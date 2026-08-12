@@ -36,6 +36,7 @@ namespace MigradorSeguro {
     public MainForm() {
       Text = "Migrador seguro de carpetas de Windows"; Width = 1080; Height = 780;
       MinimumSize = new Size(920, 680); BackColor = Color.FromArgb(244,246,248);
+      try { Icon=Icon.ExtractAssociatedIcon(Application.ExecutablePath); } catch {}
       Font = new Font("Segoe UI", 9F); BuildFolders(); BuildUi();
       Shown += async (s,e) => await RefreshData();
     }
@@ -59,6 +60,7 @@ namespace MigradorSeguro {
       var title=new Label{Text="Migrador seguro de carpetas",Font=new Font("Segoe UI",19,FontStyle.Bold),AutoSize=true,Location=new Point(22,16)};
       var subtitle=new Label{Text="Copia, verifica y redirige tus carpetas personales sin borrar los originales.",AutoSize=true,Location=new Point(25,54)};
       Controls.Add(title); Controls.Add(subtitle);
+      var about=new Button{Text="Acerca de",Size=new Size(100,30),Location=new Point(940,22),Anchor=AnchorStyles.Top|AnchorStyles.Right}; about.Click+=(s,e)=>{using(var d=new AboutForm())d.ShowDialog(this);}; Controls.Add(about);
       var left=new Panel{BackColor=Color.White,Location=new Point(22,84),Size=new Size(650,585),Anchor=AnchorStyles.Top|AnchorStyles.Bottom|AnchorStyles.Left|AnchorStyles.Right};
       var right=new Panel{BackColor=Color.White,Location=new Point(690,84),Size=new Size(350,585),Anchor=AnchorStyles.Top|AnchorStyles.Bottom|AnchorStyles.Right};
       Controls.Add(left); Controls.Add(right);
@@ -160,6 +162,24 @@ namespace MigradorSeguro {
     [DllImport("shell32.dll")] static extern void SHChangeNotify(uint eventId,uint flags,IntPtr item1,IntPtr item2);
     static void RestartExplorer() { try{foreach(var p in Process.GetProcessesByName("explorer"))p.Kill();Process.Start("explorer.exe");}catch{} }
     static string FormatBytes(long n) { string[] u={"B","KB","MB","GB","TB"};double v=Math.Max(0,n);int i=0;while(v>=1024&&i<u.Length-1){v/=1024;i++;}return i<2?String.Format("{0:0} {1}",v,u[i]):String.Format("{0:0.0} {1}",v,u[i]); }
+  }
+
+  sealed class AboutForm:Form {
+    readonly ArcadePanel animation=new ArcadePanel();
+    public AboutForm(){Text="Acerca de Migrador Seguro";ClientSize=new Size(520,330);MinimumSize=MaximumSize=new Size(536,369);StartPosition=FormStartPosition.CenterParent;MaximizeBox=false;MinimizeBox=false;BackColor=Color.FromArgb(8,17,39);ForeColor=Color.White;try{Icon=Icon.ExtractAssociatedIcon(Application.ExecutablePath);}catch{}
+      var title=new Label{Text="Migrador Seguro",Font=new Font("Segoe UI",18,FontStyle.Bold),ForeColor=Color.White,TextAlign=ContentAlignment.MiddleCenter,Dock=DockStyle.Top,Height=52};Controls.Add(title);
+      var credit=new Label{Text="Omar Aguila MMXXVI",Font=new Font("Segoe UI",12,FontStyle.Bold),ForeColor=Color.FromArgb(255,207,46),TextAlign=ContentAlignment.MiddleCenter,Dock=DockStyle.Top,Height=35};Controls.Add(credit);
+      animation.SetBounds(20,92,480,145);animation.Anchor=AnchorStyles.Top|AnchorStyles.Left|AnchorStyles.Right;Controls.Add(animation);
+      var waka=new Label{Text="wakawakawakawakawaka",Font=new Font("Consolas",13,FontStyle.Bold),ForeColor=Color.FromArgb(255,207,46),TextAlign=ContentAlignment.MiddleCenter,Location=new Point(20,241),Size=new Size(480,35)};Controls.Add(waka);
+      var close=new Button{Text="Cerrar",Location=new Point(200,285),Size=new Size(120,30)};close.Click+=(s,e)=>Close();Controls.Add(close);
+    }
+  }
+
+  sealed class ArcadePanel:Panel {
+    readonly Timer timer=new Timer();float x=8;int frame;readonly List<float> dots=new List<float>();
+    public ArcadePanel(){DoubleBuffered=true;BackColor=Color.FromArgb(8,17,39);for(int i=0;i<14;i++)dots.Add(42+i*31);timer.Interval=55;timer.Tick+=(s,e)=>{x+=5;frame++;for(int i=0;i<dots.Count;i++)if(dots[i]<x+24)dots[i]+=434;if(x>456)x=8;Invalidate();};timer.Start();}
+    protected override void Dispose(bool disposing){if(disposing)timer.Dispose();base.Dispose(disposing);}
+    protected override void OnPaint(PaintEventArgs e){base.OnPaint(e);e.Graphics.SmoothingMode=System.Drawing.Drawing2D.SmoothingMode.AntiAlias;float cy=70;using(var dotBrush=new SolidBrush(Color.FromArgb(255,207,46)))foreach(float dx in dots){float px=((dx-8)%434+434)%434+23;if(Math.Abs(px-(x+20))>20)e.Graphics.FillEllipse(dotBrush,px,cy-4,8,8);}float mouth=(frame%10<5)?34:12;using(var brush=new SolidBrush(Color.FromArgb(255,207,46)))e.Graphics.FillPie(brush,x,cy-24,48,48,mouth,360-mouth*2);using(var eye=new SolidBrush(Color.FromArgb(8,17,39)))e.Graphics.FillEllipse(eye,x+27,cy-16,5,5);using(var pen=new Pen(Color.FromArgb(46,70,108),2))e.Graphics.DrawRectangle(pen,1,1,Width-3,Height-3);}
   }
 
   sealed class DiskPanel:Panel { public long Total,Free;public string Root="";public DiskPanel(){DoubleBuffered=true;BackColor=Color.White;}protected override void OnPaint(PaintEventArgs e){base.OnPaint(e);var r=new Rectangle(25,10,190,190);using(var b=new SolidBrush(Color.FromArgb(220,231,239)))e.Graphics.FillEllipse(b,r);if(Total>0)using(var b=new SolidBrush(Color.FromArgb(39,125,161)))e.Graphics.FillPie(b,r,-90,(float)(360.0*(Total-Free)/Total));using(var b=new SolidBrush(Color.White))e.Graphics.FillEllipse(b,new Rectangle(70,55,100,100));using(var f=new Font("Segoe UI",14,FontStyle.Bold))using(var b=new SolidBrush(Color.Black)){var s=e.Graphics.MeasureString(Root,f);e.Graphics.DrawString(Root,f,b,120-s.Width/2,90);}} }
