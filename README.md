@@ -44,6 +44,7 @@ El cambio de nombre no altera el objetivo ni las protecciones del programa. Janu
 - Usa un icono de Janus claro y multirresolución para conservar legibilidad en el Explorador, accesos directos y ventanas de Windows.
 - Incluye el **Tema de iconos JANUS**, con vista previa y selección individual para Este equipo, Archivos del usuario, Red, Papelera vacía y Papelera llena. Cada icono incorpora resoluciones de 16, 24, 32, 48, 64, 128 y 256 px con transparencia real.
 - Antes de aplicar el tema guarda la configuración anterior y ofrece **Restaurar iconos originales de Windows** con un clic.
+- La versión 2.1.1 corrige la ubicación del registro utilizada por el Explorador de Windows 11, verifica cada valor escrito y actualiza la caché de iconos al aplicar o restaurar.
 
 ## Seguridad
 
