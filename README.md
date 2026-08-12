@@ -1,6 +1,16 @@
-# Migrador Seguro para Windows
+# Janus para Windows
 
 Aplicación gráfica para trasladar Escritorio, Documentos, Descargas, Imágenes, Música y Vídeos a otra unidad sin arriesgar los archivos originales.
+
+## ¿Por qué Janus?
+
+La aplicación se llamó **Migrador Seguro** hasta la versión 1.x. Desde la versión 2.0 adopta el nombre **Janus** para representar mejor su propósito.
+
+**Jano (Janus)** pertenece a la mitología romana. Es el dios de las **transiciones, los comienzos, los finales, las puertas y los cambios**. Sus dos rostros miran simultáneamente al pasado y al futuro.
+
+La imagen encaja naturalmente con esta herramienta: acompaña una transición segura desde el sistema y las ubicaciones anteriores hacia una nueva organización, conservando la posibilidad de comprobar, respaldar y restaurar. En pocas palabras: **sistema viejo → sistema nuevo**.
+
+El cambio de nombre no altera el objetivo ni las protecciones del programa. Janus continúa copiando y verificando los archivos antes de redirigir las carpetas conocidas de Windows, sin borrar automáticamente los originales.
 
 ## Funciones
 
@@ -52,7 +62,7 @@ La versión distribuida está escrita en C# y usa Windows Forms. No necesita dep
 
 ## Compilar el ejecutable
 
-Ejecuta `build-native.ps1`. Utiliza el compilador de .NET Framework incluido con Windows y crea `dist\MigradorSeguro.exe`, sin descargar dependencias.
+Ejecuta `build-native.ps1`. Utiliza el compilador de .NET Framework incluido con Windows y crea `dist\Janus.exe`, sin descargar dependencias.
 
 ## Restauración
 

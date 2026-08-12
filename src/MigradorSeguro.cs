@@ -13,13 +13,13 @@ using System.Web.Script.Serialization;
 using System.Windows.Forms;
 using Microsoft.Win32;
 
-[assembly: AssemblyTitle("Migrador Seguro")]
+[assembly: AssemblyTitle("Janus")]
 [assembly: AssemblyDescription("Migración segura de carpetas conocidas de Windows")]
 [assembly: AssemblyCompany("Omar Aguila")]
-[assembly: AssemblyProduct("Migrador Seguro")]
+[assembly: AssemblyProduct("Janus")]
 [assembly: AssemblyCopyright("Copyright © Omar Aguila MMXXVI")]
-[assembly: AssemblyVersion("1.0.19.0")]
-[assembly: AssemblyFileVersion("1.0.19.0")]
+[assembly: AssemblyVersion("2.0.0.0")]
+[assembly: AssemblyFileVersion("2.0.0.0")]
 
 namespace MigradorSeguro {
   static class Program {
@@ -49,7 +49,7 @@ namespace MigradorSeguro {
     readonly Color[] folderColors={Color.FromArgb(39,125,161),Color.FromArgb(249,199,79),Color.FromArgb(244,162,97),Color.FromArgb(67,170,139),Color.FromArgb(153,102,204),Color.FromArgb(231,111,81)};
 
     public MainForm() {
-      Text = "Migrador seguro de carpetas de Windows"; Width = 1080; Height = 780;
+      Text = "Janus — Migración segura de carpetas"; Width = 1080; Height = 780;
       MinimumSize = new Size(920, 680); BackColor = Color.FromArgb(244,246,248);
       try { Icon=Icon.ExtractAssociatedIcon(Application.ExecutablePath); } catch {}
       Font = new Font("Segoe UI", 9F); BuildFolders(); BuildUi();
@@ -72,7 +72,7 @@ namespace MigradorSeguro {
     }
 
     void BuildUi() {
-      var title=new Label{Text="Migrador seguro de carpetas",Font=new Font("Segoe UI",19,FontStyle.Bold),AutoSize=true,Location=new Point(22,16)};
+      var title=new Label{Text="Janus",Font=new Font("Segoe UI",19,FontStyle.Bold),AutoSize=true,Location=new Point(22,16)};
       var subtitle=new Label{Text="Copia, verifica y redirige tus carpetas personales sin borrar los originales.",AutoSize=true,Location=new Point(25,54)};
       Controls.Add(title); Controls.Add(subtitle);
       var about=new Button{Text="Acerca de",Size=new Size(100,27),Location=new Point(940,10),Anchor=AnchorStyles.Top|AnchorStyles.Right}; about.Click+=(s,e)=>{using(var d=new AboutForm())d.ShowDialog(this);}; Controls.Add(about);
@@ -170,7 +170,7 @@ namespace MigradorSeguro {
     void UpdateMigrationProgress(long doneBytes,long totalBytes,int doneFiles,int totalFiles,TimeSpan elapsed,string current){double ratio=totalBytes<=0?0:Math.Min(1.0,(double)doneBytes/totalBytes);int value=(int)Math.Round(ratio*1000);migrationBar.Value=Math.Max(0,Math.Min(1000,value));TimeSpan? remaining=null;if(ratio>.002&&ratio<1)remaining=TimeSpan.FromSeconds(Math.Max(0,elapsed.TotalSeconds*(1-ratio)/ratio));int missing=Math.Max(0,totalFiles-doneFiles);progressSummary.Text=String.Format("Progreso: {0:0.0}%  •  Transcurrido: {1}  •  Restante: {2}  •  Faltan: {3:N0} archivos",ratio*100,FormatTime(elapsed),remaining.HasValue?FormatTime(remaining.Value):"--:--",missing);status.Text=current;}
     void UpdateMigrationProgress(long doneBytes,int totalFiles,int doneFiles,TimeSpan elapsed,string current){UpdateMigrationProgress(doneBytes,Math.Max(1,folders.Where(f=>f.Check.Checked).Sum(f=>f.Size)),doneFiles,totalFiles,elapsed,current);}
     static string FormatTime(TimeSpan value){if(value.TotalHours>=1)return String.Format("{0:00}:{1:00}:{2:00}",(int)value.TotalHours,value.Minutes,value.Seconds);return String.Format("{0:00}:{1:00}",(int)value.TotalMinutes,value.Seconds);}
-    static string BuildSummary(List<FolderItem> selected,string root,string backup,MigrationStats stats,TimeSpan elapsed){var b=new System.Text.StringBuilder();b.AppendLine("MIGRADOR SEGURO — RESUMEN DE OPERACIÓN");b.AppendLine(new String('=',44));b.AppendLine("Fecha: "+DateTime.Now.ToString("dd-MM-yyyy HH:mm:ss"));b.AppendLine("Versión: "+Application.ProductVersion);b.AppendLine("Destino: "+root);b.AppendLine("Tiempo transcurrido: "+FormatTime(elapsed));b.AppendLine();b.AppendLine("ACCIONES REALIZADAS");b.AppendLine("• Carpetas procesadas: "+selected.Count);b.AppendLine("• Archivos copiados: "+stats.Copied);b.AppendLine("• Archivos idénticos verificados y omitidos: "+stats.Identical);b…2214 tokens truncated… ok=new Button{Text="Crear",DialogResult=DialogResult.OK,Location=new Point(226,92),Size=new Size(84,30)};var cancel=new Button{Text="Cancelar",DialogResult=DialogResult.Cancel,Location=new Point(318,92),Size=new Size(84,30)};Controls.Add(label);Controls.Add(name);Controls.Add(ok);Controls.Add(cancel);AcceptButton=ok;CancelButton=cancel;Shown+=(s,e)=>{name.Focus();name.SelectAll();};}}
+    static string BuildSummary(List<FolderItem> selected,string root,string backup,MigrationStats stats,TimeSpan elapsed){var b=new System.Text.StringBuilder();b.AppendLine("MIGRADOR SEGURO — RESUMEN DE OPERACIÓN");b.AppendLine(new String('=',44));b.AppendLine("Fecha: "+DateTime.Now.ToString("dd-MM-yyyy HH:mm:ss"));b.AppendLine("Versión: "+Application.ProductVersion);b.AppendLine("Destino: "+root);b.AppendLine("Tiempo transcurrido: "+FormatTime(elapsed));b.AppendLine();b.AppendLine("ACCIONES REALIZADAS");b.AppendLine("• Carpetas procesadas: "+selected.Count);b.AppendLine("• Archivos copiados: "+stats.Copied);b.AppendLine("• Archivos idénticos verificados y omitidos: "+stats.Identical);b.AppendLine("• Conflictos conservados con…2216 tokens truncated…ult.OK,Location=new Point(226,92),Size=new Size(84,30)};var cancel=new Button{Text="Cancelar",DialogResult=DialogResult.Cancel,Location=new Point(318,92),Size=new Size(84,30)};Controls.Add(label);Controls.Add(name);Controls.Add(ok);Controls.Add(cancel);AcceptButton=ok;CancelButton=cancel;Shown+=(s,e)=>{name.Focus();name.SelectAll();};}}
 
   sealed class WindowsToolsForm:Form {
     readonly CheckBox neverNotify=new CheckBox();
@@ -222,22 +222,22 @@ namespace MigradorSeguro {
 
   sealed class AboutForm:Form {
     int secretClicks;
-    public AboutForm(){Text="Acerca de Migrador Seguro";ClientSize=new Size(620,510);MinimumSize=MaximumSize=new Size(636,549);StartPosition=FormStartPosition.CenterParent;MaximizeBox=false;MinimizeBox=false;BackColor=Color.White;ForeColor=Color.FromArgb(28,38,52);Icon appIcon=null;try{appIcon=Icon.ExtractAssociatedIcon(Application.ExecutablePath);Icon=appIcon;}catch{}
+    public AboutForm(){Text="Acerca de Janus";ClientSize=new Size(620,550);MinimumSize=MaximumSize=new Size(636,589);StartPosition=FormStartPosition.CenterParent;MaximizeBox=false;MinimizeBox=false;BackColor=Color.White;ForeColor=Color.FromArgb(28,38,52);Icon appIcon=null;try{appIcon=Icon.ExtractAssociatedIcon(Application.ExecutablePath);Icon=appIcon;}catch{}
       var picture=new PictureBox{Location=new Point(28,28),Size=new Size(128,128),SizeMode=PictureBoxSizeMode.Zoom,Cursor=Cursors.Hand};try{using(Stream iconStream=Assembly.GetExecutingAssembly().GetManifestResourceStream("MigradorSeguro.AppIcon.png")){if(iconStream!=null)picture.Image=Image.FromStream(iconStream);else if(appIcon!=null)picture.Image=appIcon.ToBitmap();}}catch{if(appIcon!=null)picture.Image=appIcon.ToBitmap();}picture.Click+=(s,e)=>{secretClicks++;if(secretClicks>=5){secretClicks=0;using(var egg=new EasterEggForm())egg.ShowDialog(this);}};Controls.Add(picture);
-      var title=new Label{Text="Migrador Seguro",Font=new Font("Segoe UI",22,FontStyle.Bold),Location=new Point(180,27),AutoSize=true};Controls.Add(title);
+      var title=new Label{Text="Janus",Font=new Font("Segoe UI",22,FontStyle.Bold),Location=new Point(180,27),AutoSize=true};Controls.Add(title);
       var version=new Label{Text="Versión "+Application.ProductVersion,Font=new Font("Segoe UI",11,FontStyle.Bold),ForeColor=Color.FromArgb(39,125,161),Location=new Point(183,74),AutoSize=true};Controls.Add(version);
       var description=new Label{Text="Herramienta gráfica para migrar y restaurar las carpetas conocidas de Windows de forma segura.",Location=new Point(183,104),Size=new Size(370,55)};Controls.Add(description);
       var line=new Label{BorderStyle=BorderStyle.Fixed3D,Location=new Point(28,178),Size=new Size(564,2)};Controls.Add(line);
-      var details=new Label{Text="REALIZACIÓN\n12 de agosto de 2026\n\nCÓMO FUE REALIZADO\nAplicación nativa para Windows, desarrollada en C# con Windows Forms y .NET Framework. Usa las API oficiales de carpetas conocidas de Windows, verificación SHA-256 y protecciones contra sobrescritura y pérdida de datos.",Font=new Font("Segoe UI",9.5F),Location=new Point(30,196),Size=new Size(560,132)};Controls.Add(details);
-      var authorshipTitle=new Label{Text="AUTORÍA",Font=new Font("Segoe UI",9.5F),Location=new Point(30,342),AutoSize=true};Controls.Add(authorshipTitle);
-      var authorship=new Label{Text="Omar Aguila\nLaboratorios Momocrackcorp\nPueblo Seco, Ñuble, Chile",Font=new Font("Segoe UI",10.5F,FontStyle.Bold),ForeColor=Color.FromArgb(25,92,135),Location=new Point(30,366),Size=new Size(560,72)};Controls.Add(authorship);
-      var close=new Button{Text="Cerrar",Location=new Point(472,461),Size=new Size(120,32)};close.Click+=(s,e)=>Close();Controls.Add(close);
+      var details=new Label{Text="NOMBRE\nJano (Janus), dios romano de las transiciones, comienzos, finales, puertas y cambios. Sus dos rostros miran al pasado y al futuro: sistema viejo → sistema nuevo.\n\nREALIZACIÓN\n12 de agosto de 2026\n\nCÓMO FUE REALIZADO\nAplicación nativa para Windows, desarrollada en C# con Windows Forms y .NET Framework, API oficiales y verificación SHA-256.",Font=new Font("Segoe UI",9.5F),Location=new Point(30,196),Size=new Size(560,190)};Controls.Add(details);
+      var authorshipTitle=new Label{Text="AUTORÍA",Font=new Font("Segoe UI",9.5F),Location=new Point(30,398),AutoSize=true};Controls.Add(authorshipTitle);
+      var authorship=new Label{Text="Omar Aguila\nLaboratorios Momocrackcorp\nPueblo Seco, Ñuble, Chile",Font=new Font("Segoe UI",10.5F,FontStyle.Bold),ForeColor=Color.FromArgb(25,92,135),Location=new Point(30,422),Size=new Size(560,72)};Controls.Add(authorship);
+      var close=new Button{Text="Cerrar",Location=new Point(472,501),Size=new Size(120,32)};close.Click+=(s,e)=>Close();Controls.Add(close);
     }
   }
 
   sealed class EasterEggForm:Form {readonly ArcadePanel animation=new ArcadePanel();public EasterEggForm(){Text="MMXXVI";ClientSize=new Size(520,265);StartPosition=FormStartPosition.CenterParent;FormBorderStyle=FormBorderStyle.FixedDialog;MaximizeBox=false;MinimizeBox=false;BackColor=Color.FromArgb(8,17,39);var credit=new Label{Text="Omar Aguila MMXXVI",Font=new Font("Segoe UI",12,FontStyle.Bold),ForeColor=Color.FromArgb(255,207,46),TextAlign=ContentAlignment.MiddleCenter,Dock=DockStyle.Top,Height=42};Controls.Add(credit);animation.SetBounds(20,48,480,145);Controls.Add(animation);var waka=new Label{Text="wakawakawakawakawaka",Font=new Font("Consolas",13,FontStyle.Bold),ForeColor=Color.FromArgb(255,207,46),TextAlign=ContentAlignment.MiddleCenter,Location=new Point(20,201),Size=new Size(480,35)};Controls.Add(waka);}}
 
-  sealed class SummaryForm:Form {readonly string report;public SummaryForm(string text){report=text;Text="Resumen de la migración";ClientSize=new Size(720,540);MinimumSize=new Size(620,460);StartPosition=FormStartPosition.CenterParent;var title=new Label{Text="Migración completada",Font=new Font("Segoe UI",17,FontStyle.Bold),Dock=DockStyle.Top,Height=50,Padding=new Padding(14,10,0,0)};Controls.Add(title);var box=new TextBox{Text=text,Multiline=true,ReadOnly=true,ScrollBars=ScrollBars.Both,WordWrap=false,Font=new Font("Consolas",9F),Dock=DockStyle.Fill,BackColor=Color.White};Controls.Add(box);box.BringToFront();var buttons=new Panel{Dock=DockStyle.Bottom,Height=54,Padding=new Padding(12,10,12,10)};var save=new Button{Text="Guardar resumen…",Dock=DockStyle.Left,Width=145};save.Click+=(s,e)=>Save();var close=new Button{Text="Cerrar",Dock=DockStyle.Right,Width=110,DialogResult=DialogResult.OK};buttons.Controls.Add(save);buttons.Controls.Add(close);Controls.Add(buttons);buttons.BringToFront();AcceptButton=close;}void Save(){using(var d=new SaveFileDialog{Filter="Archivo de texto (*.txt)|*.txt",FileName="Resumen-MigradorSeguro-"+DateTime.Now.ToString("yyyyMMdd-HHmmss")+".txt"})if(d.ShowDialog()==DialogResult.OK){File.WriteAllText(d.FileName,report,System.Text.Encoding.UTF8);MessageBox.Show("Resumen guardado correctamente.","Resumen",MessageBoxButtons.OK,MessageBoxIcon.Information);}}}
+  sealed class SummaryForm:Form {readonly string report;public SummaryForm(string text){report=text;Text="Resumen de la migración";ClientSize=new Size(720,540);MinimumSize=new Size(620,460);StartPosition=FormStartPosition.CenterParent;var title=new Label{Text="Migración completada",Font=new Font("Segoe UI",17,FontStyle.Bold),Dock=DockStyle.Top,Height=50,Padding=new Padding(14,10,0,0)};Controls.Add(title);var box=new TextBox{Text=text,Multiline=true,ReadOnly=true,ScrollBars=ScrollBars.Both,WordWrap=false,Font=new Font("Consolas",9F),Dock=DockStyle.Fill,BackColor=Color.White};Controls.Add(box);box.BringToFront();var buttons=new Panel{Dock=DockStyle.Bottom,Height=54,Padding=new Padding(12,10,12,10)};var save=new Button{Text="Guardar resumen…",Dock=DockStyle.Left,Width=145};save.Click+=(s,e)=>Save();var close=new Button{Text="Cerrar",Dock=DockStyle.Right,Width=110,DialogResult=DialogResult.OK};buttons.Controls.Add(save);buttons.Controls.Add(close);Controls.Add(buttons);buttons.BringToFront();AcceptButton=close;}void Save(){using(var d=new SaveFileDialog{Filter="Archivo de texto (*.txt)|*.txt",FileName="Resumen-Janus-"+DateTime.Now.ToString("yyyyMMdd-HHmmss")+".txt"})if(d.ShowDialog()==DialogResult.OK){File.WriteAllText(d.FileName,report,System.Text.Encoding.UTF8);MessageBox.Show("Resumen guardado correctamente.","Resumen",MessageBoxButtons.OK,MessageBoxIcon.Information);}}}
 
   sealed class ArcadePanel:Panel {
     readonly System.Windows.Forms.Timer timer=new System.Windows.Forms.Timer();float x=8;int frame;readonly List<float> dots=new List<float>();
