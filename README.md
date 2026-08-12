@@ -20,6 +20,7 @@ Aplicación gráfica para trasladar Escritorio, Documentos, Descargas, Imágenes
 - Muestra barra de progreso por bytes, porcentaje, tiempo transcurrido, tiempo restante estimado y archivos pendientes.
 - Al finalizar muestra un resumen guardable con acciones, archivos copiados, idénticos, conflictos, volumen y tiempo total.
 - La pantalla **Acerca de** informa versión, fecha, tecnología, autoría y procedencia; la animación arcade permanece como huevo de pascua.
+- **Acerca de** utiliza el icono PNG de alta resolución y reserva un bloque completo para la autoría y ubicación.
 - Reinicia el Explorador de Windows después de aplicar o restaurar cambios.
 
 ## Seguridad
