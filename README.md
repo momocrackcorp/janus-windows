@@ -17,6 +17,7 @@ Aplicación gráfica para trasladar Escritorio, Documentos, Descargas, Imágenes
 - El icono de la unidad usa transparencia real y se adapta a temas claros u oscuros.
 - Muestra un gráfico de dona multicolor con la distribución de tamaños de las carpetas seleccionadas.
 - La leyenda del gráfico reserva espacio completo para nombres y porcentajes, incluso con escalado alto de Windows.
+- Muestra barra de progreso por bytes, porcentaje, tiempo transcurrido, tiempo restante estimado y archivos pendientes.
 - Reinicia el Explorador de Windows después de aplicar o restaurar cambios.
 
 ## Seguridad
