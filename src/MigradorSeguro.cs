@@ -18,8 +18,8 @@ using Microsoft.Win32;
 [assembly: AssemblyCompany("Omar Aguila")]
 [assembly: AssemblyProduct("Janus")]
 [assembly: AssemblyCopyright("Copyright © Omar Aguila MMXXVI")]
-[assembly: AssemblyVersion("2.0.6.0")]
-[assembly: AssemblyFileVersion("2.0.6.0")]
+[assembly: AssemblyVersion("2.0.7.0")]
+[assembly: AssemblyFileVersion("2.0.7.0")]
 
 namespace MigradorSeguro {
   static class Program {
