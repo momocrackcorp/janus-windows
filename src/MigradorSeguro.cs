@@ -18,8 +18,8 @@ using Microsoft.Win32;
 [assembly: AssemblyCompany("Omar Aguila")]
 [assembly: AssemblyProduct("Migrador Seguro")]
 [assembly: AssemblyCopyright("Copyright © Omar Aguila MMXXVI")]
-[assembly: AssemblyVersion("1.0.12.0")]
-[assembly: AssemblyFileVersion("1.0.12.0")]
+[assembly: AssemblyVersion("1.0.13.0")]
+[assembly: AssemblyFileVersion("1.0.13.0")]
 
 namespace MigradorSeguro {
   static class Program {
@@ -34,6 +34,7 @@ namespace MigradorSeguro {
     public string Label, RegistryName, DefaultName, Source, KnownFolderId;
     public long Size; public int Files; public CheckBox Check; public Label SizeLabel;
   }
+  sealed class MigrationStats {public int Copied,Identical,Conflicts;public long CopiedBytes;}
 
   sealed class MainForm : Form {
     const string UserShell = @"Software\Microsoft\Windows\CurrentVersion\Explorer\User Shell Folders";
@@ -141,14 +142,15 @@ namespace MigradorSeguro {
         string summary=String.Join("\n\n",selected.Select(f=>"• "+f.Label+": "+FormatBytes(f.Size)+"\n  "+f.Source+"\n  → "+Path.Combine(root,f.DefaultName)));
         if(MessageBox.Show("Se copiarán y verificarán estas carpetas:\n\n"+summary+"\n\nSi el destino ya contiene datos, se fusionarán sin sobrescribir: los idénticos se omiten y los conflictos se guardan con otro nombre.\n\nLos originales NO se borrarán. ¿Continuar?","Confirmación final",MessageBoxButtons.YesNo,MessageBoxIcon.Warning)!=DialogResult.Yes)return;
         apply.Enabled=false; string backup=BackupRegistry(); status.Text="Respaldo guardado en "+backup;
-        long totalBytes=Math.Max(1,selected.Sum(f=>f.Size)),doneBytes=0;int totalFiles=selected.Sum(f=>f.Files),doneFiles=0;var watch=Stopwatch.StartNew();
+        long totalBytes=Math.Max(1,selected.Sum(f=>f.Size)),doneBytes=0;int totalFiles=selected.Sum(f=>f.Files),doneFiles=0;var watch=Stopwatch.StartNew();var stats=new MigrationStats();
         UpdateMigrationProgress(0,totalFiles,0,watch.Elapsed,"Preparando copia…");
-        await Task.Run(()=> { foreach(var f in selected) CopyVerified(f.Source,Path.Combine(root,f.DefaultName),(m,bytes,files)=>{Interlocked.Add(ref doneBytes,bytes);Interlocked.Add(ref doneFiles,files);long currentBytes=Interlocked.Read(ref doneBytes);int currentFiles=Volatile.Read(ref doneFiles);BeginInvoke((Action)(()=>UpdateMigrationProgress(currentBytes,totalBytes,currentFiles,totalFiles,watch.Elapsed,m)));}); });
+        await Task.Run(()=> { foreach(var f in selected) CopyVerified(f.Source,Path.Combine(root,f.DefaultName),stats,(m,bytes,files)=>{Interlocked.Add(ref doneBytes,bytes);Interlocked.Add(ref doneFiles,files);long currentBytes=Interlocked.Read(ref doneBytes);int currentFiles=Volatile.Read(ref doneFiles);BeginInvoke((Action)(()=>UpdateMigrationProgress(currentBytes,totalBytes,currentFiles,totalFiles,watch.Elapsed,m)));}); });
         watch.Stop();UpdateMigrationProgress(totalBytes,totalBytes,totalFiles,totalFiles,watch.Elapsed,"Copia y verificación completadas.");
         var changed=new List<FolderItem>();
         try { foreach(var f in selected){SetKnownFolder(f,Path.Combine(root,f.DefaultName));changed.Add(f);} NotifyShell(); }
         catch { RestoreFile(backup,changed.Select(x=>x.Label)); throw; }
         ApplyDestinationDriveIcon(root); status.Text="Migración completada correctamente. Se aplicó el icono celeste a la unidad destino.";
+        using(var report=new SummaryForm(BuildSummary(selected,root,backup,stats,watch.Elapsed)))report.ShowDialog(this);
         if(MessageBox.Show("Windows ya apunta al nuevo destino.\n\nLos originales siguen intactos. ¿Reiniciar el Explorador ahora?","Migración completada",MessageBoxButtons.YesNo,MessageBoxIcon.Information)==DialogResult.Yes) RestartExplorer();
       } catch(Exception ex) { MessageBox.Show(ex.Message+"\n\nNo se borraron archivos.","Operación detenida",MessageBoxButtons.OK,MessageBoxIcon.Error); status.Text="La operación fue detenida de forma segura."; }
       finally { UpdatePreview(); }
@@ -167,13 +169,14 @@ namespace MigradorSeguro {
     void UpdateMigrationProgress(long doneBytes,long totalBytes,int doneFiles,int totalFiles,TimeSpan elapsed,string current){double ratio=totalBytes<=0?0:Math.Min(1.0,(double)doneBytes/totalBytes);int value=(int)Math.Round(ratio*1000);migrationBar.Value=Math.Max(0,Math.Min(1000,value));TimeSpan? remaining=null;if(ratio>.002&&ratio<1)remaining=TimeSpan.FromSeconds(Math.Max(0,elapsed.TotalSeconds*(1-ratio)/ratio));int missing=Math.Max(0,totalFiles-doneFiles);progressSummary.Text=String.Format("Progreso: {0:0.0}%  •  Transcurrido: {1}  •  Restante: {2}  •  Faltan: {3:N0} archivos",ratio*100,FormatTime(elapsed),remaining.HasValue?FormatTime(remaining.Value):"--:--",missing);status.Text=current;}
     void UpdateMigrationProgress(long doneBytes,int totalFiles,int doneFiles,TimeSpan elapsed,string current){UpdateMigrationProgress(doneBytes,Math.Max(1,folders.Where(f=>f.Check.Checked).Sum(f=>f.Size)),doneFiles,totalFiles,elapsed,current);}
     static string FormatTime(TimeSpan value){if(value.TotalHours>=1)return String.Format("{0:00}:{1:00}:{2:00}",(int)value.TotalHours,value.Minutes,value.Seconds);return String.Format("{0:00}:{1:00}",(int)value.TotalMinutes,value.Seconds);}
-    static void CopyVerified(string src,string dst,Action<string,long,int> progress) {
+    static string BuildSummary(List<FolderItem> selected,string root,string backup,MigrationStats stats,TimeSpan elapsed){var b=new System.Text.StringBuilder();b.AppendLine("MIGRADOR SEGURO — RESUMEN DE OPERACIÓN");b.AppendLine(new String('=',44));b.AppendLine("Fecha: "+DateTime.Now.ToString("dd-MM-yyyy HH:mm:ss"));b.AppendLine("Versión: "+Application.ProductVersion);b.AppendLine("Destino: "+root);b.AppendLine("Tiempo transcurrido: "+FormatTime(elapsed));b.AppendLine();b.AppendLine("ACCIONES REALIZADAS");b.AppendLine("• Carpetas procesadas: "+selected.Count);b.AppendLine("• Archivos copiados: "+stats.Copied);b.AppendLine("• Archivos idénticos verificados y omitidos: "+stats.Identical);b.AppendLine("• Conflictos conservados con nombre nuevo: "+stats.Conflicts);b.AppendLine("• Datos copiados: "+FormatBytes(stats.CopiedBytes));b.AppendLine("• Archivos procesados en total: "+(stats.Copied+stats.Identical));b.AppendLine();b.AppendLine("CARPETAS");foreach(var f in selected)b.AppendLine("• "+f.Label+": "+f.Files+" archivos, "+FormatBytes(f.Size)+"\r\n  "+f.Source+" → "+Path.Combine(root,f.DefaultName));b.AppendLine();b.AppendLine("Respaldo de rutas: "+backup);b.AppendLine("Los archivos originales se conservaron.");return b.ToString();}
+    static void CopyVerified(string src,string dst,MigrationStats stats,Action<string,long,int> progress) {
       Directory.CreateDirectory(dst);
       foreach(var dir in SafeDirectories(src)) {
         string rel=dir.Substring(src.TrimEnd('\\').Length).TrimStart('\\'); string target=String.IsNullOrEmpty(rel)?dst:Path.Combine(dst,rel);
         Directory.CreateDirectory(target); try { File.SetAttributes(target,File.GetAttributes(dir)); Directory.SetLastWriteTimeUtc(target,Directory.GetLastWriteTimeUtc(dir)); } catch {}
       }
-      foreach(var file in SafeFiles(src)){string rel=file.Substring(src.TrimEnd('\\').Length).TrimStart('\\');string target=Path.Combine(dst,rel);Directory.CreateDirectory(Path.GetDirectoryName(target));long fileBytes=0;try{fileBytes=new FileInfo(file).Length;}catch{}if(File.Exists(target)){if(FilesEqual(file,target)){progress("Ya existe idéntico, verificado: "+rel,fileBytes,1);continue;}target=ConflictName(target);}File.Copy(file,target,false);if(!FilesEqual(file,target))throw new IOException("Falló la verificación de "+Path.GetFileName(file));progress("Copiando y verificando: "+rel,fileBytes,1);}
+      foreach(var file in SafeFiles(src)){string rel=file.Substring(src.TrimEnd('\\').Length).TrimStart('\\');string target=Path.Combine(dst,rel);Directory.CreateDirectory(Path.GetDirectoryName(target));long fileBytes=0;try{fileBytes=new FileInfo(file).Length;}catch{}if(File.Exists(target)){if(FilesEqual(file,target)){Interlocked.Increment(ref stats.Identical);progress("Ya existe idéntico, verificado: "+rel,fileBytes,1);continue;}target=ConflictName(target);Interlocked.Increment(ref stats.Conflicts);}File.Copy(file,target,false);if(!FilesEqual(file,target))throw new IOException("Falló la verificación de "+Path.GetFileName(file));Interlocked.Increment(ref stats.Copied);Interlocked.Add(ref stats.CopiedBytes,fileBytes);progress("Copiando y verificando: "+rel,fileBytes,1);}
       try { File.SetAttributes(dst,File.GetAttributes(src)|FileAttributes.ReadOnly); } catch {}
     }
     static bool FilesEqual(string a,string b){var fa=new FileInfo(a);var fb=new FileInfo(b);if(fa.Length!=fb.Length)return false;using(var sha=SHA256.Create())using(var sa=File.OpenRead(a))using(var sb=File.OpenRead(b)){return sha.ComputeHash(sa).SequenceEqual(sha.ComputeHash(sb));}}
@@ -197,15 +200,21 @@ namespace MigradorSeguro {
   sealed class NamePrompt:Form {readonly TextBox name=new TextBox();public string FolderName{get{return name.Text;}}public NamePrompt(){Text="Crear carpeta contenedora";ClientSize=new Size(420,145);StartPosition=FormStartPosition.CenterParent;FormBorderStyle=FormBorderStyle.FixedDialog;MaximizeBox=false;MinimizeBox=false;var label=new Label{Text="Nombre de la nueva carpeta:",Location=new Point(18,18),AutoSize=true};name.SetBounds(18,45,384,27);name.Text=Environment.UserName;var ok=new Button{Text="Crear",DialogResult=DialogResult.OK,Location=new Point(226,92),Size=new Size(84,30)};var cancel=new Button{Text="Cancelar",DialogResult=DialogResult.Cancel,Location=new Point(318,92),Size=new Size(84,30)};Controls.Add(label);Controls.Add(name);Controls.Add(ok);Controls.Add(cancel);AcceptButton=ok;CancelButton=cancel;Shown+=(s,e)=>{name.Focus();name.SelectAll();};}}
 
   sealed class AboutForm:Form {
-    readonly ArcadePanel animation=new ArcadePanel();
-    public AboutForm(){Text="Acerca de Migrador Seguro";ClientSize=new Size(520,330);MinimumSize=MaximumSize=new Size(536,369);StartPosition=FormStartPosition.CenterParent;MaximizeBox=false;MinimizeBox=false;BackColor=Color.FromArgb(8,17,39);ForeColor=Color.White;try{Icon=Icon.ExtractAssociatedIcon(Application.ExecutablePath);}catch{}
-      var title=new Label{Text="Migrador Seguro",Font=new Font("Segoe UI",18,FontStyle.Bold),ForeColor=Color.White,TextAlign=ContentAlignment.MiddleCenter,Dock=DockStyle.Top,Height=52};Controls.Add(title);
-      var credit=new Label{Text="Omar Aguila MMXXVI",Font=new Font("Segoe UI",12,FontStyle.Bold),ForeColor=Color.FromArgb(255,207,46),TextAlign=ContentAlignment.MiddleCenter,Dock=DockStyle.Top,Height=35};Controls.Add(credit);
-      animation.SetBounds(20,92,480,145);animation.Anchor=AnchorStyles.Top|AnchorStyles.Left|AnchorStyles.Right;Controls.Add(animation);
-      var waka=new Label{Text="wakawakawakawakawaka",Font=new Font("Consolas",13,FontStyle.Bold),ForeColor=Color.FromArgb(255,207,46),TextAlign=ContentAlignment.MiddleCenter,Location=new Point(20,241),Size=new Size(480,35)};Controls.Add(waka);
-      var close=new Button{Text="Cerrar",Location=new Point(200,285),Size=new Size(120,30)};close.Click+=(s,e)=>Close();Controls.Add(close);
+    int secretClicks;
+    public AboutForm(){Text="Acerca de Migrador Seguro";ClientSize=new Size(590,430);MinimumSize=MaximumSize=new Size(606,469);StartPosition=FormStartPosition.CenterParent;MaximizeBox=false;MinimizeBox=false;BackColor=Color.White;ForeColor=Color.FromArgb(28,38,52);Icon appIcon=null;try{appIcon=Icon.ExtractAssociatedIcon(Application.ExecutablePath);Icon=appIcon;}catch{}
+      var picture=new PictureBox{Location=new Point(28,28),Size=new Size(128,128),SizeMode=PictureBoxSizeMode.Zoom,Cursor=Cursors.Hand};if(appIcon!=null)picture.Image=appIcon.ToBitmap();picture.Click+=(s,e)=>{secretClicks++;if(secretClicks>=5){secretClicks=0;using(var egg=new EasterEggForm())egg.ShowDialog(this);}};Controls.Add(picture);
+      var title=new Label{Text="Migrador Seguro",Font=new Font("Segoe UI",22,FontStyle.Bold),Location=new Point(180,27),AutoSize=true};Controls.Add(title);
+      var version=new Label{Text="Versión "+Application.ProductVersion,Font=new Font("Segoe UI",11,FontStyle.Bold),ForeColor=Color.FromArgb(39,125,161),Location=new Point(183,74),AutoSize=true};Controls.Add(version);
+      var description=new Label{Text="Herramienta gráfica para migrar y restaurar las carpetas conocidas de Windows de forma segura.",Location=new Point(183,104),Size=new Size(370,55)};Controls.Add(description);
+      var line=new Label{BorderStyle=BorderStyle.Fixed3D,Location=new Point(28,178),Size=new Size(534,2)};Controls.Add(line);
+      var details=new Label{Text="REALIZACIÓN\n12 de agosto de 2026\n\nCÓMO FUE REALIZADO\nAplicación nativa para Windows, desarrollada en C# con Windows Forms y .NET Framework. Usa las API oficiales de carpetas conocidas de Windows, verificación SHA-256 y protecciones contra sobrescritura y pérdida de datos.\n\nAUTORÍA\nOmar Aguila\nLaboratorios Momocrackcorp\nPueblo Seco, Ñuble, Chile",Font=new Font("Segoe UI",9.5F),Location=new Point(30,196),Size=new Size(530,178)};Controls.Add(details);
+      var close=new Button{Text="Cerrar",Location=new Point(442,385),Size=new Size(120,30)};close.Click+=(s,e)=>Close();Controls.Add(close);
     }
   }
+
+  sealed class EasterEggForm:Form {readonly ArcadePanel animation=new ArcadePanel();public EasterEggForm(){Text="MMXXVI";ClientSize=new Size(520,265);StartPosition=FormStartPosition.CenterParent;FormBorderStyle=FormBorderStyle.FixedDialog;MaximizeBox=false;MinimizeBox=false;BackColor=Color.FromArgb(8,17,39);var credit=new Label{Text="Omar Aguila MMXXVI",Font=new Font("Segoe UI",12,FontStyle.Bold),ForeColor=Color.FromArgb(255,207,46),TextAlign=ContentAlignment.MiddleCenter,Dock=DockStyle.Top,Height=42};Controls.Add(credit);animation.SetBounds(20,48,480,145);Controls.Add(animation);var waka=new Label{Text="wakawakawakawakawaka",Font=new Font("Consolas",13,FontStyle.Bold),ForeColor=Color.FromArgb(255,207,46),TextAlign=ContentAlignment.MiddleCenter,Location=new Point(20,201),Size=new Size(480,35)};Controls.Add(waka);}}
+
+  sealed class SummaryForm:Form {readonly string report;public SummaryForm(string text){report=text;Text="Resumen de la migración";ClientSize=new Size(720,540);MinimumSize=new Size(620,460);StartPosition=FormStartPosition.CenterParent;var title=new Label{Text="Migración completada",Font=new Font("Segoe UI",17,FontStyle.Bold),Dock=DockStyle.Top,Height=50,Padding=new Padding(14,10,0,0)};Controls.Add(title);var box=new TextBox{Text=text,Multiline=true,ReadOnly=true,ScrollBars=ScrollBars.Both,WordWrap=false,Font=new Font("Consolas",9F),Dock=DockStyle.Fill,BackColor=Color.White};Controls.Add(box);box.BringToFront();var buttons=new Panel{Dock=DockStyle.Bottom,Height=54,Padding=new Padding(12,10,12,10)};var save=new Button{Text="Guardar resumen…",Dock=DockStyle.Left,Width=145};save.Click+=(s,e)=>Save();var close=new Button{Text="Cerrar",Dock=DockStyle.Right,Width=110,DialogResult=DialogResult.OK};buttons.Controls.Add(save);buttons.Controls.Add(close);Controls.Add(buttons);buttons.BringToFront();AcceptButton=close;}void Save(){using(var d=new SaveFileDialog{Filter="Archivo de texto (*.txt)|*.txt",FileName="Resumen-MigradorSeguro-"+DateTime.Now.ToString("yyyyMMdd-HHmmss")+".txt"})if(d.ShowDialog()==DialogResult.OK){File.WriteAllText(d.FileName,report,System.Text.Encoding.UTF8);MessageBox.Show("Resumen guardado correctamente.","Resumen",MessageBoxButtons.OK,MessageBoxIcon.Information);}}}
 
   sealed class ArcadePanel:Panel {
     readonly System.Windows.Forms.Timer timer=new System.Windows.Forms.Timer();float x=8;int frame;readonly List<float> dots=new List<float>();
