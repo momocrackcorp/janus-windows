@@ -18,8 +18,8 @@ using Microsoft.Win32;
 [assembly: AssemblyCompany("Omar Aguila")]
 [assembly: AssemblyProduct("Janus")]
 [assembly: AssemblyCopyright("Copyright © Omar Aguila MMXXVI")]
-[assembly: AssemblyVersion("2.0.7.0")]
-[assembly: AssemblyFileVersion("2.0.7.0")]
+[assembly: AssemblyVersion("2.0.8.0")]
+[assembly: AssemblyFileVersion("2.0.8.0")]
 
 namespace MigradorSeguro {
   static class Program {
@@ -218,22 +218,30 @@ namespace MigradorSeguro {
     public WindowsToolsForm(){Text="Herramientas de Windows";ClientSize=new Size(900,695);MinimumSize=MaximumSize=new Size(916,734);StartPosition=FormStartPosition.CenterParent;FormBorderStyle=FormBorderStyle.FixedDialog;MaximizeBox=false;MinimizeBox=false;BackColor=Color.White;try{Icon=Icon.ExtractAssociatedIcon(Application.ExecutablePath);}catch{}
       var title=new Label{Text="Herramientas de Windows",Font=new Font("Segoe UI",18,FontStyle.Bold),Location=new Point(24,17),AutoSize=true};Controls.Add(title);
       var subtitle=new Label{Text="Diagnóstico, administración y software recomendado.",Location=new Point(27,55),AutoSize=true,ForeColor=Color.DimGray};Controls.Add(subtitle);
-      var systemGroup=new GroupBox{Text="Sistema y diagnóstico",Location=new Point(24,86),Size=new Size(408,258)};Controls.Add(systemGroup);
-      AddToolButton(systemGroup,"Versión de Windows (Winver)",54,27,(s,e)=>Launch("winver.exe"),300);
-      AddToolButton(systemGroup,"Información del sistema (MSInfo32)",54,66,(s,e)=>Launch("msinfo32.exe"),300);
-      AddToolButton(systemGroup,"Diagnóstico de DirectX (DxDiag)",54,105,(s,e)=>Launch("dxdiag.exe"),300);
-      AddToolButton(systemGroup,"Abrir Terminal",54,144,(s,e)=>OpenTerminal(),300);
-      AddToolButton(systemGroup,"Ejecutar SystemInfo",54,183,(s,e)=>Launch("cmd.exe","/k title Información del sistema & systeminfo"),300);
-      AddToolButton(systemGroup,"Crear / abrir Modo Dios (Windows 10 y 11)",54,222,(s,e)=>CreateGodMode(),300);
-      var uacGroup=new GroupBox{Text="Control de cuentas de usuario (UAC)",Location=new Point(24,357),Size=new Size(408,143)};Controls.Add(uacGroup);
-      var uacInfo=new Label{Text="Abre el control oficial de Windows para elegir el nivel de notificaciones.",Location=new Point(18,31),Size=new Size(372,38)};uacGroup.Controls.Add(uacInfo);
-      var warning=new Label{Text="Recomendado: conserva el nivel predeterminado de Windows.",ForeColor=Color.FromArgb(166,79,0),Location=new Point(18,69),Size=new Size(372,20)};uacGroup.Controls.Add(warning);
-      var applyUac=new Button{Text="Abrir configuración oficial de UAC",Location=new Point(54,98),Size=new Size(300,29)};applyUac.Click+=(s,e)=>Launch("UserAccountControlSettings.exe");uacGroup.Controls.Add(applyUac);
+      var systemGroup=new GroupBox{Text="Sistema y diagnóstico",Location=new Point(24,86),Size=new Size(408,234)};Controls.Add(systemGroup);
+      AddToolButton(systemGroup,"Versión de Windows (Winver)",54,22,(s,e)=>Launch("winver.exe"),300);
+      AddToolButton(systemGroup,"Información del sistema (MSInfo32)",54,57,(s,e)=>Launch("msinfo32.exe"),300);
+      AddToolButton(systemGroup,"Diagnóstico de DirectX (DxDiag)",54,92,(s,e)=>Launch("dxdiag.exe"),300);
+      AddToolButton(systemGroup,"Abrir Terminal",54,127,(s,e)=>OpenTerminal(),300);
+      AddToolButton(systemGroup,"Ejecutar SystemInfo",54,162,(s,e)=>Launch("cmd.exe","/k title Información del sistema & systeminfo"),300);
+      AddToolButton(systemGroup,"Crear / abrir Modo Dios (Windows 10 y 11)",54,197,(s,e)=>CreateGodMode(),300);
+      var uacGroup=new GroupBox{Text="Control de cuentas de usuario (UAC)",Location=new Point(24,328),Size=new Size(408,112)};Controls.Add(uacGroup);
+      var uacInfo=new Label{Text="Abre el control oficial de Windows para elegir el nivel de notificaciones.",Location=new Point(18,24),Size=new Size(372,20)};uacGroup.Controls.Add(uacInfo);
+      var warning=new Label{Text="Recomendado: conserva el nivel predeterminado de Windows.",ForeColor=Color.FromArgb(166,79,0),Location=new Point(18,48),Size=new Size(372,20)};uacGroup.Controls.Add(warning);
+      var applyUac=new Button{Text="Abrir configuración oficial de UAC",Location=new Point(54,73),Size=new Size(300,27)};applyUac.Click+=(s,e)=>Launch("UserAccountControlSettings.exe");uacGroup.Controls.Add(applyUac);
       var photo=new PictureBox{Location=new Point(452,72),Size=new Size(424,205),SizeMode=PictureBoxSizeMode.Zoom,BackColor=Color.White};try{using(Stream imageStream=Assembly.GetExecutingAssembly().GetManifestResourceStream("MigradorSeguro.ToolsPhoto.png")){if(imageStream!=null)photo.Image=new Bitmap(imageStream);}}catch{}Controls.Add(photo);
-      var oneDriveGroup=new GroupBox{Text="Microsoft OneDrive",Location=new Point(24,510),Size=new Size(408,115)};Controls.Add(oneDriveGroup);
-      var oneDriveNote=new Label{Text="Desactiva la sincronización mediante la directiva de Windows, cierra OneDrive y evita su inicio. Requiere administrador.",Location=new Point(18,25),Size=new Size(372,40),ForeColor=Color.DimGray};oneDriveGroup.Controls.Add(oneDriveNote);
-      var disableOneDrive=new Button{Text="Desactivar OneDrive",Location=new Point(18,75),Size=new Size(178,28)};disableOneDrive.Click+=(s,e)=>DisableOneDriveStartup();oneDriveGroup.Controls.Add(disableOneDrive);
-      var restoreStartup=new Button{Text="Restaurar OneDrive",Location=new Point(212,75),Size=new Size(178,28)};restoreStartup.Click+=(s,e)=>RestoreOneDriveStartup();oneDriveGroup.Controls.Add(restoreStartup);
+      var oneDriveGroup=new GroupBox{Text="Microsoft OneDrive",Location=new Point(24,448),Size=new Size(408,98)};Controls.Add(oneDriveGroup);
+      var oneDriveNote=new Label{Text="Desactiva la sincronización por directiva, cierra OneDrive y evita su inicio. Requiere administrador.",Location=new Point(18,22),Size=new Size(372,34),ForeColor=Color.DimGray};oneDriveGroup.Controls.Add(oneDriveNote);
+      var disableOneDrive=new Button{Text="Desactivar OneDrive",Location=new Point(18,61),Size=new Size(178,27)};disableOneDrive.Click+=(s,e)=>DisableOneDriveStartup();oneDriveGroup.Controls.Add(disableOneDrive);
+      var restoreStartup=new Button{Text="Restaurar OneDrive",Location=new Point(212,61),Size=new Size(178,27)};restoreStartup.Click+=(s,e)=>RestoreOneDriveStartup();oneDriveGroup.Controls.Add(restoreStartup);
+      var desktopGroup=new GroupBox{Text="Iconos del escritorio",Location=new Point(24,554),Size=new Size(408,102)};Controls.Add(desktopGroup);
+      var desktopComputer=new CheckBox{Text="Equipo",Location=new Point(18,22),Size=new Size(165,21)};desktopGroup.Controls.Add(desktopComputer);
+      var desktopRecycleBin=new CheckBox{Text="Papelera de reciclaje",Location=new Point(202,22),Size=new Size(185,21)};desktopGroup.Controls.Add(desktopRecycleBin);
+      var desktopUserFiles=new CheckBox{Text="Archivos del usuario",Location=new Point(18,45),Size=new Size(165,21)};desktopGroup.Controls.Add(desktopUserFiles);
+      var desktopControlPanel=new CheckBox{Text="Panel de control",Location=new Point(202,45),Size=new Size(185,21)};desktopGroup.Controls.Add(desktopControlPanel);
+      var desktopNetwork=new CheckBox{Text="Red",Location=new Point(18,70),Size=new Size(90,21)};desktopGroup.Controls.Add(desktopNetwork);
+      var applyDesktopIcons=new Button{Text="Aplicar iconos",Location=new Point(202,68),Size=new Size(185,27)};applyDesktopIcons.Click+=(s,e)=>ApplyDesktopIcons(desktopComputer,desktopUserFiles,desktopNetwork,desktopRecycleBin,desktopControlPanel);desktopGroup.Controls.Add(applyDesktopIcons);
+      LoadDesktopIcons(desktopComputer,desktopUserFiles,desktopNetwork,desktopRecycleBin,desktopControlPanel);
       var timeGroup=new GroupBox{Text="Fecha, hora y zona horaria",Location=new Point(452,285),Size=new Size(424,94)};Controls.Add(timeGroup);
       var timeNote=new Label{Text="Activa la detección automática o abre el panel oficial para ajustar el reloj.",Location=new Point(18,23),Size=new Size(388,20),ForeColor=Color.DimGray};timeGroup.Controls.Add(timeNote);
       var automaticZone=new Button{Text="Zona automática",Location=new Point(12,52),Size=new Size(126,28)};automaticZone.Click+=(s,e)=>EnableAutomaticTimeZone();timeGroup.Controls.Add(automaticZone);
@@ -282,6 +290,19 @@ namespace MigradorSeguro {
     }
     static void OpenUrl(string url){try{Process.Start(new ProcessStartInfo(url){UseShellExecute=true});}catch(Exception ex){MessageBox.Show("No se pudo abrir el enlace:\n"+ex.Message,"Enlace",MessageBoxButtons.OK,MessageBoxIcon.Error);}}
     static void CreateGodMode(){try{string desktop=Environment.GetFolderPath(Environment.SpecialFolder.DesktopDirectory);string path=Path.Combine(desktop,"Modo Dios.{ED7BA470-8E54-465E-825C-99712043E01C}");if(!Directory.Exists(path))Directory.CreateDirectory(path);Process.Start(new ProcessStartInfo("explorer.exe","\""+path+"\""){UseShellExecute=true});MessageBox.Show("La carpeta Modo Dios está disponible en el Escritorio. El mismo identificador funciona en Windows 10 y 11.","Modo Dios",MessageBoxButtons.OK,MessageBoxIcon.Information);}catch(Exception ex){MessageBox.Show("No se pudo crear la carpeta:\n"+ex.Message,"Modo Dios",MessageBoxButtons.OK,MessageBoxIcon.Error);}}
+    const string DesktopIconsNewStart=@"Software\Microsoft\Windows\CurrentVersion\Explorer\HideDesktopIcons\NewStartPanel";
+    const string DesktopIconsClassic=@"Software\Microsoft\Windows\CurrentVersion\Explorer\HideDesktopIcons\ClassicStartMenu";
+    const string DesktopComputer="{20D04FE0-3AEA-1069-A2D8-08002B30309D}";
+    const string DesktopUserFiles="{59031a47-3f72-44a7-89c5-5595fe6b30ee}";
+    const string DesktopNetwork="{F02C1A0D-BE21-4350-88B0-7367FC96EF3C}";
+    const string DesktopRecycleBin="{645FF040-5081-101B-9F08-00AA002F954E}";
+    const string DesktopControlPanel="{5399E694-6CE5-4D6C-8FCE-1D8870FDCBA0}";
+    static bool DesktopIconVisible(string id,bool defaultVisible){try{using(var key=Registry.CurrentUser.OpenSubKey(DesktopIconsNewStart)){object value=key==null?null:key.GetValue(id);return value==null?defaultVisible:Convert.ToInt32(value)==0;}}catch{return defaultVisible;}}
+    static void LoadDesktopIcons(CheckBox computer,CheckBox userFiles,CheckBox network,CheckBox recycleBin,CheckBox controlPanel){computer.Checked=DesktopIconVisible(DesktopComputer,false);userFiles.Checked=DesktopIconVisible(DesktopUserFiles,false);network.Checked=DesktopIconVisible(DesktopNetwork,false);recycleBin.Checked=DesktopIconVisible(DesktopRecycleBin,true);controlPanel.Checked=DesktopIconVisible(DesktopControlPanel,false);}
+    static void WriteDesktopIcon(RegistryKey key,string id,bool visible){key.SetValue(id,visible?0:1,RegistryValueKind.DWord);}
+    static void ApplyDesktopIcons(CheckBox computer,CheckBox userFiles,CheckBox network,CheckBox recycleBin,CheckBox controlPanel){try{foreach(string path in new[]{DesktopIconsNewStart,DesktopIconsClassic})using(var key=Registry.CurrentUser.CreateSubKey(path)){WriteDesktopIcon(key,DesktopComputer,computer.Checked);WriteDesktopIcon(key,DesktopUserFiles,userFiles.Checked);WriteDesktopIcon(key,DesktopNetwork,network.Checked);WriteDesktopIcon(key,DesktopRecycleBin,recycleBin.Checked);WriteDesktopIcon(key,DesktopControlPanel,controlPanel.Checked);}NotifyDesktop();MessageBox.Show("Windows actualizó los iconos del escritorio seleccionados.","Iconos del escritorio",MessageBoxButtons.OK,MessageBoxIcon.Information);}catch(Exception ex){MessageBox.Show("No se pudieron actualizar los iconos del escritorio:\n"+ex.Message,"Iconos del escritorio",MessageBoxButtons.OK,MessageBoxIcon.Error);}}
+    static void NotifyDesktop(){SHChangeNotify(0x08000000,0,IntPtr.Zero,IntPtr.Zero);}
+    [DllImport("shell32.dll")] static extern void SHChangeNotify(uint eventId,uint flags,IntPtr item1,IntPtr item2);
     static void CloseOneDrive(){if(MessageBox.Show("OneDrive se cerrará y su icono desaparecerá del área de notificaciones. No se eliminarán archivos. ¿Continuar?","Cerrar OneDrive",MessageBoxButtons.YesNo,MessageBoxIcon.Question)!=DialogResult.Yes)return;try{string exe=Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),@"Microsoft\OneDrive\OneDrive.exe");if(!File.Exists(exe))throw new FileNotFoundException("No se encontró OneDrive para este usuario.");var p=Process.Start(new ProcessStartInfo(exe,"/shutdown"){UseShellExecute=true});MessageBox.Show("Se solicitó a OneDrive que se cierre. Para impedir que vuelva al iniciar Windows, usa el botón 'Abrir aplicaciones de inicio'.","OneDrive",MessageBoxButtons.OK,MessageBoxIcon.Information);}catch(Exception ex){MessageBox.Show("No se pudo cerrar OneDrive:\n"+ex.Message,"OneDrive",MessageBoxButtons.OK,MessageBoxIcon.Error);}}
     static int RunElevatedRegistry(string arguments){var p=Process.Start(new ProcessStartInfo("reg.exe",arguments){UseShellExecute=true,Verb="runas",WindowStyle=ProcessWindowStyle.Hidden});if(p==null)throw new InvalidOperationException("Windows no pudo iniciar la operación administrativa.");p.WaitForExit();return p.ExitCode;}
     static string OneDriveExe(){string[] paths={Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),@"Microsoft\OneDrive\OneDrive.exe"),Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles),@"Microsoft OneDrive\OneDrive.exe"),Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86),@"Microsoft OneDrive\OneDrive.exe")};return paths.FirstOrDefault(File.Exists);}
