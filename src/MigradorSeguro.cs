@@ -33,8 +33,8 @@ namespace MigradorSeguro {
     readonly Button apply = new Button(); readonly DiskPanel disk = new DiskPanel();
 
     public MainForm() {
-      Text = "Migrador seguro de carpetas de Windows"; Width = 1080; Height = 760;
-      MinimumSize = new Size(920, 650); BackColor = Color.FromArgb(244,246,248);
+      Text = "Migrador seguro de carpetas de Windows"; Width = 1080; Height = 780;
+      MinimumSize = new Size(920, 680); BackColor = Color.FromArgb(244,246,248);
       Font = new Font("Segoe UI", 9F); BuildFolders(); BuildUi();
       Shown += async (s,e) => await RefreshData();
     }
@@ -75,13 +75,13 @@ namespace MigradorSeguro {
       }
       left.Controls.Add(Header("3. Vista previa origen → destino",16,358));
       preview.SetBounds(18,392,612,172); preview.Multiline=true; preview.ReadOnly=true; preview.ScrollBars=ScrollBars.Both; preview.WordWrap=false; preview.BackColor=Color.FromArgb(247,248,250); preview.Font=new Font("Consolas",8.5F); preview.Anchor=AnchorStyles.Top|AnchorStyles.Bottom|AnchorStyles.Left|AnchorStyles.Right; left.Controls.Add(preview);
-      right.Controls.Add(Header("Capacidad del disco",16,14)); disk.SetBounds(50,48,250,220); right.Controls.Add(disk);
-      capacity.SetBounds(20,270,310,48); capacity.TextAlign=ContentAlignment.TopCenter; right.Controls.Add(capacity);
-      required.SetBounds(22,325,306,70); required.Font=new Font("Segoe UI",10,FontStyle.Bold); right.Controls.Add(required);
-      var protection=new Label{Text="Protecciones activas",Font=new Font("Segoe UI",10,FontStyle.Bold),Location=new Point(22,405),AutoSize=true}; right.Controls.Add(protection);
-      var ptext=new Label{Text="• Nunca sobrescribe archivos\n• Nunca borra los originales\n• Verifica antes de cambiar Windows\n• Bloquea rutas críticas y falta de espacio\n• Crea un respaldo restaurable",Location=new Point(22,432),Size=new Size(306,88)}; right.Controls.Add(ptext);
-      apply.Text="Revisar y aplicar migración"; apply.SetBounds(22,526,306,32); apply.Anchor=AnchorStyles.Bottom|AnchorStyles.Left|AnchorStyles.Right; apply.Click+=async(s,e)=>await ApplyMigration(); right.Controls.Add(apply);
-      var restore=new Button{Text="Restaurar desde respaldo…"}; restore.SetBounds(22,562,306,32); restore.Anchor=AnchorStyles.Bottom|AnchorStyles.Left|AnchorStyles.Right; restore.Click+=(s,e)=>Restore(); right.Controls.Add(restore);
+      right.Controls.Add(Header("Capacidad del disco",16,12)); disk.SetBounds(50,37,250,205); right.Controls.Add(disk);
+      capacity.SetBounds(20,240,310,45); capacity.TextAlign=ContentAlignment.TopCenter; right.Controls.Add(capacity);
+      required.SetBounds(22,290,306,66); required.Font=new Font("Segoe UI",10,FontStyle.Bold); right.Controls.Add(required);
+      var protection=new Label{Text="Protecciones activas",Font=new Font("Segoe UI",10,FontStyle.Bold),Location=new Point(22,365),AutoSize=true}; right.Controls.Add(protection);
+      var ptext=new Label{Text="• Nunca sobrescribe archivos\n• Nunca borra los originales\n• Verifica antes de cambiar Windows\n• Bloquea rutas críticas y falta de espacio\n• Crea un respaldo restaurable",Location=new Point(22,391),Size=new Size(306,82)}; right.Controls.Add(ptext);
+      apply.Text="Revisar y aplicar migración"; apply.SetBounds(22,492,306,32); apply.Anchor=AnchorStyles.Bottom|AnchorStyles.Left|AnchorStyles.Right; apply.Click+=async(s,e)=>await ApplyMigration(); right.Controls.Add(apply);
+      var restore=new Button{Text="Restaurar desde respaldo…"}; restore.SetBounds(22,532,306,32); restore.Anchor=AnchorStyles.Bottom|AnchorStyles.Left|AnchorStyles.Right; restore.Click+=(s,e)=>Restore(); right.Controls.Add(restore);
       status.Text="Analizando carpetas…"; status.SetBounds(22,682,1018,25); status.Anchor=AnchorStyles.Bottom|AnchorStyles.Left|AnchorStyles.Right; Controls.Add(status);
     }
     Label Header(string text,int x,int y) { return new Label{Text=text,Font=new Font("Segoe UI",11,FontStyle.Bold),Location=new Point(x,y),AutoSize=true}; }
