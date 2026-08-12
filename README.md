@@ -21,7 +21,8 @@ Aplicación gráfica para trasladar Escritorio, Documentos, Descargas, Imágenes
 - Al finalizar muestra un resumen guardable con acciones, archivos copiados, idénticos, conflictos, volumen y tiempo total.
 - La pantalla **Acerca de** informa versión, fecha, tecnología, autoría y procedencia; la animación arcade permanece como huevo de pascua.
 - **Acerca de** utiliza el icono PNG de alta resolución y reserva un bloque completo para la autoría y ubicación.
-- Incluye un panel de herramientas para Winver, MSInfo32, Terminal, SystemInfo, Modo Dios, configuración reversible de avisos UAC y enlaces oficiales.
+- Incluye un panel ordenado de herramientas para Winver, MSInfo32, DxDiag, Terminal, SystemInfo, Modo Dios y configuración reversible de avisos UAC.
+- Integra accesos oficiales a VLC, Codec Guide, WinRAR, USB Image Tool y Adobe Reader, junto a una fotografía con tratamiento monocromático.
 - Reinicia el Explorador de Windows después de aplicar o restaurar cambios.
 
 ## Seguridad
