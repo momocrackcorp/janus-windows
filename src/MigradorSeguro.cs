@@ -17,8 +17,8 @@ using Microsoft.Win32;
 [assembly: AssemblyCompany("Omar Aguila")]
 [assembly: AssemblyProduct("Migrador Seguro")]
 [assembly: AssemblyCopyright("Copyright © Omar Aguila MMXXVI")]
-[assembly: AssemblyVersion("1.0.6.0")]
-[assembly: AssemblyFileVersion("1.0.6.0")]
+[assembly: AssemblyVersion("1.0.7.0")]
+[assembly: AssemblyFileVersion("1.0.7.0")]
 
 namespace MigradorSeguro {
   static class Program {
@@ -75,8 +75,9 @@ namespace MigradorSeguro {
       var right=new Panel{BackColor=Color.White,Location=new Point(690,84),Size=new Size(350,585),Anchor=AnchorStyles.Top|AnchorStyles.Bottom|AnchorStyles.Right};
       Controls.Add(left); Controls.Add(right);
       left.Controls.Add(Header("1. Destino",16,14));
-      destination.SetBounds(18,48,500,27); destination.Anchor=AnchorStyles.Top|AnchorStyles.Left|AnchorStyles.Right; destination.TextChanged+=(s,e)=>UpdatePreview(); left.Controls.Add(destination);
-      var browse=new Button{Text="Examinar…"}; browse.SetBounds(528,47,102,29); browse.Anchor=AnchorStyles.Top|AnchorStyles.Right; browse.Click+=(s,e)=>ChooseDestination(); left.Controls.Add(browse);
+      destination.SetBounds(18,48,372,27); destination.Anchor=AnchorStyles.Top|AnchorStyles.Left|AnchorStyles.Right; destination.TextChanged+=(s,e)=>UpdatePreview(); left.Controls.Add(destination);
+      var create=new Button{Text="Crear carpeta…"}; create.SetBounds(398,47,112,29); create.Anchor=AnchorStyles.Top|AnchorStyles.Right; create.Click+=(s,e)=>CreateContainer(); left.Controls.Add(create);
+      var browse=new Button{Text="Examinar…"}; browse.SetBounds(518,47,112,29); browse.Anchor=AnchorStyles.Top|AnchorStyles.Right; browse.Click+=(s,e)=>ChooseDestination(); left.Controls.Add(browse);
       drives.SetBounds(18,84,612,28); drives.DropDownStyle=ComboBoxStyle.DropDownList; drives.Anchor=AnchorStyles.Top|AnchorStyles.Left|AnchorStyles.Right; drives.SelectedIndexChanged+=(s,e)=>UpdateDrive(); left.Controls.Add(drives);
       left.Controls.Add(Header("2. Carpetas",16,124));
       int y=158;
@@ -114,6 +115,7 @@ namespace MigradorSeguro {
       capacity.Text=String.Format("Usado: {0} ({1:P1})\nLibre: {2}",FormatBytes(d.TotalSize-d.AvailableFreeSpace),(double)(d.TotalSize-d.AvailableFreeSpace)/d.TotalSize,FormatBytes(d.AvailableFreeSpace)); UpdatePreview();
     }
     void ChooseDestination() { using(var dlg=new FolderBrowserDialog{Description="Selecciona una carpeta base (no la raíz de la unidad)"}) if(dlg.ShowDialog()==DialogResult.OK) destination.Text=dlg.SelectedPath; }
+    void CreateContainer(){using(var pick=new FolderBrowserDialog{Description="Selecciona la unidad o carpeta donde crear la carpeta contenedora"}){if(pick.ShowDialog()!=DialogResult.OK)return;using(var prompt=new NamePrompt()){if(prompt.ShowDialog(this)!=DialogResult.OK)return;try{string name=prompt.FolderName.Trim();if(String.IsNullOrWhiteSpace(name)||name.IndexOfAny(Path.GetInvalidFileNameChars())>=0||name=="."||name=="..")throw new InvalidOperationException("El nombre de la carpeta no es válido.");string path=Path.Combine(pick.SelectedPath,name);ValidateBase(path,folders.Select(f=>f.Source));if(Directory.Exists(path)){if(MessageBox.Show("La carpeta ya existe. ¿Deseas utilizarla como destino?","Carpeta existente",MessageBoxButtons.YesNo,MessageBoxIcon.Question)!=DialogResult.Yes)return;}else Directory.CreateDirectory(path);destination.Text=path;status.Text="Carpeta contenedora lista: "+path;}catch(Exception ex){MessageBox.Show(ex.Message,"No se pudo crear la carpeta",MessageBoxButtons.OK,MessageBoxIcon.Error);}}}}
     void UpdatePreview() {
       long total=folders.Where(f=>f.Check.Checked).Sum(f=>f.Size); var lines=new List<string>();
       foreach(var f in folders.Where(x=>x.Check.Checked)) lines.Add(f.Source+Environment.NewLine+"  → "+(String.IsNullOrWhiteSpace(destination.Text)?"(elige destino)":Path.Combine(destination.Text,f.DefaultName)));
@@ -133,7 +135,7 @@ namespace MigradorSeguro {
         var changed=new List<FolderItem>();
         try { foreach(var f in selected){SetKnownFolder(f,Path.Combine(root,f.DefaultName));changed.Add(f);} NotifyShell(); }
         catch { RestoreFile(backup,changed.Select(x=>x.Label)); throw; }
-        status.Text="Migración completada correctamente.";
+        ApplyDestinationDriveIcon(root); status.Text="Migración completada correctamente. Se aplicó el icono celeste a la unidad destino.";
         if(MessageBox.Show("Windows ya apunta al nuevo destino.\n\nLos originales siguen intactos. ¿Reiniciar el Explorador ahora?","Migración completada",MessageBoxButtons.YesNo,MessageBoxIcon.Information)==DialogResult.Yes) RestartExplorer();
       } catch(Exception ex) { MessageBox.Show(ex.Message+"\n\nNo se borraron archivos.","Operación detenida",MessageBoxButtons.OK,MessageBoxIcon.Error); status.Text="La operación fue detenida de forma segura."; }
       finally { UpdatePreview(); }
@@ -169,11 +171,14 @@ namespace MigradorSeguro {
     void Restore() { using(var d=new OpenFileDialog{Filter="Respaldo JSON (*.json)|*.json",Title="Selecciona el respaldo"})if(d.ShowDialog()==DialogResult.OK&&MessageBox.Show("Se restaurarán las rutas. No se moverán ni borrarán archivos. ¿Continuar?","Restaurar",MessageBoxButtons.YesNo)==DialogResult.Yes){try{RestoreFile(d.FileName,null);NotifyShell();if(MessageBox.Show("Rutas restauradas. ¿Reiniciar el Explorador?","Restaurado",MessageBoxButtons.YesNo)==DialogResult.Yes)RestartExplorer();}catch(Exception ex){MessageBox.Show(ex.Message,"No se pudo restaurar",MessageBoxButtons.OK,MessageBoxIcon.Error);}} }
     void RestoreFile(string path,IEnumerable<string> only) { var obj=new JavaScriptSerializer().Deserialize<Dictionary<string,object>>(File.ReadAllText(path));var vals=(Dictionary<string,object>)obj["folders"];var set=only==null?null:new HashSet<string>(only);foreach(var f in folders)if((set==null||set.Contains(f.Label))&&vals.ContainsKey(f.Label))SetKnownFolder(f,Convert.ToString(vals[f.Label])); }
     static void NotifyShell(){SHChangeNotify(0x08000000,0x0000,IntPtr.Zero,IntPtr.Zero);}
+    static void ApplyDestinationDriveIcon(string destinationPath){try{string drive=Path.GetPathRoot(destinationPath).Substring(0,1).ToUpperInvariant();string appDir=Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),"MigradorSeguro");Directory.CreateDirectory(appDir);string iconPath=Path.Combine(appDir,"documentos-celeste.ico");using(Stream input=Assembly.GetExecutingAssembly().GetManifestResourceStream("MigradorSeguro.DocumentosCeleste.ico"))using(var output=File.Create(iconPath)){if(input==null)throw new IOException("No se encontró el icono integrado.");input.CopyTo(output);}using(var key=Registry.CurrentUser.CreateSubKey(@"Software\Classes\Applications\Explorer.exe\Drives\"+drive+@"\DefaultIcon"))key.SetValue("",iconPath+",0",RegistryValueKind.String);using(var legacy=Registry.CurrentUser.CreateSubKey(@"Software\Microsoft\Windows\CurrentVersion\Explorer\DriveIcons\"+drive+@"\DefaultIcon"))legacy.SetValue("",iconPath+",0",RegistryValueKind.String);NotifyShell();}catch(Exception ex){MessageBox.Show("La migración terminó, pero Windows no permitió cambiar el icono de la unidad:\n"+ex.Message,"Aviso de icono",MessageBoxButtons.OK,MessageBoxIcon.Information);}}
     [DllImport("shell32.dll",CharSet=CharSet.Unicode)] static extern int SHSetKnownFolderPath(ref Guid rfid,uint flags,IntPtr token,string path);
     [DllImport("shell32.dll")] static extern void SHChangeNotify(uint eventId,uint flags,IntPtr item1,IntPtr item2);
     static void RestartExplorer() { try{foreach(var p in Process.GetProcessesByName("explorer"))p.Kill();Process.Start("explorer.exe");}catch{} }
     static string FormatBytes(long n) { string[] u={"B","KB","MB","GB","TB"};double v=Math.Max(0,n);int i=0;while(v>=1024&&i<u.Length-1){v/=1024;i++;}return i<2?String.Format("{0:0} {1}",v,u[i]):String.Format("{0:0.0} {1}",v,u[i]); }
   }
+
+  sealed class NamePrompt:Form {readonly TextBox name=new TextBox();public string FolderName{get{return name.Text;}}public NamePrompt(){Text="Crear carpeta contenedora";ClientSize=new Size(420,145);StartPosition=FormStartPosition.CenterParent;FormBorderStyle=FormBorderStyle.FixedDialog;MaximizeBox=false;MinimizeBox=false;var label=new Label{Text="Nombre de la nueva carpeta:",Location=new Point(18,18),AutoSize=true};name.SetBounds(18,45,384,27);name.Text=Environment.UserName;var ok=new Button{Text="Crear",DialogResult=DialogResult.OK,Location=new Point(226,92),Size=new Size(84,30)};var cancel=new Button{Text="Cancelar",DialogResult=DialogResult.Cancel,Location=new Point(318,92),Size=new Size(84,30)};Controls.Add(label);Controls.Add(name);Controls.Add(ok);Controls.Add(cancel);AcceptButton=ok;CancelButton=cancel;Shown+=(s,e)=>{name.Focus();name.SelectAll();};}}
 
   sealed class AboutForm:Form {
     readonly ArcadePanel animation=new ArcadePanel();
