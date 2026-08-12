@@ -11,6 +11,7 @@ Aplicación gráfica para trasladar Escritorio, Documentos, Descargas, Imágenes
 - Respalda y restaura las rutas `Known Folders` y `User Shell Folders`.
 - Registra cada destino mediante la API oficial `SHSetKnownFolderPath` para conservar la identidad y los iconos de Windows.
 - Incluye una reparación de rutas e iconos para migraciones ya realizadas.
+- Incluye icono propio de la aplicación y una pantalla animada **Acerca de**.
 - Reinicia el Explorador de Windows después de aplicar o restaurar cambios.
 
 ## Seguridad
