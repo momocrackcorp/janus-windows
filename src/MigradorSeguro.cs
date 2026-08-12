@@ -18,8 +18,8 @@ using Microsoft.Win32;
 [assembly: AssemblyCompany("Omar Aguila")]
 [assembly: AssemblyProduct("Janus")]
 [assembly: AssemblyCopyright("Copyright © Omar Aguila MMXXVI")]
-[assembly: AssemblyVersion("2.0.3.0")]
-[assembly: AssemblyFileVersion("2.0.3.0")]
+[assembly: AssemblyVersion("2.0.4.0")]
+[assembly: AssemblyFileVersion("2.0.4.0")]
 
 namespace MigradorSeguro {
   static class Program {
@@ -234,18 +234,18 @@ namespace MigradorSeguro {
       var oneDriveNote=new Label{Text="Desactiva la sincronización mediante la directiva de Windows, cierra OneDrive y evita su inicio. Requiere administrador.",Location=new Point(18,25),Size=new Size(372,40),ForeColor=Color.DimGray};oneDriveGroup.Controls.Add(oneDriveNote);
       var disableOneDrive=new Button{Text="Desactivar OneDrive",Location=new Point(18,75),Size=new Size(178,28)};disableOneDrive.Click+=(s,e)=>DisableOneDriveStartup();oneDriveGroup.Controls.Add(disableOneDrive);
       var restoreStartup=new Button{Text="Restaurar OneDrive",Location=new Point(212,75),Size=new Size(178,28)};restoreStartup.Click+=(s,e)=>RestoreOneDriveStartup();oneDriveGroup.Controls.Add(restoreStartup);
-      var timeGroup=new GroupBox{Text="Fecha, hora y zona horaria",Location=new Point(24,635),Size=new Size(408,94)};Controls.Add(timeGroup);
-      var timeNote=new Label{Text="Activa la detección automática o abre el panel oficial para ajustar el reloj.",Location=new Point(18,23),Size=new Size(372,20),ForeColor=Color.DimGray};timeGroup.Controls.Add(timeNote);
-      var automaticZone=new Button{Text="Zona horaria automática",Location=new Point(18,52),Size=new Size(178,28)};automaticZone.Click+=(s,e)=>EnableAutomaticTimeZone();timeGroup.Controls.Add(automaticZone);
-      var adjustClock=new Button{Text="Ajustar fecha y hora",Location=new Point(212,52),Size=new Size(178,28)};adjustClock.Click+=(s,e)=>OpenDateTimeSettings();timeGroup.Controls.Add(adjustClock);
-      var links=new GroupBox{Text="Descargas y sitios oficiales",Location=new Point(452,357),Size=new Size(424,150)};Controls.Add(links);
+      var timeGroup=new GroupBox{Text="Fecha, hora y zona horaria",Location=new Point(452,357),Size=new Size(424,94)};Controls.Add(timeGroup);
+      var timeNote=new Label{Text="Activa la detección automática o abre el panel oficial para ajustar el reloj.",Location=new Point(18,23),Size=new Size(388,20),ForeColor=Color.DimGray};timeGroup.Controls.Add(timeNote);
+      var automaticZone=new Button{Text="Zona horaria automática",Location=new Point(18,52),Size=new Size(185,28)};automaticZone.Click+=(s,e)=>EnableAutomaticTimeZone();timeGroup.Controls.Add(automaticZone);
+      var adjustClock=new Button{Text="Ajustar fecha y hora",Location=new Point(217,52),Size=new Size(185,28)};adjustClock.Click+=(s,e)=>OpenDateTimeSettings();timeGroup.Controls.Add(adjustClock);
+      var links=new GroupBox{Text="Descargas y sitios oficiales",Location=new Point(452,459),Size=new Size(424,150)};Controls.Add(links);
       AddLinkButton(links,"VLC media player",18,27,"https://www.videolan.org/",185);
       AddLinkButton(links,"Codec Guide",217,27,"https://www.codecguide.com/",185);
       AddLinkButton(links,"WinRAR en español",18,64,"https://www.win-rar.com/predownload.html?&L=6",185);
       AddLinkButton(links,"USB Image Tool",217,64,"https://www.osforensics.com/tools/write-usb-images.html",185);
       AddLinkButton(links,"Adobe Acrobat Reader",18,101,"https://get.adobe.com/es/reader/",185);
       AddLinkButton(links,"Microsoft PC Manager",217,101,"https://pcmanager.microsoft.com/en-us",185);
-      var browsers=new GroupBox{Text="Navegadores — descargas oficiales",Location=new Point(452,515),Size=new Size(424,110)};Controls.Add(browsers);
+      var browsers=new GroupBox{Text="Navegadores — descargas oficiales",Location=new Point(452,617),Size=new Size(424,110)};Controls.Add(browsers);
       AddLinkButton(browsers,"Google Chrome",18,27,"https://www.google.com/chrome/download-chrome",116);
       AddLinkButton(browsers,"Mozilla Firefox",145,27,"https://www.mozilla.org/firefox/new/",116);
       AddLinkButton(browsers,"Brave",272,27,"https://brave.com/download/",116);
