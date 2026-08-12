@@ -18,8 +18,8 @@ using Microsoft.Win32;
 [assembly: AssemblyCompany("Omar Aguila")]
 [assembly: AssemblyProduct("Janus")]
 [assembly: AssemblyCopyright("Copyright © Omar Aguila MMXXVI")]
-[assembly: AssemblyVersion("2.0.2.0")]
-[assembly: AssemblyFileVersion("2.0.2.0")]
+[assembly: AssemblyVersion("2.0.3.0")]
+[assembly: AssemblyFileVersion("2.0.3.0")]
 
 namespace MigradorSeguro {
   static class Program {
@@ -215,7 +215,7 @@ namespace MigradorSeguro {
 
   sealed class WindowsToolsForm:Form {
     readonly CheckBox neverNotify=new CheckBox();
-    public WindowsToolsForm(){Text="Herramientas de Windows";ClientSize=new Size(900,670);MinimumSize=MaximumSize=new Size(916,709);StartPosition=FormStartPosition.CenterParent;FormBorderStyle=FormBorderStyle.FixedDialog;MaximizeBox=false;MinimizeBox=false;BackColor=Color.White;try{Icon=Icon.ExtractAssociatedIcon(Application.ExecutablePath);}catch{}
+    public WindowsToolsForm(){Text="Herramientas de Windows";ClientSize=new Size(900,770);MinimumSize=MaximumSize=new Size(916,809);StartPosition=FormStartPosition.CenterParent;FormBorderStyle=FormBorderStyle.FixedDialog;MaximizeBox=false;MinimizeBox=false;BackColor=Color.White;try{Icon=Icon.ExtractAssociatedIcon(Application.ExecutablePath);}catch{}
       var title=new Label{Text="Herramientas de Windows",Font=new Font("Segoe UI",18,FontStyle.Bold),Location=new Point(24,17),AutoSize=true};Controls.Add(title);
       var subtitle=new Label{Text="Diagnóstico, administración y software recomendado.",Location=new Point(27,55),AutoSize=true,ForeColor=Color.DimGray};Controls.Add(subtitle);
       var systemGroup=new GroupBox{Text="Sistema y diagnóstico",Location=new Point(24,86),Size=new Size(408,258)};Controls.Add(systemGroup);
@@ -234,6 +234,10 @@ namespace MigradorSeguro {
       var oneDriveNote=new Label{Text="Desactiva la sincronización mediante la directiva de Windows, cierra OneDrive y evita su inicio. Requiere administrador.",Location=new Point(18,25),Size=new Size(372,40),ForeColor=Color.DimGray};oneDriveGroup.Controls.Add(oneDriveNote);
       var disableOneDrive=new Button{Text="Desactivar OneDrive",Location=new Point(18,75),Size=new Size(178,28)};disableOneDrive.Click+=(s,e)=>DisableOneDriveStartup();oneDriveGroup.Controls.Add(disableOneDrive);
       var restoreStartup=new Button{Text="Restaurar OneDrive",Location=new Point(212,75),Size=new Size(178,28)};restoreStartup.Click+=(s,e)=>RestoreOneDriveStartup();oneDriveGroup.Controls.Add(restoreStartup);
+      var timeGroup=new GroupBox{Text="Fecha, hora y zona horaria",Location=new Point(24,635),Size=new Size(408,94)};Controls.Add(timeGroup);
+      var timeNote=new Label{Text="Activa la detección automática o abre el panel oficial para ajustar el reloj.",Location=new Point(18,23),Size=new Size(372,20),ForeColor=Color.DimGray};timeGroup.Controls.Add(timeNote);
+      var automaticZone=new Button{Text="Zona horaria automática",Location=new Point(18,52),Size=new Size(178,28)};automaticZone.Click+=(s,e)=>EnableAutomaticTimeZone();timeGroup.Controls.Add(automaticZone);
+      var adjustClock=new Button{Text="Ajustar fecha y hora",Location=new Point(212,52),Size=new Size(178,28)};adjustClock.Click+=(s,e)=>OpenDateTimeSettings();timeGroup.Controls.Add(adjustClock);
       var links=new GroupBox{Text="Descargas y sitios oficiales",Location=new Point(452,357),Size=new Size(424,150)};Controls.Add(links);
       AddLinkButton(links,"VLC media player",18,27,"https://www.videolan.org/",185);
       AddLinkButton(links,"Codec Guide",217,27,"https://www.codecguide.com/",185);
@@ -247,12 +251,24 @@ namespace MigradorSeguro {
       AddLinkButton(browsers,"Brave",272,27,"https://brave.com/download/",116);
       AddLinkButton(browsers,"Opera",80,67,"https://www.opera.com/download",116);
       AddLinkButton(browsers,"Comet",208,67,"https://www.perplexity.ai/comet",116);
-      var close=new Button{Text="Cerrar",Location=new Point(756,633),Size=new Size(120,31),DialogResult=DialogResult.OK};Controls.Add(close);AcceptButton=close;
+      var close=new Button{Text="Cerrar",Location=new Point(756,733),Size=new Size(120,31),DialogResult=DialogResult.OK};Controls.Add(close);AcceptButton=close;
     }
     static void AddToolButton(Control parent,string text,int x,int y,EventHandler click,int width=158){var b=new Button{Text=text,Location=new Point(x,y),Size=new Size(width,29)};b.Click+=click;parent.Controls.Add(b);}
     static void AddLinkButton(Control parent,string text,int x,int y,string url,int width=388){var b=new Button{Text=text,Location=new Point(x,y),Size=new Size(width,28),Tag=url,TextAlign=ContentAlignment.MiddleCenter};b.Click+=(s,e)=>OpenUrl(Convert.ToString(((Button)s).Tag));parent.Controls.Add(b);}
     static void Launch(string file,string args=null){try{var p=new ProcessStartInfo(file,args??""){UseShellExecute=true};Process.Start(p);}catch(Exception ex){MessageBox.Show("No se pudo abrir la herramienta:\n"+ex.Message,"Herramientas",MessageBoxButtons.OK,MessageBoxIcon.Error);}}
     static void OpenTerminal(){try{Process.Start(new ProcessStartInfo("wt.exe"){UseShellExecute=true});}catch{Launch("powershell.exe");}}
+    static void OpenDateTimeSettings(){try{Process.Start(new ProcessStartInfo("ms-settings:dateandtime"){UseShellExecute=true});}catch{Launch("timedate.cpl");}}
+    static void EnableAutomaticTimeZone(){
+      if(MessageBox.Show("Windows activará el servicio de zona horaria automática. Se solicitará permiso de administrador y puede ser necesario habilitar la ubicación del dispositivo. ¿Continuar?","Zona horaria automática",MessageBoxButtons.YesNo,MessageBoxIcon.Question)!=DialogResult.Yes)return;
+      try{
+        var command="/c reg add \"HKLM\\SYSTEM\\CurrentControlSet\\Services\\tzautoupdate\" /v Start /t REG_DWORD /d 3 /f";
+        var p=Process.Start(new ProcessStartInfo("cmd.exe",command){UseShellExecute=true,Verb="runas",WindowStyle=ProcessWindowStyle.Hidden});
+        if(p==null)throw new InvalidOperationException("Windows no pudo iniciar la operación administrativa.");p.WaitForExit();
+        if(p.ExitCode!=0)throw new InvalidOperationException("Windows no pudo activar el servicio de zona horaria automática.");
+        MessageBox.Show("La zona horaria automática quedó activada. Se abrirá el panel de Fecha y hora para que puedas comprobar el interruptor y ajustar o sincronizar el reloj.","Zona horaria automática",MessageBoxButtons.OK,MessageBoxIcon.Information);
+        OpenDateTimeSettings();
+      }catch(Exception ex){MessageBox.Show("No se pudo activar la zona horaria automática:\n"+ex.Message+"\n\nSi cancelaste el aviso de administrador, no se realizó el cambio.","Fecha y hora",MessageBoxButtons.OK,MessageBoxIcon.Error);}
+    }
     static void OpenUrl(string url){try{Process.Start(new ProcessStartInfo(url){UseShellExecute=true});}catch(Exception ex){MessageBox.Show("No se pudo abrir el enlace:\n"+ex.Message,"Enlace",MessageBoxButtons.OK,MessageBoxIcon.Error);}}
     static void CreateGodMode(){try{string desktop=Environment.GetFolderPath(Environment.SpecialFolder.DesktopDirectory);string path=Path.Combine(desktop,"Modo Dios.{ED7BA470-8E54-465E-825C-99712043E01C}");if(!Directory.Exists(path))Directory.CreateDirectory(path);Process.Start(new ProcessStartInfo("explorer.exe","\""+path+"\""){UseShellExecute=true});MessageBox.Show("La carpeta Modo Dios está disponible en el Escritorio. El mismo identificador funciona en Windows 10 y 11.","Modo Dios",MessageBoxButtons.OK,MessageBoxIcon.Information);}catch(Exception ex){MessageBox.Show("No se pudo crear la carpeta:\n"+ex.Message,"Modo Dios",MessageBoxButtons.OK,MessageBoxIcon.Error);}}
     static void CloseOneDrive(){if(MessageBox.Show("OneDrive se cerrará y su icono desaparecerá del área de notificaciones. No se eliminarán archivos. ¿Continuar?","Cerrar OneDrive",MessageBoxButtons.YesNo,MessageBoxIcon.Question)!=DialogResult.Yes)return;try{string exe=Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),@"Microsoft\OneDrive\OneDrive.exe");if(!File.Exists(exe))throw new FileNotFoundException("No se encontró OneDrive para este usuario.");var p=Process.Start(new ProcessStartInfo(exe,"/shutdown"){UseShellExecute=true});MessageBox.Show("Se solicitó a OneDrive que se cierre. Para impedir que vuelva al iniciar Windows, usa el botón 'Abrir aplicaciones de inicio'.","OneDrive",MessageBoxButtons.OK,MessageBoxIcon.Information);}catch(Exception ex){MessageBox.Show("No se pudo cerrar OneDrive:\n"+ex.Message,"OneDrive",MessageBoxButtons.OK,MessageBoxIcon.Error);}}

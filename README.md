@@ -33,6 +33,7 @@ El cambio de nombre no altera el objetivo ni las protecciones del programa. Janu
 - La pantalla **Acerca de** informa versión, fecha, tecnología, autoría y procedencia; la animación arcade permanece como huevo de pascua.
 - **Acerca de** utiliza el icono PNG de alta resolución y reserva un bloque completo para la autoría y ubicación.
 - Incluye un panel ordenado de herramientas para Winver, MSInfo32, DxDiag, Terminal, SystemInfo, Modo Dios y configuración reversible de avisos UAC.
+- Desde **Herramientas de Windows** permite activar la zona horaria automática con autorización de administrador y abrir el panel oficial para ajustar o sincronizar el reloj.
 - Integra accesos oficiales a VLC, Codec Guide, WinRAR, USB Image Tool, Adobe Reader y Microsoft PC Manager, junto a una fotografía monocromática integrada sin marco.
 - Incluye una sección de descarga para Google Chrome, Mozilla Firefox, Brave, Opera y Comet.
 - El botón **Desactivar OneDrive** aplica, con autorización de administrador, la directiva oficial `DisableFileSyncNGSC` que bloquea su sincronización; además cierra el cliente, retira su icono de la bandeja y elimina su inicio automático con respaldo. **Restaurar OneDrive** retira la directiva y repone el inicio. No desinstala, desvincula ni borra archivos.
