@@ -4,6 +4,7 @@ using System.Diagnostics;
 using System.Drawing;
 using System.IO;
 using System.Linq;
+using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 using System.Web.Script.Serialization;
 using System.Windows.Forms;
@@ -19,7 +20,7 @@ namespace MigradorSeguro {
   }
 
   sealed class FolderItem {
-    public string Label, RegistryName, DefaultName, Source;
+    public string Label, RegistryName, DefaultName, Source, KnownFolderId;
     public long Size; public int Files; public CheckBox Check; public Label SizeLabel;
   }
 
@@ -40,18 +41,18 @@ namespace MigradorSeguro {
     }
 
     void BuildFolders() {
-      folders.Add(NewFolder("Escritorio", "Desktop", "Desktop"));
-      folders.Add(NewFolder("Documentos", "Personal", "Documents"));
-      folders.Add(NewFolder("Descargas", "{374DE290-123F-4565-9164-39C4925E467B}", "Downloads"));
-      folders.Add(NewFolder("Imágenes", "My Pictures", "Pictures"));
-      folders.Add(NewFolder("Música", "My Music", "Music"));
-      folders.Add(NewFolder("Vídeos", "My Video", "Videos"));
+      folders.Add(NewFolder("Escritorio", "Desktop", "Desktop", "B4BFCC3A-DB2C-424C-B029-7FE99A87C641"));
+      folders.Add(NewFolder("Documentos", "Personal", "Documents", "FDD39AD0-238F-46AF-ADB4-6C85480369C7"));
+      folders.Add(NewFolder("Descargas", "{374DE290-123F-4565-9164-39C4925E467B}", "Downloads", "374DE290-123F-4565-9164-39C4925E467B"));
+      folders.Add(NewFolder("Imágenes", "My Pictures", "Pictures", "33E28130-4E1E-4676-835A-98395C3BC3BB"));
+      folders.Add(NewFolder("Música", "My Music", "Music", "4BD8D571-6D19-48D3-BE97-422220080E43"));
+      folders.Add(NewFolder("Vídeos", "My Video", "Videos", "18989B1D-99B5-455B-841C-AB7C74E4DDFC"));
     }
-    FolderItem NewFolder(string label,string reg,string fallback) {
+    FolderItem NewFolder(string label,string reg,string fallback,string knownFolderId) {
       string value = null;
       using (var key=Registry.CurrentUser.OpenSubKey(UserShell)) value=key==null?null:key.GetValue(reg,null,RegistryValueOptions.DoNotExpandEnvironmentNames) as string;
       if (String.IsNullOrWhiteSpace(value)) value=Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile),fallback);
-      return new FolderItem {Label=label,RegistryName=reg,DefaultName=fallback,Source=Environment.ExpandEnvironmentVariables(value)};
+      return new FolderItem {Label=label,RegistryName=reg,DefaultName=fallback,KnownFolderId=knownFolderId,Source=Environment.ExpandEnvironmentVariables(value)};
     }
 
     void BuildUi() {
@@ -81,7 +82,7 @@ namespace MigradorSeguro {
       var protection=new Label{Text="Protecciones activas",Font=new Font("Segoe UI",10,FontStyle.Bold),Location=new Point(22,365),AutoSize=true}; right.Controls.Add(protection);
       var ptext=new Label{Text="• Nunca sobrescribe archivos\n• Nunca borra los originales\n• Verifica antes de cambiar Windows\n• Bloquea rutas críticas y falta de espacio\n• Crea un respaldo restaurable",Location=new Point(22,391),Size=new Size(306,82)}; right.Controls.Add(ptext);
       apply.Text="Revisar y aplicar migración"; apply.SetBounds(22,492,306,32); apply.Anchor=AnchorStyles.Bottom|AnchorStyles.Left|AnchorStyles.Right; apply.Click+=async(s,e)=>await ApplyMigration(); right.Controls.Add(apply);
-      var restore=new Button{Text="Restaurar desde respaldo…"}; restore.SetBounds(22,532,306,32); restore.Anchor=AnchorStyles.Bottom|AnchorStyles.Left|AnchorStyles.Right; restore.Click+=(s,e)=>Restore(); right.Controls.Add(restore);
+      var restore=new Button{Text="Restaurar / reparar rutas…"}; restore.SetBounds(22,532,306,32); restore.Anchor=AnchorStyles.Bottom|AnchorStyles.Left|AnchorStyles.Right; restore.Click+=(s,e)=>RestoreMenu(); right.Controls.Add(restore);
       status.Text="Analizando carpetas…"; status.SetBounds(22,682,1018,25); status.Anchor=AnchorStyles.Bottom|AnchorStyles.Left|AnchorStyles.Right; Controls.Add(status);
     }
     Label Header(string text,int x,int y) { return new Label{Text=text,Font=new Font("Segoe UI",11,FontStyle.Bold),Location=new Point(x,y),AutoSize=true}; }
@@ -117,7 +118,7 @@ namespace MigradorSeguro {
         apply.Enabled=false; string backup=BackupRegistry(); status.Text="Respaldo guardado en "+backup;
         await Task.Run(()=> { foreach(var f in selected) CopyVerified(f.Source,Path.Combine(root,f.DefaultName),m=>BeginInvoke((Action)(()=>status.Text=m))); });
         var changed=new List<FolderItem>();
-        try { foreach(var f in selected){SetRegistry(f.RegistryName,Path.Combine(root,f.DefaultName));changed.Add(f);} }
+        try { foreach(var f in selected){SetKnownFolder(f,Path.Combine(root,f.DefaultName));changed.Add(f);} NotifyShell(); }
         catch { RestoreFile(backup,changed.Select(x=>x.Label)); throw; }
         status.Text="Migración completada correctamente.";
         if(MessageBox.Show("Windows ya apunta al nuevo destino.\n\nLos originales siguen intactos. ¿Reiniciar el Explorador ahora?","Migración completada",MessageBoxButtons.YesNo,MessageBoxIcon.Information)==DialogResult.Yes) RestartExplorer();
@@ -135,11 +136,26 @@ namespace MigradorSeguro {
     static bool IsWithin(string child,string parent) { child=Path.GetFullPath(child).TrimEnd('\\')+"\\"; parent=Path.GetFullPath(parent).TrimEnd('\\')+"\\"; return child.StartsWith(parent,StringComparison.OrdinalIgnoreCase); }
     static void Stats(string path,out long total,out int count) { total=0;count=0;if(!Directory.Exists(path))return; foreach(var file in SafeFiles(path)){try{var i=new FileInfo(file);if((i.Attributes&FileAttributes.ReparsePoint)==0){total+=i.Length;count++;}}catch{}} }
     static IEnumerable<string> SafeFiles(string root) { var dirs=new Stack<string>();dirs.Push(root);while(dirs.Count>0){var d=dirs.Pop();string[] files=new string[0],subs=new string[0];try{files=Directory.GetFiles(d);subs=Directory.GetDirectories(d);}catch{}foreach(var f in files)yield return f;foreach(var s in subs)try{if((new DirectoryInfo(s).Attributes&FileAttributes.ReparsePoint)==0)dirs.Push(s);}catch{}} }
-    static void CopyVerified(string src,string dst,Action<string> progress) { Directory.CreateDirectory(dst);foreach(var file in SafeFiles(src)){string rel=file.Substring(src.TrimEnd('\\').Length).TrimStart('\\');string target=Path.Combine(dst,rel);Directory.CreateDirectory(Path.GetDirectoryName(target));if(File.Exists(target))throw new IOException("Conflicto inesperado: "+target);File.Copy(file,target,false);if(new FileInfo(file).Length!=new FileInfo(target).Length)throw new IOException("Falló la verificación de "+Path.GetFileName(file));progress("Copiando "+Path.GetFileName(src)+": "+rel);}long a,b;int ac,bc;Stats(src,out a,out ac);Stats(dst,out b,out bc);if(a!=b||ac!=bc)throw new IOException("La copia no coincide con el origen; no se cambió Windows."); }
+    static void CopyVerified(string src,string dst,Action<string> progress) {
+      Directory.CreateDirectory(dst);
+      foreach(var dir in SafeDirectories(src)) {
+        string rel=dir.Substring(src.TrimEnd('\\').Length).TrimStart('\\'); string target=String.IsNullOrEmpty(rel)?dst:Path.Combine(dst,rel);
+        Directory.CreateDirectory(target); try { File.SetAttributes(target,File.GetAttributes(dir)); Directory.SetLastWriteTimeUtc(target,Directory.GetLastWriteTimeUtc(dir)); } catch {}
+      }
+      foreach(var file in SafeFiles(src)){string rel=file.Substring(src.TrimEnd('\\').Length).TrimStart('\\');string target=Path.Combine(dst,rel);Directory.CreateDirectory(Path.GetDirectoryName(target));if(File.Exists(target))throw new IOException("Conflicto inesperado: "+target);File.Copy(file,target,false);if(new FileInfo(file).Length!=new FileInfo(target).Length)throw new IOException("Falló la verificación de "+Path.GetFileName(file));progress("Copiando "+Path.GetFileName(src)+": "+rel);}long a,b;int ac,bc;Stats(src,out a,out ac);Stats(dst,out b,out bc);if(a!=b||ac!=bc)throw new IOException("La copia no coincide con el origen; no se cambió Windows.");
+      try { File.SetAttributes(dst,File.GetAttributes(src)|FileAttributes.ReadOnly); } catch {}
+    }
+    static IEnumerable<string> SafeDirectories(string root) { yield return root;var dirs=new Stack<string>();dirs.Push(root);while(dirs.Count>0){var d=dirs.Pop();string[] subs=new string[0];try{subs=Directory.GetDirectories(d);}catch{}foreach(var s in subs){bool normal=false;try{normal=(new DirectoryInfo(s).Attributes&FileAttributes.ReparsePoint)==0;}catch{}if(normal){yield return s;dirs.Push(s);}}} }
     string BackupRegistry() { var data=new Dictionary<string,object>();data["version"]=1;data["created"]=DateTime.Now.ToString("s");var values=new Dictionary<string,string>();foreach(var f in folders)values[f.Label]=f.Source;data["folders"]=values;string dir=Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments),"Respaldos Migrador Seguro");Directory.CreateDirectory(dir);string path=Path.Combine(dir,"known-folders-"+DateTime.Now.ToString("yyyyMMdd-HHmmss")+".json");File.WriteAllText(path,new JavaScriptSerializer().Serialize(data));return path; }
     static void SetRegistry(string name,string value) { using(var k=Registry.CurrentUser.OpenSubKey(UserShell,true))k.SetValue(name,value,RegistryValueKind.ExpandString);using(var k=Registry.CurrentUser.CreateSubKey(Shell))k.SetValue(name,Environment.ExpandEnvironmentVariables(value),RegistryValueKind.String); }
-    void Restore() { using(var d=new OpenFileDialog{Filter="Respaldo JSON (*.json)|*.json",Title="Selecciona el respaldo"})if(d.ShowDialog()==DialogResult.OK&&MessageBox.Show("Se restaurarán las rutas. No se moverán ni borrarán archivos. ¿Continuar?","Restaurar",MessageBoxButtons.YesNo)==DialogResult.Yes){try{RestoreFile(d.FileName,null);if(MessageBox.Show("Rutas restauradas. ¿Reiniciar el Explorador?","Restaurado",MessageBoxButtons.YesNo)==DialogResult.Yes)RestartExplorer();}catch(Exception ex){MessageBox.Show(ex.Message,"No se pudo restaurar",MessageBoxButtons.OK,MessageBoxIcon.Error);}} }
-    void RestoreFile(string path,IEnumerable<string> only) { var obj=new JavaScriptSerializer().Deserialize<Dictionary<string,object>>(File.ReadAllText(path));var vals=(Dictionary<string,object>)obj["folders"];var set=only==null?null:new HashSet<string>(only);foreach(var f in folders)if((set==null||set.Contains(f.Label))&&vals.ContainsKey(f.Label))SetRegistry(f.RegistryName,Convert.ToString(vals[f.Label])); }
+    static void SetKnownFolder(FolderItem folder,string value) { Directory.CreateDirectory(value);var id=new Guid(folder.KnownFolderId);int hr=SHSetKnownFolderPath(ref id,0,IntPtr.Zero,value);if(hr!=0)Marshal.ThrowExceptionForHR(hr);SetRegistry(folder.RegistryName,value);try{File.SetAttributes(value,File.GetAttributes(value)|FileAttributes.ReadOnly);}catch{} }
+    void RestoreMenu() { var choice=MessageBox.Show("Sí: reparar ahora las rutas e iconos ya configurados.\n\nNo: restaurar rutas desde un respaldo JSON.\n\nCancelar: no hacer cambios.","Restaurar / reparar",MessageBoxButtons.YesNoCancel,MessageBoxIcon.Question);if(choice==DialogResult.Yes)RepairCurrent();else if(choice==DialogResult.No)Restore(); }
+    void RepairCurrent(){try{foreach(var f in folders){string current=f.Source;using(var k=Registry.CurrentUser.OpenSubKey(UserShell)){var v=k==null?null:k.GetValue(f.RegistryName,null,RegistryValueOptions.DoNotExpandEnvironmentNames) as string;if(!String.IsNullOrWhiteSpace(v))current=Environment.ExpandEnvironmentVariables(v);}if(Directory.Exists(current))SetKnownFolder(f,current);}NotifyShell();MessageBox.Show("Rutas, atributos e iconos registrados nuevamente. Reiniciaremos el Explorador.","Reparación completada",MessageBoxButtons.OK,MessageBoxIcon.Information);RestartExplorer();}catch(Exception ex){MessageBox.Show(ex.Message,"No se pudo reparar",MessageBoxButtons.OK,MessageBoxIcon.Error);} }
+    void Restore() { using(var d=new OpenFileDialog{Filter="Respaldo JSON (*.json)|*.json",Title="Selecciona el respaldo"})if(d.ShowDialog()==DialogResult.OK&&MessageBox.Show("Se restaurarán las rutas. No se moverán ni borrarán archivos. ¿Continuar?","Restaurar",MessageBoxButtons.YesNo)==DialogResult.Yes){try{RestoreFile(d.FileName,null);NotifyShell();if(MessageBox.Show("Rutas restauradas. ¿Reiniciar el Explorador?","Restaurado",MessageBoxButtons.YesNo)==DialogResult.Yes)RestartExplorer();}catch(Exception ex){MessageBox.Show(ex.Message,"No se pudo restaurar",MessageBoxButtons.OK,MessageBoxIcon.Error);}} }
+    void RestoreFile(string path,IEnumerable<string> only) { var obj=new JavaScriptSerializer().Deserialize<Dictionary<string,object>>(File.ReadAllText(path));var vals=(Dictionary<string,object>)obj["folders"];var set=only==null?null:new HashSet<string>(only);foreach(var f in folders)if((set==null||set.Contains(f.Label))&&vals.ContainsKey(f.Label))SetKnownFolder(f,Convert.ToString(vals[f.Label])); }
+    static void NotifyShell(){SHChangeNotify(0x08000000,0x0000,IntPtr.Zero,IntPtr.Zero);}
+    [DllImport("shell32.dll",CharSet=CharSet.Unicode)] static extern int SHSetKnownFolderPath(ref Guid rfid,uint flags,IntPtr token,string path);
+    [DllImport("shell32.dll")] static extern void SHChangeNotify(uint eventId,uint flags,IntPtr item1,IntPtr item2);
     static void RestartExplorer() { try{foreach(var p in Process.GetProcessesByName("explorer"))p.Kill();Process.Start("explorer.exe");}catch{} }
     static string FormatBytes(long n) { string[] u={"B","KB","MB","GB","TB"};double v=Math.Max(0,n);int i=0;while(v>=1024&&i<u.Length-1){v/=1024;i++;}return i<2?String.Format("{0:0} {1}",v,u[i]):String.Format("{0:0.0} {1}",v,u[i]); }
   }
