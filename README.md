@@ -24,7 +24,7 @@ Aplicación gráfica para trasladar Escritorio, Documentos, Descargas, Imágenes
 - Incluye un panel ordenado de herramientas para Winver, MSInfo32, DxDiag, Terminal, SystemInfo, Modo Dios y configuración reversible de avisos UAC.
 - Integra accesos oficiales a VLC, Codec Guide, WinRAR, USB Image Tool, Adobe Reader y Microsoft PC Manager, junto a una fotografía monocromática integrada sin marco.
 - Incluye una sección de descarga para Google Chrome, Mozilla Firefox, Brave, Opera y Comet.
-- Permite cerrar OneDrive mediante su comando oficial y abrir la pantalla de aplicaciones de inicio de Windows, sin desinstalar, desvincular ni borrar archivos.
+- Permite cerrar OneDrive mediante su comando oficial, quitar su entrada de inicio automático con respaldo y restaurarla posteriormente, sin desinstalar, desvincular ni borrar archivos.
 - La configuración de UAC se realiza únicamente desde el panel oficial de Windows; la aplicación no altera directamente sus políticas.
 - Reinicia el Explorador de Windows después de aplicar o restaurar cambios.
 
