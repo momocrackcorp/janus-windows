@@ -5,10 +5,20 @@ using System.Drawing;
 using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
+using System.Reflection;
+using System.Security.Cryptography;
 using System.Threading.Tasks;
 using System.Web.Script.Serialization;
 using System.Windows.Forms;
 using Microsoft.Win32;
+
+[assembly: AssemblyTitle("Migrador Seguro")]
+[assembly: AssemblyDescription("Migración segura de carpetas conocidas de Windows")]
+[assembly: AssemblyCompany("Omar Aguila")]
+[assembly: AssemblyProduct("Migrador Seguro")]
+[assembly: AssemblyCopyright("Copyright © Omar Aguila MMXXVI")]
+[assembly: AssemblyVersion("1.0.6.0")]
+[assembly: AssemblyFileVersion("1.0.6.0")]
 
 namespace MigradorSeguro {
   static class Program {
@@ -115,10 +125,9 @@ namespace MigradorSeguro {
     async Task ApplyMigration() {
       try {
         var selected=folders.Where(f=>f.Check.Checked).ToList(); string root=ValidateBase(destination.Text,selected.Select(f=>f.Source));
-        foreach(var f in selected) { string dst=Path.Combine(root,f.DefaultName); if(Directory.Exists(dst)&&Directory.EnumerateFileSystemEntries(dst).Any()) throw new InvalidOperationException(dst+" ya contiene archivos. No se sobrescribirá."); }
         long needed=selected.Sum(f=>f.Size)+100L*1024*1024; var drive=new DriveInfo(Path.GetPathRoot(root)); if(drive.AvailableFreeSpace<needed) throw new InvalidOperationException("Espacio insuficiente. Faltan "+FormatBytes(needed-drive.AvailableFreeSpace)+".");
         string summary=String.Join("\n\n",selected.Select(f=>"• "+f.Label+": "+FormatBytes(f.Size)+"\n  "+f.Source+"\n  → "+Path.Combine(root,f.DefaultName)));
-        if(MessageBox.Show("Se copiarán y verificarán estas carpetas:\n\n"+summary+"\n\nLos originales NO se borrarán. ¿Continuar?","Confirmación final",MessageBoxButtons.YesNo,MessageBoxIcon.Warning)!=DialogResult.Yes)return;
+        if(MessageBox.Show("Se copiarán y verificarán estas carpetas:\n\n"+summary+"\n\nSi el destino ya contiene datos, se fusionarán sin sobrescribir: los idénticos se omiten y los conflictos se guardan con otro nombre.\n\nLos originales NO se borrarán. ¿Continuar?","Confirmación final",MessageBoxButtons.YesNo,MessageBoxIcon.Warning)!=DialogResult.Yes)return;
         apply.Enabled=false; string backup=BackupRegistry(); status.Text="Respaldo guardado en "+backup;
         await Task.Run(()=> { foreach(var f in selected) CopyVerified(f.Source,Path.Combine(root,f.DefaultName),m=>BeginInvoke((Action)(()=>status.Text=m))); });
         var changed=new List<FolderItem>();
@@ -146,9 +155,11 @@ namespace MigradorSeguro {
         string rel=dir.Substring(src.TrimEnd('\\').Length).TrimStart('\\'); string target=String.IsNullOrEmpty(rel)?dst:Path.Combine(dst,rel);
         Directory.CreateDirectory(target); try { File.SetAttributes(target,File.GetAttributes(dir)); Directory.SetLastWriteTimeUtc(target,Directory.GetLastWriteTimeUtc(dir)); } catch {}
       }
-      foreach(var file in SafeFiles(src)){string rel=file.Substring(src.TrimEnd('\\').Length).TrimStart('\\');string target=Path.Combine(dst,rel);Directory.CreateDirectory(Path.GetDirectoryName(target));if(File.Exists(target))throw new IOException("Conflicto inesperado: "+target);File.Copy(file,target,false);if(new FileInfo(file).Length!=new FileInfo(target).Length)throw new IOException("Falló la verificación de "+Path.GetFileName(file));progress("Copiando "+Path.GetFileName(src)+": "+rel);}long a,b;int ac,bc;Stats(src,out a,out ac);Stats(dst,out b,out bc);if(a!=b||ac!=bc)throw new IOException("La copia no coincide con el origen; no se cambió Windows.");
+      foreach(var file in SafeFiles(src)){string rel=file.Substring(src.TrimEnd('\\').Length).TrimStart('\\');string target=Path.Combine(dst,rel);Directory.CreateDirectory(Path.GetDirectoryName(target));if(File.Exists(target)){if(FilesEqual(file,target)){progress("Ya existe idéntico, omitido: "+rel);continue;}target=ConflictName(target);progress("Conflicto conservado con otro nombre: "+Path.GetFileName(target));}File.Copy(file,target,false);if(!FilesEqual(file,target))throw new IOException("Falló la verificación de "+Path.GetFileName(file));progress("Copiando "+Path.GetFileName(src)+": "+rel);}
       try { File.SetAttributes(dst,File.GetAttributes(src)|FileAttributes.ReadOnly); } catch {}
     }
+    static bool FilesEqual(string a,string b){var fa=new FileInfo(a);var fb=new FileInfo(b);if(fa.Length!=fb.Length)return false;using(var sha=SHA256.Create())using(var sa=File.OpenRead(a))using(var sb=File.OpenRead(b)){return sha.ComputeHash(sa).SequenceEqual(sha.ComputeHash(sb));}}
+    static string ConflictName(string path){string dir=Path.GetDirectoryName(path),name=Path.GetFileNameWithoutExtension(path),ext=Path.GetExtension(path),stamp=DateTime.Now.ToString("yyyyMMdd-HHmmss");string candidate=Path.Combine(dir,name+" (migrado "+stamp+")"+ext);int n=2;while(File.Exists(candidate)){candidate=Path.Combine(dir,name+" (migrado "+stamp+"-"+n+")"+ext);n++;}return candidate;}
     static IEnumerable<string> SafeDirectories(string root) { yield return root;var dirs=new Stack<string>();dirs.Push(root);while(dirs.Count>0){var d=dirs.Pop();string[] subs=new string[0];try{subs=Directory.GetDirectories(d);}catch{}foreach(var s in subs){bool normal=false;try{normal=(new DirectoryInfo(s).Attributes&FileAttributes.ReparsePoint)==0;}catch{}if(normal){yield return s;dirs.Push(s);}}} }
     string BackupRegistry() { var data=new Dictionary<string,object>();data["version"]=1;data["created"]=DateTime.Now.ToString("s");var values=new Dictionary<string,string>();foreach(var f in folders)values[f.Label]=f.Source;data["folders"]=values;string dir=Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments),"Respaldos Migrador Seguro");Directory.CreateDirectory(dir);string path=Path.Combine(dir,"known-folders-"+DateTime.Now.ToString("yyyyMMdd-HHmmss")+".json");File.WriteAllText(path,new JavaScriptSerializer().Serialize(data));return path; }
     static void SetRegistry(string name,string value) { using(var k=Registry.CurrentUser.OpenSubKey(UserShell,true))k.SetValue(name,value,RegistryValueKind.ExpandString);using(var k=Registry.CurrentUser.CreateSubKey(Shell))k.SetValue(name,Environment.ExpandEnvironmentVariables(value),RegistryValueKind.String); }
