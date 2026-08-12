@@ -18,6 +18,8 @@ Aplicación gráfica para trasladar Escritorio, Documentos, Descargas, Imágenes
 - Muestra un gráfico de dona multicolor con la distribución de tamaños de las carpetas seleccionadas.
 - La leyenda del gráfico reserva espacio completo para nombres y porcentajes, incluso con escalado alto de Windows.
 - Muestra barra de progreso por bytes, porcentaje, tiempo transcurrido, tiempo restante estimado y archivos pendientes.
+- Al finalizar muestra un resumen guardable con acciones, archivos copiados, idénticos, conflictos, volumen y tiempo total.
+- La pantalla **Acerca de** informa versión, fecha, tecnología, autoría y procedencia; la animación arcade permanece como huevo de pascua.
 - Reinicia el Explorador de Windows después de aplicar o restaurar cambios.
 
 ## Seguridad
