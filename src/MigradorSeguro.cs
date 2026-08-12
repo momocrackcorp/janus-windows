@@ -81,8 +81,10 @@ namespace MigradorSeguro {
       required.SetBounds(22,290,306,66); required.Font=new Font("Segoe UI",10,FontStyle.Bold); right.Controls.Add(required);
       var protection=new Label{Text="Protecciones activas",Font=new Font("Segoe UI",10,FontStyle.Bold),Location=new Point(22,365),AutoSize=true}; right.Controls.Add(protection);
       var ptext=new Label{Text="• Nunca sobrescribe archivos\n• Nunca borra los originales\n• Verifica antes de cambiar Windows\n• Bloquea rutas críticas y falta de espacio\n• Crea un respaldo restaurable",Location=new Point(22,391),Size=new Size(306,82)}; right.Controls.Add(ptext);
-      apply.Text="Revisar y aplicar migración"; apply.SetBounds(22,492,306,32); apply.Anchor=AnchorStyles.Bottom|AnchorStyles.Left|AnchorStyles.Right; apply.Click+=async(s,e)=>await ApplyMigration(); right.Controls.Add(apply);
-      var restore=new Button{Text="Restaurar / reparar rutas…"}; restore.SetBounds(22,532,306,32); restore.Anchor=AnchorStyles.Bottom|AnchorStyles.Left|AnchorStyles.Right; restore.Click+=(s,e)=>RestoreMenu(); right.Controls.Add(restore);
+      var actions=new Panel{Dock=DockStyle.Bottom,Height=92,Padding=new Padding(22,8,22,12),BackColor=Color.White};
+      apply.Text="Revisar y aplicar migración"; apply.Dock=DockStyle.Top; apply.Height=32; apply.Click+=async(s,e)=>await ApplyMigration();
+      var restore=new Button{Text="Restaurar / reparar rutas…",Dock=DockStyle.Bottom,Height=32}; restore.Click+=(s,e)=>RestoreMenu();
+      actions.Controls.Add(apply); actions.Controls.Add(restore); right.Controls.Add(actions); actions.BringToFront();
       status.Text="Analizando carpetas…"; status.SetBounds(22,682,1018,25); status.Anchor=AnchorStyles.Bottom|AnchorStyles.Left|AnchorStyles.Right; Controls.Add(status);
     }
     Label Header(string text,int x,int y) { return new Label{Text=text,Font=new Font("Segoe UI",11,FontStyle.Bold),Location=new Point(x,y),AutoSize=true}; }
