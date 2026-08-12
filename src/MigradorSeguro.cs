@@ -18,8 +18,8 @@ using Microsoft.Win32;
 [assembly: AssemblyCompany("Omar Aguila")]
 [assembly: AssemblyProduct("Janus")]
 [assembly: AssemblyCopyright("Copyright © Omar Aguila MMXXVI")]
-[assembly: AssemblyVersion("2.0.9.0")]
-[assembly: AssemblyFileVersion("2.0.9.0")]
+[assembly: AssemblyVersion("2.1.0.0")]
+[assembly: AssemblyFileVersion("2.1.0.0")]
 
 namespace MigradorSeguro {
   static class Program {
@@ -241,7 +241,8 @@ namespace MigradorSeguro {
       var desktopControlPanel=new CheckBox{Text="Panel de control",Location=new Point(202,45),Size=new Size(185,21)};desktopGroup.Controls.Add(desktopControlPanel);
       var desktopNetwork=new CheckBox{Text="Red",Location=new Point(18,68),Size=new Size(90,21)};desktopGroup.Controls.Add(desktopNetwork);
       var startMenuLeft=new CheckBox{Text="Menú Inicio a la izquierda (Windows 11)",Location=new Point(110,68),Size=new Size(277,21)};desktopGroup.Controls.Add(startMenuLeft);
-      var applyDesktopIcons=new Button{Text="Aplicar cambios",Location=new Point(202,94),Size=new Size(185,27)};applyDesktopIcons.Click+=(s,e)=>ApplyDesktopSettings(desktopComputer,desktopUserFiles,desktopNetwork,desktopRecycleBin,desktopControlPanel,startMenuLeft);desktopGroup.Controls.Add(applyDesktopIcons);
+      var applyDesktopIcons=new Button{Text="Aplicar cambios",Location=new Point(110,94),Size=new Size(132,27)};applyDesktopIcons.Click+=(s,e)=>ApplyDesktopSettings(desktopComputer,desktopUserFiles,desktopNetwork,desktopRecycleBin,desktopControlPanel,startMenuLeft);desktopGroup.Controls.Add(applyDesktopIcons);
+      var iconTheme=new Button{Text="Tema JANUS...",Location=new Point(250,94),Size=new Size(137,27)};iconTheme.Click+=(s,e)=>{using(var form=new JanusIconThemeForm())form.ShowDialog(this);};desktopGroup.Controls.Add(iconTheme);
       LoadDesktopIcons(desktopComputer,desktopUserFiles,desktopNetwork,desktopRecycleBin,desktopControlPanel);
       LoadStartMenuAlignment(startMenuLeft);
       var timeGroup=new GroupBox{Text="Fecha, hora y zona horaria",Location=new Point(452,285),Size=new Size(424,94)};Controls.Add(timeGroup);
@@ -330,6 +331,47 @@ namespace MigradorSeguro {
         MessageBox.Show("La directiva fue retirada y OneDrive quedó restaurado.","OneDrive restaurado",MessageBoxButtons.OK,MessageBoxIcon.Information);
       }catch(Exception ex){MessageBox.Show("No se pudo restaurar OneDrive:\n"+ex.Message,"OneDrive",MessageBoxButtons.OK,MessageBoxIcon.Error);}
     }
+  }
+
+  sealed class IconKeyBackup { public bool Exists{get;set;} public Dictionary<string,string> Values{get;set;} }
+
+  sealed class JanusIconThemeForm:Form {
+    const string ComputerId="{20D04FE0-3AEA-1069-A2D8-08002B30309D}";
+    const string UserFilesId="{59031A47-3F72-44A7-89C5-5595FE6B30EE}";
+    const string NetworkId="{F02C1A0D-BE21-4350-88B0-7367FC96EF3C}";
+    const string RecycleId="{645FF040-5081-101B-9F08-00AA002F954E}";
+    readonly CheckBox computer=new CheckBox(),userFiles=new CheckBox(),network=new CheckBox(),recycleEmpty=new CheckBox(),recycleFull=new CheckBox();
+    static string KeyPath(string id){return @"Software\Classes\CLSID\"+id+@"\DefaultIcon";}
+    static string ThemeDirectory{get{return Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),"Janus","IconThemes","FluentSoft3D");}}
+    static string BackupDirectory{get{return Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),"Janus","Backups","Iconos");}}
+    static string OriginalBackup{get{return Path.Combine(BackupDirectory,"iconos-originales.json");}}
+
+    public JanusIconThemeForm(){Text="Tema de iconos JANUS";ClientSize=new Size(800,440);MinimumSize=MaximumSize=new Size(816,479);StartPosition=FormStartPosition.CenterParent;FormBorderStyle=FormBorderStyle.FixedDialog;MaximizeBox=false;MinimizeBox=false;BackColor=Color.White;try{Icon=Icon.ExtractAssociatedIcon(Application.ExecutablePath);}catch{}
+      Controls.Add(new Label{Text="Tema de iconos JANUS",Font=new Font("Segoe UI",18,FontStyle.Bold),Location=new Point(24,18),AutoSize=true});
+      Controls.Add(new Label{Text="Elige qué iconos aplicar. JANUS respalda la configuración de Windows antes de modificarla.",Location=new Point(27,58),Size=new Size(742,22),ForeColor=Color.DimGray});
+      var preview=new GroupBox{Text="Vista previa",Location=new Point(24,91),Size=new Size(752,239)};Controls.Add(preview);
+      AddChoice(preview,computer,"Este equipo","JanusIcons.Computer.png",10);
+      AddChoice(preview,userFiles,"Archivos del usuario","JanusIcons.UserFiles.png",158);
+      AddChoice(preview,network,"Red","JanusIcons.Network.png",306);
+      AddChoice(preview,recycleEmpty,"Papelera vacía","JanusIcons.RecycleEmpty.png",454);
+      AddChoice(preview,recycleFull,"Papelera llena","JanusIcons.RecycleFull.png",602);
+      var note=new Label{Text="Los archivos originales de Windows no se eliminan. Restaurar utiliza el respaldo previo al primer cambio.",Location=new Point(27,343),Size=new Size(742,22),ForeColor=Color.FromArgb(65,82,98)};Controls.Add(note);
+      var apply=new Button{Text="Aplicar tema",Location=new Point(354,382),Size=new Size(130,32)};apply.Click+=(s,e)=>ApplyTheme();Controls.Add(apply);
+      var restore=new Button{Text="Restaurar iconos originales",Location=new Point(494,382),Size=new Size(180,32)};restore.Click+=(s,e)=>RestoreOriginals();Controls.Add(restore);
+      var close=new Button{Text="Cerrar",Location=new Point(684,382),Size=new Size(92,32),DialogResult=DialogResult.Cancel};Controls.Add(close);CancelButton=close;
+    }
+    static void AddChoice(Control parent,CheckBox check,string label,string resource,int x){var box=new Panel{Location=new Point(x,25),Size=new Size(140,198),BackColor=Color.FromArgb(247,249,252),BorderStyle=BorderStyle.FixedSingle};var picture=new PictureBox{Location=new Point(10,10),Size=new Size(118,140),SizeMode=PictureBoxSizeMode.Zoom,BackColor=Color.Transparent};try{using(var stream=Assembly.GetExecutingAssembly().GetManifestResourceStream(resource))if(stream!=null)picture.Image=new Bitmap(stream);}catch{}check.Text=label;check.Checked=true;check.TextAlign=ContentAlignment.MiddleCenter;check.CheckAlign=ContentAlignment.MiddleCenter;check.Location=new Point(5,158);check.Size=new Size(130,32);box.Controls.Add(picture);box.Controls.Add(check);parent.Controls.Add(box);}
+    static Dictionary<string,IconKeyBackup> CaptureIconKeys(){var result=new Dictionary<string,IconKeyBackup>();foreach(string id in new[]{ComputerId,UserFilesId,NetworkId,RecycleId}){string path=KeyPath(id);var item=new IconKeyBackup{Exists=false,Values=new Dictionary<string,string>()};using(var key=Registry.CurrentUser.OpenSubKey(path)){if(key!=null){item.Exists=true;foreach(string name in key.GetValueNames())item.Values[name]=Convert.ToString(key.GetValue(name,null,RegistryValueOptions.DoNotExpandEnvironmentNames));}}result[path]=item;}return result;}
+    static void SaveBackup(string path,Dictionary<string,IconKeyBackup> state){Directory.CreateDirectory(Path.GetDirectoryName(path));File.WriteAllText(path,new JavaScriptSerializer().Serialize(state),System.Text.Encoding.UTF8);}
+    static Dictionary<string,IconKeyBackup> ReadBackup(string path){return new JavaScriptSerializer().Deserialize<Dictionary<string,IconKeyBackup>>(File.ReadAllText(path,System.Text.Encoding.UTF8));}
+    static void EnsureBackups(){Directory.CreateDirectory(BackupDirectory);var state=CaptureIconKeys();if(!File.Exists(OriginalBackup))SaveBackup(OriginalBackup,state);SaveBackup(Path.Combine(BackupDirectory,"antes-de-aplicar-"+DateTime.Now.ToString("yyyyMMdd-HHmmss")+".json"),state);}
+    static string ExtractIcon(string resource,string fileName){Directory.CreateDirectory(ThemeDirectory);string path=Path.Combine(ThemeDirectory,fileName);using(var input=Assembly.GetExecutingAssembly().GetManifestResourceStream(resource))using(var output=File.Create(path)){if(input==null)throw new IOException("No se encontró el icono integrado "+fileName+".");input.CopyTo(output);}return path+",0";}
+    static void SetDefaultIcon(string id,string value){using(var key=Registry.CurrentUser.CreateSubKey(KeyPath(id)))key.SetValue("",value,RegistryValueKind.String);}
+    void ApplyTheme(){if(!computer.Checked&&!userFiles.Checked&&!network.Checked&&!recycleEmpty.Checked&&!recycleFull.Checked){MessageBox.Show("Selecciona al menos un icono.","Tema JANUS",MessageBoxButtons.OK,MessageBoxIcon.Information);return;}if(MessageBox.Show("JANUS creará un respaldo y aplicará solamente los iconos seleccionados.\n\n¿Continuar?","Aplicar tema de iconos",MessageBoxButtons.YesNo,MessageBoxIcon.Question)!=DialogResult.Yes)return;try{EnsureBackups();string computerPath=ExtractIcon("JanusIcons.Computer.ico","este-equipo.ico"),userPath=ExtractIcon("JanusIcons.UserFiles.ico","archivos-usuario.ico"),networkPath=ExtractIcon("JanusIcons.Network.ico","red.ico"),emptyPath=ExtractIcon("JanusIcons.RecycleEmpty.ico","papelera-vacia.ico"),fullPath=ExtractIcon("JanusIcons.RecycleFull.ico","papelera-llena.ico");if(computer.Checked)SetDefaultIcon(ComputerId,computerPath);if(userFiles.Checked)SetDefaultIcon(UserFilesId,userPath);if(network.Checked)SetDefaultIcon(NetworkId,networkPath);using(var recycle=Registry.CurrentUser.CreateSubKey(KeyPath(RecycleId))){if(recycleEmpty.Checked){recycle.SetValue("empty",emptyPath,RegistryValueKind.String);recycle.SetValue("",emptyPath,RegistryValueKind.String);}if(recycleFull.Checked)recycle.SetValue("full",fullPath,RegistryValueKind.String);}RefreshShell();OfferExplorerRestart("El tema JANUS fue aplicado a los iconos seleccionados.");}catch(Exception ex){MessageBox.Show("No se pudo aplicar el tema:\n"+ex.Message,"Tema JANUS",MessageBoxButtons.OK,MessageBoxIcon.Error);}}
+    void RestoreOriginals(){if(!File.Exists(OriginalBackup)){MessageBox.Show("No existe un respaldo de iconos originales porque el tema JANUS todavía no ha sido aplicado.","Restaurar iconos",MessageBoxButtons.OK,MessageBoxIcon.Information);return;}if(MessageBox.Show("Se restaurará la configuración guardada antes de aplicar el tema JANUS.\n\n¿Continuar?","Restaurar iconos originales",MessageBoxButtons.YesNo,MessageBoxIcon.Question)!=DialogResult.Yes)return;try{var state=ReadBackup(OriginalBackup);foreach(var entry in state){if(!entry.Value.Exists){Registry.CurrentUser.DeleteSubKeyTree(entry.Key,false);continue;}using(var key=Registry.CurrentUser.CreateSubKey(entry.Key)){foreach(string name in key.GetValueNames())key.DeleteValue(name,false);foreach(var value in entry.Value.Values)key.SetValue(value.Key,value.Value,RegistryValueKind.String);}}File.Delete(OriginalBackup);RefreshShell();OfferExplorerRestart("Los iconos originales de Windows fueron restaurados.");}catch(Exception ex){MessageBox.Show("No se pudieron restaurar los iconos:\n"+ex.Message,"Restaurar iconos",MessageBoxButtons.OK,MessageBoxIcon.Error);}}
+    static void OfferExplorerRestart(string message){if(MessageBox.Show(message+"\n\nPara verlos inmediatamente es recomendable reiniciar el Explorador de Windows. ¿Hacerlo ahora?","Tema JANUS",MessageBoxButtons.YesNo,MessageBoxIcon.Information)==DialogResult.Yes)try{foreach(var process in Process.GetProcessesByName("explorer"))process.Kill();Process.Start("explorer.exe");}catch{}}
+    static void RefreshShell(){SHChangeNotify(0x08000000,0,IntPtr.Zero,IntPtr.Zero);}
+    [DllImport("shell32.dll")] static extern void SHChangeNotify(uint eventId,uint flags,IntPtr item1,IntPtr item2);
   }
 
   sealed class AboutForm:Form {

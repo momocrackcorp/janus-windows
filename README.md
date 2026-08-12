@@ -42,6 +42,8 @@ El cambio de nombre no altera el objetivo ni las protecciones del programa. Janu
 - La configuración de UAC se realiza únicamente desde el panel oficial de Windows; la aplicación no altera directamente sus políticas.
 - Reinicia el Explorador de Windows después de aplicar o restaurar cambios.
 - Usa un icono de Janus claro y multirresolución para conservar legibilidad en el Explorador, accesos directos y ventanas de Windows.
+- Incluye el **Tema de iconos JANUS**, con vista previa y selección individual para Este equipo, Archivos del usuario, Red, Papelera vacía y Papelera llena. Cada icono incorpora resoluciones de 16, 24, 32, 48, 64, 128 y 256 px con transparencia real.
+- Antes de aplicar el tema guarda la configuración anterior y ofrece **Restaurar iconos originales de Windows** con un clic.
 
 ## Seguridad
 
@@ -78,6 +80,10 @@ Si las carpetas ya fueron migradas pero aparecen con iconos genéricos, pulsa **
 ## Diseño de recuperación
 
 Después de verificar durante varios días que todo funciona, el usuario puede archivar o borrar manualmente las carpetas originales. La aplicación no ofrece borrado para evitar pérdida accidental.
+
+## Futuras ampliaciones del tema JANUS
+
+La misma familia visual podrá ampliarse a Documentos, Descargas, Escritorio, Imágenes, Música, Vídeos, HDD/SSD, USB y unidades de red.
 
 ## Pruebas
 
