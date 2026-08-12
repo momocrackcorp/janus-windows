@@ -1,0 +1,18 @@
+MIGRADOR SEGURO 1.0
+===================
+
+1. Abre MigradorSeguro.exe.
+2. Elige una carpeta base dentro de la unidad de destino (por ejemplo D:\MiPerfil).
+   No elijas D:\ directamente.
+3. Marca las carpetas que deseas migrar y revisa la vista previa.
+4. Pulsa "Revisar y aplicar migración" y confirma.
+
+La herramienta copia y verifica los archivos, cambia las rutas de Windows y deja
+intactos los originales. Nunca sobrescribe una carpeta de destino con contenido.
+
+El respaldo para restaurar las rutas queda en:
+Documentos\Respaldos Migrador Seguro
+
+IMPORTANTE: el ejecutable no está firmado digitalmente, por lo que Windows puede
+mostrar una advertencia de SmartScreen. El código fuente completo está incluido
+en el ZIP para revisión y recompilación.
