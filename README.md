@@ -27,17 +27,11 @@ El ejecutable de Windows se publica en la sección **Releases** del repositorio.
 
 ## Ejecutar desde el código fuente
 
-Requiere Windows y Python 3.11 o superior (Python incluye Tkinter):
-
-```powershell
-py -3 run.py
-```
-
-No requiere permisos de administrador porque solo modifica las rutas del usuario actual.
+La versión distribuida está escrita en C# y usa Windows Forms. No necesita dependencias externas ni permisos de administrador porque solo modifica las rutas del usuario actual.
 
 ## Compilar el ejecutable
 
-Haz clic derecho en `build.ps1`, elige **Ejecutar con PowerShell**, o ejecútalo desde una terminal. Crea `dist\MigradorSeguro.exe` usando PyInstaller. La descarga de PyInstaller solo es necesaria durante la compilación.
+Ejecuta `build-native.ps1`. Utiliza el compilador de .NET Framework incluido con Windows y crea `dist\MigradorSeguro.exe`, sin descargar dependencias.
 
 ## Restauración
 
@@ -49,8 +43,4 @@ Después de verificar durante varios días que todo funciona, el usuario puede a
 
 ## Pruebas
 
-```powershell
-py -3 -m unittest discover -s tests -v
-```
-
-Las pruebas no modifican el registro ni las carpetas personales reales.
+La validación del ejecutable comprueba que la interfaz nativa inicia y permanece estable. Las operaciones reales solo comienzan después de seleccionar destino y aceptar la confirmación final.
