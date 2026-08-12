@@ -45,6 +45,7 @@ El cambio de nombre no altera el objetivo ni las protecciones del programa. Janu
 - Incluye el **Tema de iconos JANUS**, con vista previa y selección individual para Este equipo, Archivos del usuario, Red, Papelera vacía y Papelera llena. Cada icono incorpora resoluciones de 16, 24, 32, 48, 64, 128 y 256 px con transparencia real.
 - Antes de aplicar el tema guarda la configuración anterior y ofrece **Restaurar iconos originales de Windows** con un clic.
 - La versión 2.1.1 corrige la ubicación del registro utilizada por el Explorador de Windows 11, verifica cada valor escrito y actualiza la caché de iconos al aplicar o restaurar.
+- La versión 2.2 amplía la familia a Documentos, Descargas, Escritorio, Imágenes, Música, Vídeos, HDD/SSD, USB y unidades de red. El panel se organiza en tres pestañas y conserva el contenido existente de `desktop.ini` al cambiar iconos de carpetas.
 
 ## Seguridad
 
