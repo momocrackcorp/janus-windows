@@ -18,8 +18,8 @@ using Microsoft.Win32;
 [assembly: AssemblyCompany("Omar Aguila")]
 [assembly: AssemblyProduct("Janus")]
 [assembly: AssemblyCopyright("Copyright © Omar Aguila MMXXVI")]
-[assembly: AssemblyVersion("2.0.4.0")]
-[assembly: AssemblyFileVersion("2.0.4.0")]
+[assembly: AssemblyVersion("2.0.5.0")]
+[assembly: AssemblyFileVersion("2.0.5.0")]
 
 namespace MigradorSeguro {
   static class Program {
@@ -215,7 +215,7 @@ namespace MigradorSeguro {
 
   sealed class WindowsToolsForm:Form {
     readonly CheckBox neverNotify=new CheckBox();
-    public WindowsToolsForm(){Text="Herramientas de Windows";ClientSize=new Size(900,770);MinimumSize=MaximumSize=new Size(916,809);StartPosition=FormStartPosition.CenterParent;FormBorderStyle=FormBorderStyle.FixedDialog;MaximizeBox=false;MinimizeBox=false;BackColor=Color.White;try{Icon=Icon.ExtractAssociatedIcon(Application.ExecutablePath);}catch{}
+    public WindowsToolsForm(){Text="Herramientas de Windows";ClientSize=new Size(900,695);MinimumSize=MaximumSize=new Size(916,734);StartPosition=FormStartPosition.CenterParent;FormBorderStyle=FormBorderStyle.FixedDialog;MaximizeBox=false;MinimizeBox=false;BackColor=Color.White;try{Icon=Icon.ExtractAssociatedIcon(Application.ExecutablePath);}catch{}
       var title=new Label{Text="Herramientas de Windows",Font=new Font("Segoe UI",18,FontStyle.Bold),Location=new Point(24,17),AutoSize=true};Controls.Add(title);
       var subtitle=new Label{Text="Diagnóstico, administración y software recomendado.",Location=new Point(27,55),AutoSize=true,ForeColor=Color.DimGray};Controls.Add(subtitle);
       var systemGroup=new GroupBox{Text="Sistema y diagnóstico",Location=new Point(24,86),Size=new Size(408,258)};Controls.Add(systemGroup);
@@ -229,29 +229,29 @@ namespace MigradorSeguro {
       var uacInfo=new Label{Text="Abre el control oficial de Windows para elegir el nivel de notificaciones.",Location=new Point(18,31),Size=new Size(372,38)};uacGroup.Controls.Add(uacInfo);
       var warning=new Label{Text="Recomendado: conserva el nivel predeterminado de Windows.",ForeColor=Color.FromArgb(166,79,0),Location=new Point(18,69),Size=new Size(372,20)};uacGroup.Controls.Add(warning);
       var applyUac=new Button{Text="Abrir configuración oficial de UAC",Location=new Point(54,98),Size=new Size(300,29)};applyUac.Click+=(s,e)=>Launch("UserAccountControlSettings.exe");uacGroup.Controls.Add(applyUac);
-      var photo=new PictureBox{Location=new Point(452,86),Size=new Size(424,258),SizeMode=PictureBoxSizeMode.Zoom,BackColor=Color.White};try{using(Stream imageStream=Assembly.GetExecutingAssembly().GetManifestResourceStream("MigradorSeguro.ToolsPhoto.png")){if(imageStream!=null)photo.Image=new Bitmap(imageStream);}}catch{}Controls.Add(photo);
+      var photo=new PictureBox{Location=new Point(452,72),Size=new Size(424,205),SizeMode=PictureBoxSizeMode.Zoom,BackColor=Color.White};try{using(Stream imageStream=Assembly.GetExecutingAssembly().GetManifestResourceStream("MigradorSeguro.ToolsPhoto.png")){if(imageStream!=null)photo.Image=new Bitmap(imageStream);}}catch{}Controls.Add(photo);
       var oneDriveGroup=new GroupBox{Text="Microsoft OneDrive",Location=new Point(24,510),Size=new Size(408,115)};Controls.Add(oneDriveGroup);
       var oneDriveNote=new Label{Text="Desactiva la sincronización mediante la directiva de Windows, cierra OneDrive y evita su inicio. Requiere administrador.",Location=new Point(18,25),Size=new Size(372,40),ForeColor=Color.DimGray};oneDriveGroup.Controls.Add(oneDriveNote);
       var disableOneDrive=new Button{Text="Desactivar OneDrive",Location=new Point(18,75),Size=new Size(178,28)};disableOneDrive.Click+=(s,e)=>DisableOneDriveStartup();oneDriveGroup.Controls.Add(disableOneDrive);
       var restoreStartup=new Button{Text="Restaurar OneDrive",Location=new Point(212,75),Size=new Size(178,28)};restoreStartup.Click+=(s,e)=>RestoreOneDriveStartup();oneDriveGroup.Controls.Add(restoreStartup);
-      var timeGroup=new GroupBox{Text="Fecha, hora y zona horaria",Location=new Point(452,357),Size=new Size(424,94)};Controls.Add(timeGroup);
+      var timeGroup=new GroupBox{Text="Fecha, hora y zona horaria",Location=new Point(452,285),Size=new Size(424,94)};Controls.Add(timeGroup);
       var timeNote=new Label{Text="Activa la detección automática o abre el panel oficial para ajustar el reloj.",Location=new Point(18,23),Size=new Size(388,20),ForeColor=Color.DimGray};timeGroup.Controls.Add(timeNote);
       var automaticZone=new Button{Text="Zona horaria automática",Location=new Point(18,52),Size=new Size(185,28)};automaticZone.Click+=(s,e)=>EnableAutomaticTimeZone();timeGroup.Controls.Add(automaticZone);
       var adjustClock=new Button{Text="Ajustar fecha y hora",Location=new Point(217,52),Size=new Size(185,28)};adjustClock.Click+=(s,e)=>OpenDateTimeSettings();timeGroup.Controls.Add(adjustClock);
-      var links=new GroupBox{Text="Descargas y sitios oficiales",Location=new Point(452,459),Size=new Size(424,150)};Controls.Add(links);
+      var links=new GroupBox{Text="Descargas y sitios oficiales",Location=new Point(452,387),Size=new Size(424,150)};Controls.Add(links);
       AddLinkButton(links,"VLC media player",18,27,"https://www.videolan.org/",185);
       AddLinkButton(links,"Codec Guide",217,27,"https://www.codecguide.com/",185);
       AddLinkButton(links,"WinRAR en español",18,64,"https://www.win-rar.com/predownload.html?&L=6",185);
       AddLinkButton(links,"USB Image Tool",217,64,"https://www.osforensics.com/tools/write-usb-images.html",185);
       AddLinkButton(links,"Adobe Acrobat Reader",18,101,"https://get.adobe.com/es/reader/",185);
       AddLinkButton(links,"Microsoft PC Manager",217,101,"https://pcmanager.microsoft.com/en-us",185);
-      var browsers=new GroupBox{Text="Navegadores — descargas oficiales",Location=new Point(452,617),Size=new Size(424,110)};Controls.Add(browsers);
+      var browsers=new GroupBox{Text="Navegadores — descargas oficiales",Location=new Point(452,545),Size=new Size(424,110)};Controls.Add(browsers);
       AddLinkButton(browsers,"Google Chrome",18,27,"https://www.google.com/chrome/download-chrome",116);
       AddLinkButton(browsers,"Mozilla Firefox",145,27,"https://www.mozilla.org/firefox/new/",116);
       AddLinkButton(browsers,"Brave",272,27,"https://brave.com/download/",116);
       AddLinkButton(browsers,"Opera",80,67,"https://www.opera.com/download",116);
       AddLinkButton(browsers,"Comet",208,67,"https://www.perplexity.ai/comet",116);
-      var close=new Button{Text="Cerrar",Location=new Point(756,733),Size=new Size(120,31),DialogResult=DialogResult.OK};Controls.Add(close);AcceptButton=close;
+      var close=new Button{Text="Cerrar",Location=new Point(756,660),Size=new Size(120,29),DialogResult=DialogResult.OK};Controls.Add(close);AcceptButton=close;
     }
     static void AddToolButton(Control parent,string text,int x,int y,EventHandler click,int width=158){var b=new Button{Text=text,Location=new Point(x,y),Size=new Size(width,29)};b.Click+=click;parent.Controls.Add(b);}
     static void AddLinkButton(Control parent,string text,int x,int y,string url,int width=388){var b=new Button{Text=text,Location=new Point(x,y),Size=new Size(width,28),Tag=url,TextAlign=ContentAlignment.MiddleCenter};b.Click+=(s,e)=>OpenUrl(Convert.ToString(((Button)s).Tag));parent.Controls.Add(b);}
