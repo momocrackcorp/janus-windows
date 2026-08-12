@@ -16,6 +16,7 @@ Aplicación gráfica para trasladar Escritorio, Documentos, Descargas, Imágenes
 - Aplica un icono celeste de documentos a la unidad destino para el usuario actual, sin escribir `autorun.inf` en la raíz.
 - El icono de la unidad usa transparencia real y se adapta a temas claros u oscuros.
 - Muestra un gráfico de dona multicolor con la distribución de tamaños de las carpetas seleccionadas.
+- La leyenda del gráfico reserva espacio completo para nombres y porcentajes, incluso con escalado alto de Windows.
 - Reinicia el Explorador de Windows después de aplicar o restaurar cambios.
 
 ## Seguridad
