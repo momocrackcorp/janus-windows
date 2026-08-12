@@ -17,8 +17,8 @@ using Microsoft.Win32;
 [assembly: AssemblyCompany("Omar Aguila")]
 [assembly: AssemblyProduct("Migrador Seguro")]
 [assembly: AssemblyCopyright("Copyright © Omar Aguila MMXXVI")]
-[assembly: AssemblyVersion("1.0.7.0")]
-[assembly: AssemblyFileVersion("1.0.7.0")]
+[assembly: AssemblyVersion("1.0.8.0")]
+[assembly: AssemblyFileVersion("1.0.8.0")]
 
 namespace MigradorSeguro {
   static class Program {
@@ -42,6 +42,8 @@ namespace MigradorSeguro {
     readonly TextBox preview = new TextBox(); readonly Label capacity = new Label();
     readonly Label required = new Label(); readonly Label status = new Label();
     readonly Button apply = new Button(); readonly DiskPanel disk = new DiskPanel();
+    readonly FolderPiePanel folderPie = new FolderPiePanel();
+    readonly Color[] folderColors={Color.FromArgb(39,125,161),Color.FromArgb(249,199,79),Color.FromArgb(244,162,97),Color.FromArgb(67,170,139),Color.FromArgb(153,102,204),Color.FromArgb(231,111,81)};
 
     public MainForm() {
       Text = "Migrador seguro de carpetas de Windows"; Width = 1080; Height = 780;
@@ -81,12 +83,14 @@ namespace MigradorSeguro {
       drives.SetBounds(18,84,612,28); drives.DropDownStyle=ComboBoxStyle.DropDownList; drives.Anchor=AnchorStyles.Top|AnchorStyles.Left|AnchorStyles.Right; drives.SelectedIndexChanged+=(s,e)=>UpdateDrive(); left.Controls.Add(drives);
       left.Controls.Add(Header("2. Carpetas",16,124));
       int y=158;
-      foreach(var f in folders) {
-        f.Check=new CheckBox{Text=f.Label,Checked=true,Location=new Point(18,y),Width=120}; f.Check.CheckedChanged+=(s,e)=>UpdatePreview();
-        f.SizeLabel=new Label{Text="Calculando…",Location=new Point(145,y+2),Width=85,TextAlign=ContentAlignment.MiddleRight};
-        var path=new Label{Text=f.Source,ForeColor=Color.DimGray,Location=new Point(244,y+2),Width=386,AutoEllipsis=true,Anchor=AnchorStyles.Top|AnchorStyles.Left|AnchorStyles.Right};
-        left.Controls.Add(f.Check); left.Controls.Add(f.SizeLabel); left.Controls.Add(path); y+=32;
+      for(int index=0;index<folders.Count;index++) { var f=folders[index];
+        var swatch=new Panel{BackColor=folderColors[index],Location=new Point(18,y+5),Size=new Size(11,11)};
+        f.Check=new CheckBox{Text=f.Label,Checked=true,Location=new Point(34,y),Width=105}; f.Check.CheckedChanged+=(s,e)=>UpdatePreview();
+        f.SizeLabel=new Label{Text="Calculando…",Location=new Point(142,y+2),Width=82,TextAlign=ContentAlignment.MiddleRight};
+        var path=new Label{Text=f.Source,ForeColor=Color.DimGray,Location=new Point(236,y+2),Width=145,AutoEllipsis=true};
+        left.Controls.Add(swatch);left.Controls.Add(f.Check); left.Controls.Add(f.SizeLabel); left.Controls.Add(path); y+=32;
       }
+      folderPie.SetBounds(390,125,240,225);folderPie.Anchor=AnchorStyles.Top|AnchorStyles.Right;left.Controls.Add(folderPie);
       left.Controls.Add(Header("3. Vista previa origen → destino",16,358));
       preview.SetBounds(18,392,612,172); preview.Multiline=true; preview.ReadOnly=true; preview.ScrollBars=ScrollBars.Both; preview.WordWrap=false; preview.BackColor=Color.FromArgb(247,248,250); preview.Font=new Font("Consolas",8.5F); preview.Anchor=AnchorStyles.Top|AnchorStyles.Bottom|AnchorStyles.Left|AnchorStyles.Right; left.Controls.Add(preview);
       right.Controls.Add(Header("Capacidad del disco",16,12)); disk.SetBounds(50,37,250,205); right.Controls.Add(disk);
@@ -120,6 +124,7 @@ namespace MigradorSeguro {
       long total=folders.Where(f=>f.Check.Checked).Sum(f=>f.Size); var lines=new List<string>();
       foreach(var f in folders.Where(x=>x.Check.Checked)) lines.Add(f.Source+Environment.NewLine+"  → "+(String.IsNullOrWhiteSpace(destination.Text)?"(elige destino)":Path.Combine(destination.Text,f.DefaultName)));
       preview.Text=String.Join(Environment.NewLine,lines); var selectedDrive=drives.SelectedItem as DriveInfo; long free=selectedDrive==null?0:selectedDrive.AvailableFreeSpace;
+      folderPie.Items=folders.Select((f,i)=>new PieItem{Label=f.Label,Size=f.Check.Checked?f.Size:0,Color=folderColors[i]}).Where(x=>x.Size>0).ToList();folderPie.Invalidate();
       bool ok=!String.IsNullOrWhiteSpace(destination.Text)&&folders.Any(f=>f.Check.Checked)&&free>=total+100L*1024*1024;
       required.Text="Datos a copiar: "+FormatBytes(total)+"\nLibre estimado después: "+FormatBytes(Math.Max(0,free-total))+"\n"+(ok?"✓ Espacio suficiente":"⚠ Revisa destino y espacio"); apply.Enabled=ok;
     }
@@ -196,6 +201,14 @@ namespace MigradorSeguro {
     public ArcadePanel(){DoubleBuffered=true;BackColor=Color.FromArgb(8,17,39);for(int i=0;i<14;i++)dots.Add(42+i*31);timer.Interval=55;timer.Tick+=(s,e)=>{x+=5;frame++;for(int i=0;i<dots.Count;i++)if(dots[i]<x+24)dots[i]+=434;if(x>456)x=8;Invalidate();};timer.Start();}
     protected override void Dispose(bool disposing){if(disposing)timer.Dispose();base.Dispose(disposing);}
     protected override void OnPaint(PaintEventArgs e){base.OnPaint(e);e.Graphics.SmoothingMode=System.Drawing.Drawing2D.SmoothingMode.AntiAlias;float cy=70;using(var dotBrush=new SolidBrush(Color.FromArgb(255,207,46)))foreach(float dx in dots){float px=((dx-8)%434+434)%434+23;if(Math.Abs(px-(x+20))>20)e.Graphics.FillEllipse(dotBrush,px,cy-4,8,8);}float mouth=(frame%10<5)?34:12;using(var brush=new SolidBrush(Color.FromArgb(255,207,46)))e.Graphics.FillPie(brush,x,cy-24,48,48,mouth,360-mouth*2);using(var eye=new SolidBrush(Color.FromArgb(8,17,39)))e.Graphics.FillEllipse(eye,x+27,cy-16,5,5);using(var pen=new Pen(Color.FromArgb(46,70,108),2))e.Graphics.DrawRectangle(pen,1,1,Width-3,Height-3);}
+  }
+
+  sealed class PieItem {public string Label;public long Size;public Color Color;}
+  sealed class FolderPiePanel:Panel {
+    public List<PieItem> Items=new List<PieItem>();
+    public FolderPiePanel(){DoubleBuffered=true;BackColor=Color.White;}
+    protected override void OnPaint(PaintEventArgs e){base.OnPaint(e);e.Graphics.SmoothingMode=System.Drawing.Drawing2D.SmoothingMode.AntiAlias;using(var title=new Font("Segoe UI",9,FontStyle.Bold))e.Graphics.DrawString("Distribución seleccionada",title,Brushes.Black,8,2);long total=Items.Sum(x=>x.Size);if(total<=0){e.Graphics.DrawString("Selecciona carpetas",Font,Brushes.Gray,50,90);return;}var rect=new Rectangle(12,28,128,128);float start=-90;foreach(var item in Items){float sweep=(float)(360.0*item.Size/total);using(var b=new SolidBrush(item.Color))e.Graphics.FillPie(b,rect,start,Math.Max(.6F,sweep));start+=sweep;}using(var b=new SolidBrush(Color.White))e.Graphics.FillEllipse(b,new Rectangle(48,64,56,56));using(var small=new Font("Segoe UI",7.5F,FontStyle.Bold)){string center=FormatTotal(total);var size=e.Graphics.MeasureString(center,small);e.Graphics.DrawString(center,small,Brushes.Black,76-size.Width/2,86);}int y=31;using(var legend=new Font("Segoe UI",7.2F)){foreach(var item in Items.OrderByDescending(x=>x.Size).Take(6)){using(var b=new SolidBrush(item.Color))e.Graphics.FillRectangle(b,151,y+3,9,9);double pct=100.0*item.Size/total;string text=item.Label+"  "+pct.ToString("0.#")+"%";e.Graphics.DrawString(text,legend,Brushes.Black,164,y);y+=22;}}}
+    static string FormatTotal(long n){string[] u={"B","KB","MB","GB","TB"};double v=n;int i=0;while(v>=1024&&i<u.Length-1){v/=1024;i++;}return (i<2?v.ToString("0"):v.ToString("0.0"))+" "+u[i];}
   }
 
   sealed class DiskPanel:Panel { public long Total,Free;public string Root="";public DiskPanel(){DoubleBuffered=true;BackColor=Color.White;}protected override void OnPaint(PaintEventArgs e){base.OnPaint(e);var r=new Rectangle(25,10,190,190);using(var b=new SolidBrush(Color.FromArgb(220,231,239)))e.Graphics.FillEllipse(b,r);if(Total>0)using(var b=new SolidBrush(Color.FromArgb(39,125,161)))e.Graphics.FillPie(b,r,-90,(float)(360.0*(Total-Free)/Total));using(var b=new SolidBrush(Color.White))e.Graphics.FillEllipse(b,new Rectangle(70,55,100,100));using(var f=new Font("Segoe UI",14,FontStyle.Bold))using(var b=new SolidBrush(Color.Black)){var s=e.Graphics.MeasureString(Root,f);e.Graphics.DrawString(Root,f,b,120-s.Width/2,90);}} }
