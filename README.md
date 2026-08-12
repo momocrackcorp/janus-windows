@@ -35,7 +35,7 @@ El cambio de nombre no altera el objetivo ni las protecciones del programa. Janu
 - Incluye un panel ordenado de herramientas para Winver, MSInfo32, DxDiag, Terminal, SystemInfo, Modo Dios y configuración reversible de avisos UAC.
 - Integra accesos oficiales a VLC, Codec Guide, WinRAR, USB Image Tool, Adobe Reader y Microsoft PC Manager, junto a una fotografía monocromática integrada sin marco.
 - Incluye una sección de descarga para Google Chrome, Mozilla Firefox, Brave, Opera y Comet.
-- El botón **Desactivar OneDrive** lo cierra para retirar su icono de la bandeja y quita su entrada de inicio automático con respaldo; **Restaurar OneDrive** revierte el cambio. No desinstala, desvincula ni borra archivos.
+- El botón **Desactivar OneDrive** aplica, con autorización de administrador, la directiva oficial `DisableFileSyncNGSC` que bloquea su sincronización; además cierra el cliente, retira su icono de la bandeja y elimina su inicio automático con respaldo. **Restaurar OneDrive** retira la directiva y repone el inicio. No desinstala, desvincula ni borra archivos.
 - La configuración de UAC se realiza únicamente desde el panel oficial de Windows; la aplicación no altera directamente sus políticas.
 - Reinicia el Explorador de Windows después de aplicar o restaurar cambios.
 
