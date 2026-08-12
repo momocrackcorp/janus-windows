@@ -9,6 +9,8 @@ Aplicación gráfica para trasladar Escritorio, Documentos, Descargas, Imágenes
 - Permite elegir carpetas individualmente y previsualiza origen → destino.
 - Bloquea la migración si falta espacio o el destino ya contiene archivos.
 - Respalda y restaura las rutas `Known Folders` y `User Shell Folders`.
+- Registra cada destino mediante la API oficial `SHSetKnownFolderPath` para conservar la identidad y los iconos de Windows.
+- Incluye una reparación de rutas e iconos para migraciones ya realizadas.
 - Reinicia el Explorador de Windows después de aplicar o restaurar cambios.
 
 ## Seguridad
@@ -36,6 +38,8 @@ Ejecuta `build-native.ps1`. Utiliza el compilador de .NET Framework incluido con
 ## Restauración
 
 Pulsa **Restaurar desde respaldo…** y selecciona el JSON guardado en `Documentos\Respaldos Migrador Seguro`. La restauración solo repone las rutas del registro; nunca mueve ni borra datos.
+
+Si las carpetas ya fueron migradas pero aparecen con iconos genéricos, pulsa **Restaurar / reparar rutas…** y elige **Sí**. La herramienta volverá a registrar las carpetas conocidas y reiniciará el Explorador sin copiar ni borrar datos.
 
 ## Diseño de recuperación
 
