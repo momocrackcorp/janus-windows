@@ -13,6 +13,7 @@ intactos los originales. Nunca sobrescribe una carpeta de destino con contenido.
 El respaldo para restaurar las rutas queda en:
 Documentos\Respaldos Migrador Seguro
 
-IMPORTANTE: el ejecutable no está firmado digitalmente, por lo que Windows puede
+IMPORTANTE: el ejecutable es una aplicación nativa de Windows, pero no está
+firmado digitalmente, por lo que Windows puede
 mostrar una advertencia de SmartScreen. El código fuente completo está incluido
 en el ZIP para revisión y recompilación.
