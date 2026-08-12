@@ -22,6 +22,7 @@ El cambio de nombre no altera el objetivo ni las protecciones del programa. Janu
 - Registra cada destino mediante la API oficial `SHSetKnownFolderPath` para conservar la identidad y los iconos de Windows.
 - Incluye una reparación de rutas e iconos para migraciones ya realizadas.
 - Incluye icono propio de la aplicación y una pantalla animada **Acerca de**.
+- Muestra una pantalla de inicio de Janus durante la carga de la aplicación.
 - Permite crear una carpeta contenedora directamente desde el selector de destino.
 - Aplica un icono celeste de documentos a la unidad destino para el usuario actual, sin escribir `autorun.inf` en la raíz.
 - El icono de la unidad usa transparencia real y se adapta a temas claros u oscuros.
@@ -34,7 +35,7 @@ El cambio de nombre no altera el objetivo ni las protecciones del programa. Janu
 - Incluye un panel ordenado de herramientas para Winver, MSInfo32, DxDiag, Terminal, SystemInfo, Modo Dios y configuración reversible de avisos UAC.
 - Integra accesos oficiales a VLC, Codec Guide, WinRAR, USB Image Tool, Adobe Reader y Microsoft PC Manager, junto a una fotografía monocromática integrada sin marco.
 - Incluye una sección de descarga para Google Chrome, Mozilla Firefox, Brave, Opera y Comet.
-- Permite cerrar OneDrive mediante su comando oficial, quitar su entrada de inicio automático con respaldo y restaurarla posteriormente, sin desinstalar, desvincular ni borrar archivos.
+- El botón **Desactivar OneDrive** lo cierra para retirar su icono de la bandeja y quita su entrada de inicio automático con respaldo; **Restaurar OneDrive** revierte el cambio. No desinstala, desvincula ni borra archivos.
 - La configuración de UAC se realiza únicamente desde el panel oficial de Windows; la aplicación no altera directamente sus políticas.
 - Reinicia el Explorador de Windows después de aplicar o restaurar cambios.
 

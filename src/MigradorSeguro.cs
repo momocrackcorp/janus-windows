@@ -18,16 +18,29 @@ using Microsoft.Win32;
 [assembly: AssemblyCompany("Omar Aguila")]
 [assembly: AssemblyProduct("Janus")]
 [assembly: AssemblyCopyright("Copyright © Omar Aguila MMXXVI")]
-[assembly: AssemblyVersion("2.0.0.0")]
-[assembly: AssemblyFileVersion("2.0.0.0")]
+[assembly: AssemblyVersion("2.0.1.0")]
+[assembly: AssemblyFileVersion("2.0.1.0")]
 
 namespace MigradorSeguro {
   static class Program {
     [STAThread] static void Main() {
       Application.EnableVisualStyles();
       Application.SetCompatibleTextRenderingDefault(false);
+      using (var splash=new SplashForm()) splash.ShowDialog();
       Application.Run(new MainForm());
     }
+  }
+
+  sealed class SplashForm:Form {
+    readonly System.Windows.Forms.Timer timer=new System.Windows.Forms.Timer();
+    public SplashForm(){
+      FormBorderStyle=FormBorderStyle.None;StartPosition=FormStartPosition.CenterScreen;ShowInTaskbar=false;TopMost=true;
+      ClientSize=new Size(620,620);BackColor=Color.White;
+      var picture=new PictureBox{Dock=DockStyle.Fill,SizeMode=PictureBoxSizeMode.Zoom,BackColor=Color.White};
+      try{using(Stream imageStream=Assembly.GetExecutingAssembly().GetManifestResourceStream("MigradorSeguro.Splash.png")){if(imageStream!=null)picture.Image=new Bitmap(imageStream);}}catch{}
+      Controls.Add(picture);timer.Interval=1900;timer.Tick+=(s,e)=>{timer.Stop();Close();};Shown+=(s,e)=>timer.Start();
+    }
+    protected override void Dispose(bool disposing){if(disposing)timer.Dispose();base.Dispose(disposing);}
   }
 
   sealed class FolderItem {
@@ -170,7 +183,35 @@ namespace MigradorSeguro {
     void UpdateMigrationProgress(long doneBytes,long totalBytes,int doneFiles,int totalFiles,TimeSpan elapsed,string current){double ratio=totalBytes<=0?0:Math.Min(1.0,(double)doneBytes/totalBytes);int value=(int)Math.Round(ratio*1000);migrationBar.Value=Math.Max(0,Math.Min(1000,value));TimeSpan? remaining=null;if(ratio>.002&&ratio<1)remaining=TimeSpan.FromSeconds(Math.Max(0,elapsed.TotalSeconds*(1-ratio)/ratio));int missing=Math.Max(0,totalFiles-doneFiles);progressSummary.Text=String.Format("Progreso: {0:0.0}%  •  Transcurrido: {1}  •  Restante: {2}  •  Faltan: {3:N0} archivos",ratio*100,FormatTime(elapsed),remaining.HasValue?FormatTime(remaining.Value):"--:--",missing);status.Text=current;}
     void UpdateMigrationProgress(long doneBytes,int totalFiles,int doneFiles,TimeSpan elapsed,string current){UpdateMigrationProgress(doneBytes,Math.Max(1,folders.Where(f=>f.Check.Checked).Sum(f=>f.Size)),doneFiles,totalFiles,elapsed,current);}
     static string FormatTime(TimeSpan value){if(value.TotalHours>=1)return String.Format("{0:00}:{1:00}:{2:00}",(int)value.TotalHours,value.Minutes,value.Seconds);return String.Format("{0:00}:{1:00}",(int)value.TotalMinutes,value.Seconds);}
-    static string BuildSummary(List<FolderItem> selected,string root,string backup,MigrationStats stats,TimeSpan elapsed){var b=new System.Text.StringBuilder();b.AppendLine("MIGRADOR SEGURO — RESUMEN DE OPERACIÓN");b.AppendLine(new String('=',44));b.AppendLine("Fecha: "+DateTime.Now.ToString("dd-MM-yyyy HH:mm:ss"));b.AppendLine("Versión: "+Application.ProductVersion);b.AppendLine("Destino: "+root);b.AppendLine("Tiempo transcurrido: "+FormatTime(elapsed));b.AppendLine();b.AppendLine("ACCIONES REALIZADAS");b.AppendLine("• Carpetas procesadas: "+selected.Count);b.AppendLine("• Archivos copiados: "+stats.Copied);b.AppendLine("• Archivos idénticos verificados y omitidos: "+stats.Identical);b.AppendLine("• Conflictos conservados con…2216 tokens truncated…ult.OK,Location=new Point(226,92),Size=new Size(84,30)};var cancel=new Button{Text="Cancelar",DialogResult=DialogResult.Cancel,Location=new Point(318,92),Size=new Size(84,30)};Controls.Add(label);Controls.Add(name);Controls.Add(ok);Controls.Add(cancel);AcceptButton=ok;CancelButton=cancel;Shown+=(s,e)=>{name.Focus();name.SelectAll();};}}
+    static string BuildSummary(List<FolderItem> selected,string root,string backup,MigrationStats stats,TimeSpan elapsed){var b=new System.Text.StringBuilder();b.AppendLine("MIGRADOR SEGURO — RESUMEN DE OPERACIÓN");b.AppendLine(new String('=',44));b.AppendLine("Fecha: "+DateTime.Now.ToString("dd-MM-yyyy HH:mm:ss"));b.AppendLine("Versión: "+Application.ProductVersion);b.AppendLine("Destino: "+root);b.AppendLine("Tiempo transcurrido: "+FormatTime(elapsed));b.AppendLine();b.AppendLine("ACCIONES REALIZADAS");b.AppendLine("• Carpetas procesadas: "+selected.Count);b.AppendLine("• Archivos copiados: "+stats.Copied);b.AppendLine("• Archivos idénticos verificados y omitidos: "+stats.Identical);b.AppendLine("• Conflictos conservados con nombre nuevo: "+stats.Conflicts);b.AppendLine("• Datos copiados: "+FormatBytes(stats.CopiedBytes));b.AppendLine("• Archivos procesados en total: "+(stats.Copied+stats.Identical));b.AppendLine();b.AppendLine("CARPETAS");foreach(var f in selected)b.AppendLine("• "+f.Label+": "+f.Files+" archivos, "+FormatBytes(f.Size)+"\r\n  "+f.Source+" → "+Path.Combine(root,f.DefaultName));b.AppendLine();b.AppendLine("Respaldo de rutas: "+backup);b.AppendLine("Los archivos originales se conservaron.");return b.ToString();}
+    static void CopyVerified(string src,string dst,MigrationStats stats,Action<string,long,int> progress) {
+      Directory.CreateDirectory(dst);
+      foreach(var dir in SafeDirectories(src)) {
+        string rel=dir.Substring(src.TrimEnd('\\').Length).TrimStart('\\'); string target=String.IsNullOrEmpty(rel)?dst:Path.Combine(dst,rel);
+        Directory.CreateDirectory(target); try { File.SetAttributes(target,File.GetAttributes(dir)); Directory.SetLastWriteTimeUtc(target,Directory.GetLastWriteTimeUtc(dir)); } catch {}
+      }
+      foreach(var file in SafeFiles(src)){string rel=file.Substring(src.TrimEnd('\\').Length).TrimStart('\\');string target=Path.Combine(dst,rel);Directory.CreateDirectory(Path.GetDirectoryName(target));long fileBytes=0;try{fileBytes=new FileInfo(file).Length;}catch{}if(File.Exists(target)){if(FilesEqual(file,target)){Interlocked.Increment(ref stats.Identical);progress("Ya existe idéntico, verificado: "+rel,fileBytes,1);continue;}target=ConflictName(target);Interlocked.Increment(ref stats.Conflicts);}File.Copy(file,target,false);if(!FilesEqual(file,target))throw new IOException("Falló la verificación de "+Path.GetFileName(file));Interlocked.Increment(ref stats.Copied);Interlocked.Add(ref stats.CopiedBytes,fileBytes);progress("Copiando y verificando: "+rel,fileBytes,1);}
+      try { File.SetAttributes(dst,File.GetAttributes(src)|FileAttributes.ReadOnly); } catch {}
+    }
+    static bool FilesEqual(string a,string b){var fa=new FileInfo(a);var fb=new FileInfo(b);if(fa.Length!=fb.Length)return false;using(var sha=SHA256.Create())using(var sa=File.OpenRead(a))using(var sb=File.OpenRead(b)){return sha.ComputeHash(sa).SequenceEqual(sha.ComputeHash(sb));}}
+    static string ConflictName(string path){string dir=Path.GetDirectoryName(path),name=Path.GetFileNameWithoutExtension(path),ext=Path.GetExtension(path),stamp=DateTime.Now.ToString("yyyyMMdd-HHmmss");string candidate=Path.Combine(dir,name+" (migrado "+stamp+")"+ext);int n=2;while(File.Exists(candidate)){candidate=Path.Combine(dir,name+" (migrado "+stamp+"-"+n+")"+ext);n++;}return candidate;}
+    static IEnumerable<string> SafeDirectories(string root) { yield return root;var dirs=new Stack<string>();dirs.Push(root);while(dirs.Count>0){var d=dirs.Pop();string[] subs=new string[0];try{subs=Directory.GetDirectories(d);}catch{}foreach(var s in subs){bool normal=false;try{normal=(new DirectoryInfo(s).Attributes&FileAttributes.ReparsePoint)==0;}catch{}if(normal){yield return s;dirs.Push(s);}}} }
+    string BackupRegistry() { var data=new Dictionary<string,object>();data["version"]=1;data["created"]=DateTime.Now.ToString("s");var values=new Dictionary<string,string>();foreach(var f in folders)values[f.Label]=f.Source;data["folders"]=values;string dir=Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments),"Respaldos Migrador Seguro");Directory.CreateDirectory(dir);string path=Path.Combine(dir,"known-folders-"+DateTime.Now.ToString("yyyyMMdd-HHmmss")+".json");File.WriteAllText(path,new JavaScriptSerializer().Serialize(data));return path; }
+    static void SetRegistry(string name,string value) { using(var k=Registry.CurrentUser.OpenSubKey(UserShell,true))k.SetValue(name,value,RegistryValueKind.ExpandString);using(var k=Registry.CurrentUser.CreateSubKey(Shell))k.SetValue(name,Environment.ExpandEnvironmentVariables(value),RegistryValueKind.String); }
+    static void SetKnownFolder(FolderItem folder,string value) { Directory.CreateDirectory(value);var id=new Guid(folder.KnownFolderId);int hr=SHSetKnownFolderPath(ref id,0,IntPtr.Zero,value);if(hr!=0)Marshal.ThrowExceptionForHR(hr);SetRegistry(folder.RegistryName,value);try{File.SetAttributes(value,File.GetAttributes(value)|FileAttributes.ReadOnly);}catch{} }
+    void RestoreMenu() { var choice=MessageBox.Show("Sí: reparar ahora las rutas e iconos ya configurados.\n\nNo: restaurar rutas desde un respaldo JSON.\n\nCancelar: no hacer cambios.","Restaurar / reparar",MessageBoxButtons.YesNoCancel,MessageBoxIcon.Question);if(choice==DialogResult.Yes)RepairCurrent();else if(choice==DialogResult.No)Restore(); }
+    void RepairCurrent(){try{foreach(var f in folders){string current=f.Source;using(var k=Registry.CurrentUser.OpenSubKey(UserShell)){var v=k==null?null:k.GetValue(f.RegistryName,null,RegistryValueOptions.DoNotExpandEnvironmentNames) as string;if(!String.IsNullOrWhiteSpace(v))current=Environment.ExpandEnvironmentVariables(v);}if(Directory.Exists(current))SetKnownFolder(f,current);}NotifyShell();MessageBox.Show("Rutas, atributos e iconos registrados nuevamente. Reiniciaremos el Explorador.","Reparación completada",MessageBoxButtons.OK,MessageBoxIcon.Information);RestartExplorer();}catch(Exception ex){MessageBox.Show(ex.Message,"No se pudo reparar",MessageBoxButtons.OK,MessageBoxIcon.Error);} }
+    void Restore() { using(var d=new OpenFileDialog{Filter="Respaldo JSON (*.json)|*.json",Title="Selecciona el respaldo"})if(d.ShowDialog()==DialogResult.OK&&MessageBox.Show("Se restaurarán las rutas. No se moverán ni borrarán archivos. ¿Continuar?","Restaurar",MessageBoxButtons.YesNo)==DialogResult.Yes){try{RestoreFile(d.FileName,null);NotifyShell();if(MessageBox.Show("Rutas restauradas. ¿Reiniciar el Explorador?","Restaurado",MessageBoxButtons.YesNo)==DialogResult.Yes)RestartExplorer();}catch(Exception ex){MessageBox.Show(ex.Message,"No se pudo restaurar",MessageBoxButtons.OK,MessageBoxIcon.Error);}} }
+    void RestoreFile(string path,IEnumerable<string> only) { var obj=new JavaScriptSerializer().Deserialize<Dictionary<string,object>>(File.ReadAllText(path));var vals=(Dictionary<string,object>)obj["folders"];var set=only==null?null:new HashSet<string>(only);foreach(var f in folders)if((set==null||set.Contains(f.Label))&&vals.ContainsKey(f.Label))SetKnownFolder(f,Convert.ToString(vals[f.Label])); }
+    static void NotifyShell(){SHChangeNotify(0x08000000,0x0000,IntPtr.Zero,IntPtr.Zero);}
+    static void ApplyDestinationDriveIcon(string destinationPath){try{string drive=Path.GetPathRoot(destinationPath).Substring(0,1).ToUpperInvariant();string appDir=Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),"MigradorSeguro");Directory.CreateDirectory(appDir);string iconPath=Path.Combine(appDir,"documentos-celeste-transparente-v109.ico");using(Stream input=Assembly.GetExecutingAssembly().GetManifestResourceStream("MigradorSeguro.DocumentosCeleste.ico"))using(var output=File.Create(iconPath)){if(input==null)throw new IOException("No se encontró el icono integrado.");input.CopyTo(output);}using(var key=Registry.CurrentUser.CreateSubKey(@"Software\Classes\Applications\Explorer.exe\Drives\"+drive+@"\DefaultIcon"))key.SetValue("",iconPath+",0",RegistryValueKind.String);using(var legacy=Registry.CurrentUser.CreateSubKey(@"Software\Microsoft\Windows\CurrentVersion\Explorer\DriveIcons\"+drive+@"\DefaultIcon"))legacy.SetValue("",iconPath+",0",RegistryValueKind.String);NotifyShell();}catch(Exception ex){MessageBox.Show("La migración terminó, pero Windows no permitió cambiar el icono de la unidad:\n"+ex.Message,"Aviso de icono",MessageBoxButtons.OK,MessageBoxIcon.Information);}}
+    [DllImport("shell32.dll",CharSet=CharSet.Unicode)] static extern int SHSetKnownFolderPath(ref Guid rfid,uint flags,IntPtr token,string path);
+    [DllImport("shell32.dll")] static extern void SHChangeNotify(uint eventId,uint flags,IntPtr item1,IntPtr item2);
+    static void RestartExplorer() { try{foreach(var p in Process.GetProcessesByName("explorer"))p.Kill();Process.Start("explorer.exe");}catch{} }
+    static string FormatBytes(long n) { string[] u={"B","KB","MB","GB","TB"};double v=Math.Max(0,n);int i=0;while(v>=1024&&i<u.Length-1){v/=1024;i++;}return i<2?String.Format("{0:0} {1}",v,u[i]):String.Format("{0:0.0} {1}",v,u[i]); }
+  }
+
+  sealed class NamePrompt:Form {readonly TextBox name=new TextBox();public string FolderName{get{return name.Text;}}public NamePrompt(){Text="Crear carpeta contenedora";ClientSize=new Size(420,145);StartPosition=FormStartPosition.CenterParent;FormBorderStyle=FormBorderStyle.FixedDialog;MaximizeBox=false;MinimizeBox=false;var label=new Label{Text="Nombre de la nueva carpeta:",Location=new Point(18,18),AutoSize=true};name.SetBounds(18,45,384,27);name.Text=Environment.UserName;var ok=new Button{Text="Crear",DialogResult=DialogResult.OK,Location=new Point(226,92),Size=new Size(84,30)};var cancel=new Button{Text="Cancelar",DialogResult=DialogResult.Cancel,Location=new Point(318,92),Size=new Size(84,30)};Controls.Add(label);Controls.Add(name);Controls.Add(ok);Controls.Add(cancel);AcceptButton=ok;CancelButton=cancel;Shown+=(s,e)=>{name.Focus();name.SelectAll();};}}
 
   sealed class WindowsToolsForm:Form {
     readonly CheckBox neverNotify=new CheckBox();
@@ -190,10 +231,9 @@ namespace MigradorSeguro {
       var applyUac=new Button{Text="Abrir configuración oficial de UAC",Location=new Point(54,98),Size=new Size(300,29)};applyUac.Click+=(s,e)=>Launch("UserAccountControlSettings.exe");uacGroup.Controls.Add(applyUac);
       var photo=new PictureBox{Location=new Point(452,86),Size=new Size(424,258),SizeMode=PictureBoxSizeMode.Zoom,BackColor=Color.White};try{using(Stream imageStream=Assembly.GetExecutingAssembly().GetManifestResourceStream("MigradorSeguro.ToolsPhoto.png")){if(imageStream!=null)photo.Image=new Bitmap(imageStream);}}catch{}Controls.Add(photo);
       var oneDriveGroup=new GroupBox{Text="Microsoft OneDrive",Location=new Point(24,510),Size=new Size(408,115)};Controls.Add(oneDriveGroup);
-      var oneDriveNote=new Label{Text="Cierra OneDrive, retira su inicio automático y permite restaurarlo. No desinstala ni borra archivos.",Location=new Point(18,25),Size=new Size(372,40),ForeColor=Color.DimGray};oneDriveGroup.Controls.Add(oneDriveNote);
-      var stopOneDrive=new Button{Text="Cerrar",Location=new Point(18,75),Size=new Size(112,28)};stopOneDrive.Click+=(s,e)=>CloseOneDrive();oneDriveGroup.Controls.Add(stopOneDrive);
-      var disableStartup=new Button{Text="Quitar del inicio",Location=new Point(139,75),Size=new Size(122,28)};disableStartup.Click+=(s,e)=>DisableOneDriveStartup();oneDriveGroup.Controls.Add(disableStartup);
-      var restoreStartup=new Button{Text="Restaurar inicio",Location=new Point(270,75),Size=new Size(120,28)};restoreStartup.Click+=(s,e)=>RestoreOneDriveStartup();oneDriveGroup.Controls.Add(restoreStartup);
+      var oneDriveNote=new Label{Text="Cierra OneDrive, quita su icono de la bandeja y evita que arranque con Windows. No desinstala ni borra archivos.",Location=new Point(18,25),Size=new Size(372,40),ForeColor=Color.DimGray};oneDriveGroup.Controls.Add(oneDriveNote);
+      var disableOneDrive=new Button{Text="Desactivar OneDrive",Location=new Point(18,75),Size=new Size(178,28)};disableOneDrive.Click+=(s,e)=>DisableOneDriveStartup();oneDriveGroup.Controls.Add(disableOneDrive);
+      var restoreStartup=new Button{Text="Restaurar OneDrive",Location=new Point(212,75),Size=new Size(178,28)};restoreStartup.Click+=(s,e)=>RestoreOneDriveStartup();oneDriveGroup.Controls.Add(restoreStartup);
       var links=new GroupBox{Text="Descargas y sitios oficiales",Location=new Point(452,357),Size=new Size(424,150)};Controls.Add(links);
       AddLinkButton(links,"VLC media player",18,27,"https://www.videolan.org/",185);
       AddLinkButton(links,"Codec Guide",217,27,"https://www.codecguide.com/",185);
