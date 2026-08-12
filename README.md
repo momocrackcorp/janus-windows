@@ -14,6 +14,7 @@ Aplicación gráfica para trasladar Escritorio, Documentos, Descargas, Imágenes
 - Incluye icono propio de la aplicación y una pantalla animada **Acerca de**.
 - Permite crear una carpeta contenedora directamente desde el selector de destino.
 - Aplica un icono celeste de documentos a la unidad destino para el usuario actual, sin escribir `autorun.inf` en la raíz.
+- El icono de la unidad usa transparencia real y se adapta a temas claros u oscuros.
 - Muestra un gráfico de dona multicolor con la distribución de tamaños de las carpetas seleccionadas.
 - Reinicia el Explorador de Windows después de aplicar o restaurar cambios.
 
