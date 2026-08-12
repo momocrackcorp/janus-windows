@@ -18,8 +18,8 @@ using Microsoft.Win32;
 [assembly: AssemblyCompany("Omar Aguila")]
 [assembly: AssemblyProduct("Migrador Seguro")]
 [assembly: AssemblyCopyright("Copyright © Omar Aguila MMXXVI")]
-[assembly: AssemblyVersion("1.0.13.0")]
-[assembly: AssemblyFileVersion("1.0.13.0")]
+[assembly: AssemblyVersion("1.0.14.0")]
+[assembly: AssemblyFileVersion("1.0.14.0")]
 
 namespace MigradorSeguro {
   static class Program {
@@ -201,14 +201,16 @@ namespace MigradorSeguro {
 
   sealed class AboutForm:Form {
     int secretClicks;
-    public AboutForm(){Text="Acerca de Migrador Seguro";ClientSize=new Size(590,430);MinimumSize=MaximumSize=new Size(606,469);StartPosition=FormStartPosition.CenterParent;MaximizeBox=false;MinimizeBox=false;BackColor=Color.White;ForeColor=Color.FromArgb(28,38,52);Icon appIcon=null;try{appIcon=Icon.ExtractAssociatedIcon(Application.ExecutablePath);Icon=appIcon;}catch{}
-      var picture=new PictureBox{Location=new Point(28,28),Size=new Size(128,128),SizeMode=PictureBoxSizeMode.Zoom,Cursor=Cursors.Hand};if(appIcon!=null)picture.Image=appIcon.ToBitmap();picture.Click+=(s,e)=>{secretClicks++;if(secretClicks>=5){secretClicks=0;using(var egg=new EasterEggForm())egg.ShowDialog(this);}};Controls.Add(picture);
+    public AboutForm(){Text="Acerca de Migrador Seguro";ClientSize=new Size(620,510);MinimumSize=MaximumSize=new Size(636,549);StartPosition=FormStartPosition.CenterParent;MaximizeBox=false;MinimizeBox=false;BackColor=Color.White;ForeColor=Color.FromArgb(28,38,52);Icon appIcon=null;try{appIcon=Icon.ExtractAssociatedIcon(Application.ExecutablePath);Icon=appIcon;}catch{}
+      var picture=new PictureBox{Location=new Point(28,28),Size=new Size(128,128),SizeMode=PictureBoxSizeMode.Zoom,Cursor=Cursors.Hand};try{using(Stream iconStream=Assembly.GetExecutingAssembly().GetManifestResourceStream("MigradorSeguro.AppIcon.png")){if(iconStream!=null)picture.Image=Image.FromStream(iconStream);else if(appIcon!=null)picture.Image=appIcon.ToBitmap();}}catch{if(appIcon!=null)picture.Image=appIcon.ToBitmap();}picture.Click+=(s,e)=>{secretClicks++;if(secretClicks>=5){secretClicks=0;using(var egg=new EasterEggForm())egg.ShowDialog(this);}};Controls.Add(picture);
       var title=new Label{Text="Migrador Seguro",Font=new Font("Segoe UI",22,FontStyle.Bold),Location=new Point(180,27),AutoSize=true};Controls.Add(title);
       var version=new Label{Text="Versión "+Application.ProductVersion,Font=new Font("Segoe UI",11,FontStyle.Bold),ForeColor=Color.FromArgb(39,125,161),Location=new Point(183,74),AutoSize=true};Controls.Add(version);
       var description=new Label{Text="Herramienta gráfica para migrar y restaurar las carpetas conocidas de Windows de forma segura.",Location=new Point(183,104),Size=new Size(370,55)};Controls.Add(description);
-      var line=new Label{BorderStyle=BorderStyle.Fixed3D,Location=new Point(28,178),Size=new Size(534,2)};Controls.Add(line);
-      var details=new Label{Text="REALIZACIÓN\n12 de agosto de 2026\n\nCÓMO FUE REALIZADO\nAplicación nativa para Windows, desarrollada en C# con Windows Forms y .NET Framework. Usa las API oficiales de carpetas conocidas de Windows, verificación SHA-256 y protecciones contra sobrescritura y pérdida de datos.\n\nAUTORÍA\nOmar Aguila\nLaboratorios Momocrackcorp\nPueblo Seco, Ñuble, Chile",Font=new Font("Segoe UI",9.5F),Location=new Point(30,196),Size=new Size(530,178)};Controls.Add(details);
-      var close=new Button{Text="Cerrar",Location=new Point(442,385),Size=new Size(120,30)};close.Click+=(s,e)=>Close();Controls.Add(close);
+      var line=new Label{BorderStyle=BorderStyle.Fixed3D,Location=new Point(28,178),Size=new Size(564,2)};Controls.Add(line);
+      var details=new Label{Text="REALIZACIÓN\n12 de agosto de 2026\n\nCÓMO FUE REALIZADO\nAplicación nativa para Windows, desarrollada en C# con Windows Forms y .NET Framework. Usa las API oficiales de carpetas conocidas de Windows, verificación SHA-256 y protecciones contra sobrescritura y pérdida de datos.",Font=new Font("Segoe UI",9.5F),Location=new Point(30,196),Size=new Size(560,132)};Controls.Add(details);
+      var authorshipTitle=new Label{Text="AUTORÍA",Font=new Font("Segoe UI",9.5F),Location=new Point(30,342),AutoSize=true};Controls.Add(authorshipTitle);
+      var authorship=new Label{Text="Omar Aguila\nLaboratorios Momocrackcorp\nPueblo Seco, Ñuble, Chile",Font=new Font("Segoe UI",10.5F,FontStyle.Bold),ForeColor=Color.FromArgb(25,92,135),Location=new Point(30,366),Size=new Size(560,72)};Controls.Add(authorship);
+      var close=new Button{Text="Cerrar",Location=new Point(472,461),Size=new Size(120,32)};close.Click+=(s,e)=>Close();Controls.Add(close);
     }
   }
 
