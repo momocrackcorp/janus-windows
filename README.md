@@ -18,7 +18,7 @@ Aplicación gráfica para trasladar Escritorio, Documentos, Descargas, Imágenes
 
 - Copia y verifica antes de cambiar las rutas de Windows.
 - Conserva los originales; nunca borra automáticamente.
-- No sobrescribe: si el destino contiene archivos, bloquea la operación.
+- Fusiona destinos existentes sin sobrescribir: omite archivos idénticos y conserva conflictos con un nombre nuevo.
 - Bloquea raíces de disco, AppData, Windows, ProgramData y Program Files.
 - Comprueba el espacio libre y mantiene 100 MB de margen.
 - Respalda `Known Folders/User Shell Folders` en JSON antes del cambio.
@@ -27,6 +27,10 @@ Aplicación gráfica para trasladar Escritorio, Documentos, Descargas, Imágenes
 ## Descargar
 
 El ejecutable de Windows se publica en la sección **Releases** del repositorio. Windows SmartScreen puede advertir que el archivo no tiene firma digital; el hash SHA-256 se incluye en cada versión.
+
+### Aviso de SmartScreen
+
+El proyecto publica actualmente binarios sin certificado Authenticode comercial. En Windows puede ser necesario pulsar **Más información → Ejecutar de todas formas**. Para distribución sin ese aviso se requiere un certificado OV/EV de firma de código, firma con sello de tiempo y reputación de Microsoft SmartScreen. Una firma autofirmada no elimina el aviso en equipos ajenos.
 
 ## Ejecutar desde el código fuente
 
