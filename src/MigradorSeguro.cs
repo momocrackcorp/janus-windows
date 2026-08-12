@@ -7,6 +7,7 @@ using System.Linq;
 using System.Runtime.InteropServices;
 using System.Reflection;
 using System.Security.Cryptography;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Web.Script.Serialization;
 using System.Windows.Forms;
@@ -17,8 +18,8 @@ using Microsoft.Win32;
 [assembly: AssemblyCompany("Omar Aguila")]
 [assembly: AssemblyProduct("Migrador Seguro")]
 [assembly: AssemblyCopyright("Copyright © Omar Aguila MMXXVI")]
-[assembly: AssemblyVersion("1.0.11.0")]
-[assembly: AssemblyFileVersion("1.0.11.0")]
+[assembly: AssemblyVersion("1.0.12.0")]
+[assembly: AssemblyFileVersion("1.0.12.0")]
 
 namespace MigradorSeguro {
   static class Program {
@@ -42,6 +43,7 @@ namespace MigradorSeguro {
     readonly TextBox preview = new TextBox(); readonly Label capacity = new Label();
     readonly Label required = new Label(); readonly Label status = new Label();
     readonly Button apply = new Button(); readonly DiskPanel disk = new DiskPanel();
+    readonly ProgressBar migrationBar = new ProgressBar(); readonly Label progressSummary = new Label();
     readonly FolderPiePanel folderPie = new FolderPiePanel();
     readonly Color[] folderColors={Color.FromArgb(39,125,161),Color.FromArgb(249,199,79),Color.FromArgb(244,162,97),Color.FromArgb(67,170,139),Color.FromArgb(153,102,204),Color.FromArgb(231,111,81)};
 
@@ -102,7 +104,10 @@ namespace MigradorSeguro {
       apply.Text="Revisar y aplicar migración"; apply.Dock=DockStyle.Top; apply.Height=32; apply.Click+=async(s,e)=>await ApplyMigration();
       var restore=new Button{Text="Restaurar / reparar rutas…",Dock=DockStyle.Bottom,Height=32}; restore.Click+=(s,e)=>RestoreMenu();
       actions.Controls.Add(apply); actions.Controls.Add(restore); right.Controls.Add(actions); actions.BringToFront();
-      status.Text="Analizando carpetas…"; status.SetBounds(22,682,1018,25); status.Anchor=AnchorStyles.Bottom|AnchorStyles.Left|AnchorStyles.Right; Controls.Add(status);
+      var progressArea=new Panel{BackColor=Color.FromArgb(244,246,248),Height=66,Dock=DockStyle.Bottom,Padding=new Padding(22,4,22,7)};
+      status.Text="Analizando carpetas…";status.Dock=DockStyle.Top;status.Height=19;progressArea.Controls.Add(status);
+      progressSummary.Text="Progreso: 0%  •  Transcurrido: 00:00  •  Restante: --:--  •  Faltan: -- archivos";progressSummary.Dock=DockStyle.Top;progressSummary.Height=19;progressSummary.TextAlign=ContentAlignment.MiddleLeft;progressArea.Controls.Add(progressSummary);progressSummary.BringToFront();
+      migrationBar.Minimum=0;migrationBar.Maximum=1000;migrationBar.Value=0;migrationBar.Dock=DockStyle.Bottom;migrationBar.Height=18;progressArea.Controls.Add(migrationBar);Controls.Add(progressArea);progressArea.BringToFront();
     }
     Label Header(string text,int x,int y) { return new Label{Text=text,Font=new Font("Segoe UI",11,FontStyle.Bold),Location=new Point(x,y),AutoSize=true}; }
 
@@ -136,7 +141,10 @@ namespace MigradorSeguro {
         string summary=String.Join("\n\n",selected.Select(f=>"• "+f.Label+": "+FormatBytes(f.Size)+"\n  "+f.Source+"\n  → "+Path.Combine(root,f.DefaultName)));
         if(MessageBox.Show("Se copiarán y verificarán estas carpetas:\n\n"+summary+"\n\nSi el destino ya contiene datos, se fusionarán sin sobrescribir: los idénticos se omiten y los conflictos se guardan con otro nombre.\n\nLos originales NO se borrarán. ¿Continuar?","Confirmación final",MessageBoxButtons.YesNo,MessageBoxIcon.Warning)!=DialogResult.Yes)return;
         apply.Enabled=false; string backup=BackupRegistry(); status.Text="Respaldo guardado en "+backup;
-        await Task.Run(()=> { foreach(var f in selected) CopyVerified(f.Source,Path.Combine(root,f.DefaultName),m=>BeginInvoke((Action)(()=>status.Text=m))); });
+        long totalBytes=Math.Max(1,selected.Sum(f=>f.Size)),doneBytes=0;int totalFiles=selected.Sum(f=>f.Files),doneFiles=0;var watch=Stopwatch.StartNew();
+        UpdateMigrationProgress(0,totalFiles,0,watch.Elapsed,"Preparando copia…");
+        await Task.Run(()=> { foreach(var f in selected) CopyVerified(f.Source,Path.Combine(root,f.DefaultName),(m,bytes,files)=>{Interlocked.Add(ref doneBytes,bytes);Interlocked.Add(ref doneFiles,files);long currentBytes=Interlocked.Read(ref doneBytes);int currentFiles=Volatile.Read(ref doneFiles);BeginInvoke((Action)(()=>UpdateMigrationProgress(currentBytes,totalBytes,currentFiles,totalFiles,watch.Elapsed,m)));}); });
+        watch.Stop();UpdateMigrationProgress(totalBytes,totalBytes,totalFiles,totalFiles,watch.Elapsed,"Copia y verificación completadas.");
         var changed=new List<FolderItem>();
         try { foreach(var f in selected){SetKnownFolder(f,Path.Combine(root,f.DefaultName));changed.Add(f);} NotifyShell(); }
         catch { RestoreFile(backup,changed.Select(x=>x.Label)); throw; }
@@ -156,13 +164,16 @@ namespace MigradorSeguro {
     static bool IsWithin(string child,string parent) { child=Path.GetFullPath(child).TrimEnd('\\')+"\\"; parent=Path.GetFullPath(parent).TrimEnd('\\')+"\\"; return child.StartsWith(parent,StringComparison.OrdinalIgnoreCase); }
     static void Stats(string path,out long total,out int count) { total=0;count=0;if(!Directory.Exists(path))return; foreach(var file in SafeFiles(path)){try{var i=new FileInfo(file);if((i.Attributes&FileAttributes.ReparsePoint)==0){total+=i.Length;count++;}}catch{}} }
     static IEnumerable<string> SafeFiles(string root) { var dirs=new Stack<string>();dirs.Push(root);while(dirs.Count>0){var d=dirs.Pop();string[] files=new string[0],subs=new string[0];try{files=Directory.GetFiles(d);subs=Directory.GetDirectories(d);}catch{}foreach(var f in files)yield return f;foreach(var s in subs)try{if((new DirectoryInfo(s).Attributes&FileAttributes.ReparsePoint)==0)dirs.Push(s);}catch{}} }
-    static void CopyVerified(string src,string dst,Action<string> progress) {
+    void UpdateMigrationProgress(long doneBytes,long totalBytes,int doneFiles,int totalFiles,TimeSpan elapsed,string current){double ratio=totalBytes<=0?0:Math.Min(1.0,(double)doneBytes/totalBytes);int value=(int)Math.Round(ratio*1000);migrationBar.Value=Math.Max(0,Math.Min(1000,value));TimeSpan? remaining=null;if(ratio>.002&&ratio<1)remaining=TimeSpan.FromSeconds(Math.Max(0,elapsed.TotalSeconds*(1-ratio)/ratio));int missing=Math.Max(0,totalFiles-doneFiles);progressSummary.Text=String.Format("Progreso: {0:0.0}%  •  Transcurrido: {1}  •  Restante: {2}  •  Faltan: {3:N0} archivos",ratio*100,FormatTime(elapsed),remaining.HasValue?FormatTime(remaining.Value):"--:--",missing);status.Text=current;}
+    void UpdateMigrationProgress(long doneBytes,int totalFiles,int doneFiles,TimeSpan elapsed,string current){UpdateMigrationProgress(doneBytes,Math.Max(1,folders.Where(f=>f.Check.Checked).Sum(f=>f.Size)),doneFiles,totalFiles,elapsed,current);}
+    static string FormatTime(TimeSpan value){if(value.TotalHours>=1)return String.Format("{0:00}:{1:00}:{2:00}",(int)value.TotalHours,value.Minutes,value.Seconds);return String.Format("{0:00}:{1:00}",(int)value.TotalMinutes,value.Seconds);}
+    static void CopyVerified(string src,string dst,Action<string,long,int> progress) {
       Directory.CreateDirectory(dst);
       foreach(var dir in SafeDirectories(src)) {
         string rel=dir.Substring(src.TrimEnd('\\').Length).TrimStart('\\'); string target=String.IsNullOrEmpty(rel)?dst:Path.Combine(dst,rel);
         Directory.CreateDirectory(target); try { File.SetAttributes(target,File.GetAttributes(dir)); Directory.SetLastWriteTimeUtc(target,Directory.GetLastWriteTimeUtc(dir)); } catch {}
       }
-      foreach(var file in SafeFiles(src)){string rel=file.Substring(src.TrimEnd('\\').Length).TrimStart('\\');string target=Path.Combine(dst,rel);Directory.CreateDirectory(Path.GetDirectoryName(target));if(File.Exists(target)){if(FilesEqual(file,target)){progress("Ya existe idéntico, omitido: "+rel);continue;}target=ConflictName(target);progress("Conflicto conservado con otro nombre: "+Path.GetFileName(target));}File.Copy(file,target,false);if(!FilesEqual(file,target))throw new IOException("Falló la verificación de "+Path.GetFileName(file));progress("Copiando "+Path.GetFileName(src)+": "+rel);}
+      foreach(var file in SafeFiles(src)){string rel=file.Substring(src.TrimEnd('\\').Length).TrimStart('\\');string target=Path.Combine(dst,rel);Directory.CreateDirectory(Path.GetDirectoryName(target));long fileBytes=0;try{fileBytes=new FileInfo(file).Length;}catch{}if(File.Exists(target)){if(FilesEqual(file,target)){progress("Ya existe idéntico, verificado: "+rel,fileBytes,1);continue;}target=ConflictName(target);}File.Copy(file,target,false);if(!FilesEqual(file,target))throw new IOException("Falló la verificación de "+Path.GetFileName(file));progress("Copiando y verificando: "+rel,fileBytes,1);}
       try { File.SetAttributes(dst,File.GetAttributes(src)|FileAttributes.ReadOnly); } catch {}
     }
     static bool FilesEqual(string a,string b){var fa=new FileInfo(a);var fb=new FileInfo(b);if(fa.Length!=fb.Length)return false;using(var sha=SHA256.Create())using(var sa=File.OpenRead(a))using(var sb=File.OpenRead(b)){return sha.ComputeHash(sa).SequenceEqual(sha.ComputeHash(sb));}}
@@ -197,7 +208,7 @@ namespace MigradorSeguro {
   }
 
   sealed class ArcadePanel:Panel {
-    readonly Timer timer=new Timer();float x=8;int frame;readonly List<float> dots=new List<float>();
+    readonly System.Windows.Forms.Timer timer=new System.Windows.Forms.Timer();float x=8;int frame;readonly List<float> dots=new List<float>();
     public ArcadePanel(){DoubleBuffered=true;BackColor=Color.FromArgb(8,17,39);for(int i=0;i<14;i++)dots.Add(42+i*31);timer.Interval=55;timer.Tick+=(s,e)=>{x+=5;frame++;for(int i=0;i<dots.Count;i++)if(dots[i]<x+24)dots[i]+=434;if(x>456)x=8;Invalidate();};timer.Start();}
     protected override void Dispose(bool disposing){if(disposing)timer.Dispose();base.Dispose(disposing);}
     protected override void OnPaint(PaintEventArgs e){base.OnPaint(e);e.Graphics.SmoothingMode=System.Drawing.Drawing2D.SmoothingMode.AntiAlias;float cy=70;using(var dotBrush=new SolidBrush(Color.FromArgb(255,207,46)))foreach(float dx in dots){float px=((dx-8)%434+434)%434+23;if(Math.Abs(px-(x+20))>20)e.Graphics.FillEllipse(dotBrush,px,cy-4,8,8);}float mouth=(frame%10<5)?34:12;using(var brush=new SolidBrush(Color.FromArgb(255,207,46)))e.Graphics.FillPie(brush,x,cy-24,48,48,mouth,360-mouth*2);using(var eye=new SolidBrush(Color.FromArgb(8,17,39)))e.Graphics.FillEllipse(eye,x+27,cy-16,5,5);using(var pen=new Pen(Color.FromArgb(46,70,108),2))e.Graphics.DrawRectangle(pen,1,1,Width-3,Height-3);}
