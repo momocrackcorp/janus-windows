@@ -12,6 +12,8 @@ Aplicación gráfica para trasladar Escritorio, Documentos, Descargas, Imágenes
 - Registra cada destino mediante la API oficial `SHSetKnownFolderPath` para conservar la identidad y los iconos de Windows.
 - Incluye una reparación de rutas e iconos para migraciones ya realizadas.
 - Incluye icono propio de la aplicación y una pantalla animada **Acerca de**.
+- Permite crear una carpeta contenedora directamente desde el selector de destino.
+- Aplica un icono celeste de documentos a la unidad destino para el usuario actual, sin escribir `autorun.inf` en la raíz.
 - Reinicia el Explorador de Windows después de aplicar o restaurar cambios.
 
 ## Seguridad
