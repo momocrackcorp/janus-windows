@@ -18,8 +18,8 @@ using Microsoft.Win32;
 [assembly: AssemblyCompany("Omar Aguila")]
 [assembly: AssemblyProduct("Janus")]
 [assembly: AssemblyCopyright("Copyright © Omar Aguila MMXXVI")]
-[assembly: AssemblyVersion("2.0.5.0")]
-[assembly: AssemblyFileVersion("2.0.5.0")]
+[assembly: AssemblyVersion("2.0.6.0")]
+[assembly: AssemblyFileVersion("2.0.6.0")]
 
 namespace MigradorSeguro {
   static class Program {
@@ -236,8 +236,9 @@ namespace MigradorSeguro {
       var restoreStartup=new Button{Text="Restaurar OneDrive",Location=new Point(212,75),Size=new Size(178,28)};restoreStartup.Click+=(s,e)=>RestoreOneDriveStartup();oneDriveGroup.Controls.Add(restoreStartup);
       var timeGroup=new GroupBox{Text="Fecha, hora y zona horaria",Location=new Point(452,285),Size=new Size(424,94)};Controls.Add(timeGroup);
       var timeNote=new Label{Text="Activa la detección automática o abre el panel oficial para ajustar el reloj.",Location=new Point(18,23),Size=new Size(388,20),ForeColor=Color.DimGray};timeGroup.Controls.Add(timeNote);
-      var automaticZone=new Button{Text="Zona horaria automática",Location=new Point(18,52),Size=new Size(185,28)};automaticZone.Click+=(s,e)=>EnableAutomaticTimeZone();timeGroup.Controls.Add(automaticZone);
-      var adjustClock=new Button{Text="Ajustar fecha y hora",Location=new Point(217,52),Size=new Size(185,28)};adjustClock.Click+=(s,e)=>OpenDateTimeSettings();timeGroup.Controls.Add(adjustClock);
+      var automaticZone=new Button{Text="Zona automática",Location=new Point(12,52),Size=new Size(126,28)};automaticZone.Click+=(s,e)=>EnableAutomaticTimeZone();timeGroup.Controls.Add(automaticZone);
+      var syncClock=new Button{Text="Sincronizar ahora",Location=new Point(149,52),Size=new Size(126,28)};syncClock.Click+=(s,e)=>SynchronizeClock();timeGroup.Controls.Add(syncClock);
+      var adjustClock=new Button{Text="Ajustar reloj",Location=new Point(286,52),Size=new Size(126,28)};adjustClock.Click+=(s,e)=>OpenDateTimeSettings();timeGroup.Controls.Add(adjustClock);
       var links=new GroupBox{Text="Descargas y sitios oficiales",Location=new Point(452,387),Size=new Size(424,150)};Controls.Add(links);
       AddLinkButton(links,"VLC media player",18,27,"https://www.videolan.org/",185);
       AddLinkButton(links,"Codec Guide",217,27,"https://www.codecguide.com/",185);
@@ -258,6 +259,16 @@ namespace MigradorSeguro {
     static void Launch(string file,string args=null){try{var p=new ProcessStartInfo(file,args??""){UseShellExecute=true};Process.Start(p);}catch(Exception ex){MessageBox.Show("No se pudo abrir la herramienta:\n"+ex.Message,"Herramientas",MessageBoxButtons.OK,MessageBoxIcon.Error);}}
     static void OpenTerminal(){try{Process.Start(new ProcessStartInfo("wt.exe"){UseShellExecute=true});}catch{Launch("powershell.exe");}}
     static void OpenDateTimeSettings(){try{Process.Start(new ProcessStartInfo("ms-settings:dateandtime"){UseShellExecute=true});}catch{Launch("timedate.cpl");}}
+    static void SynchronizeClock(){
+      if(MessageBox.Show("Windows sincronizará ahora el reloj con su servidor de hora configurado. Se solicitará permiso de administrador. ¿Continuar?","Sincronizar reloj",MessageBoxButtons.YesNo,MessageBoxIcon.Question)!=DialogResult.Yes)return;
+      try{
+        var command="/c sc start w32time >nul 2>&1 & w32tm /resync";
+        var p=Process.Start(new ProcessStartInfo("cmd.exe",command){UseShellExecute=true,Verb="runas",WindowStyle=ProcessWindowStyle.Hidden});
+        if(p==null)throw new InvalidOperationException("Windows no pudo iniciar la sincronización.");p.WaitForExit();
+        if(p.ExitCode!=0)throw new InvalidOperationException("El servicio de hora de Windows no pudo completar la sincronización.");
+        MessageBox.Show("El reloj se sincronizó correctamente con el servidor de hora de Windows.","Hora sincronizada",MessageBoxButtons.OK,MessageBoxIcon.Information);
+      }catch(Exception ex){MessageBox.Show("No se pudo sincronizar el reloj:\n"+ex.Message+"\n\nComprueba la conexión a Internet y que no se haya cancelado el permiso de administrador.","Sincronizar reloj",MessageBoxButtons.OK,MessageBoxIcon.Error);}
+    }
     static void EnableAutomaticTimeZone(){
       if(MessageBox.Show("Windows activará el servicio de zona horaria automática. Se solicitará permiso de administrador y puede ser necesario habilitar la ubicación del dispositivo. ¿Continuar?","Zona horaria automática",MessageBoxButtons.YesNo,MessageBoxIcon.Question)!=DialogResult.Yes)return;
       try{
