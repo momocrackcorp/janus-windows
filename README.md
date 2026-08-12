@@ -22,7 +22,9 @@ Aplicación gráfica para trasladar Escritorio, Documentos, Descargas, Imágenes
 - La pantalla **Acerca de** informa versión, fecha, tecnología, autoría y procedencia; la animación arcade permanece como huevo de pascua.
 - **Acerca de** utiliza el icono PNG de alta resolución y reserva un bloque completo para la autoría y ubicación.
 - Incluye un panel ordenado de herramientas para Winver, MSInfo32, DxDiag, Terminal, SystemInfo, Modo Dios y configuración reversible de avisos UAC.
-- Integra accesos oficiales a VLC, Codec Guide, WinRAR, USB Image Tool y Adobe Reader, junto a una fotografía con tratamiento monocromático.
+- Integra accesos oficiales a VLC, Codec Guide, WinRAR, USB Image Tool, Adobe Reader y Microsoft PC Manager, junto a una fotografía monocromática integrada sin marco.
+- Incluye una sección de descarga para Google Chrome, Mozilla Firefox, Brave, Opera y Comet.
+- Permite cerrar OneDrive y quitar su inicio automático para el usuario actual, con restauración posterior y sin desinstalar, desvincular ni borrar archivos.
 - Reinicia el Explorador de Windows después de aplicar o restaurar cambios.
 
 ## Seguridad
