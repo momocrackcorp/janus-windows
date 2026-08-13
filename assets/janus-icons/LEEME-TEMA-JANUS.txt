@@ -1,0 +1,16 @@
+TEMA DE ICONOS JANUS 2.2
+
+Paquete visual opcional para JANUS.
+
+1. Abra JANUS.
+2. Entre en Herramientas > Tema JANUS.
+3. Pulse "Cargar ZIP..." y seleccione este paquete.
+4. Marque solo los elementos que desea cambiar.
+5. Pulse "Aplicar tema".
+
+JANUS respalda la configuración anterior antes de modificar los iconos.
+El botón "Restaurar iconos originales" permite deshacer los cambios.
+
+Autoría: Omar Aguila
+Laboratorios Momocrackcorp
+Pueblo Seco, Ñuble, Chile
