@@ -19,10 +19,12 @@ using Microsoft.Win32;
 [assembly: AssemblyCompany("Omar Aguila")]
 [assembly: AssemblyProduct("Janus")]
 [assembly: AssemblyCopyright("Copyright © Omar Aguila MMXXVI")]
-[assembly: AssemblyVersion("2.2.0.2")]
-[assembly: AssemblyFileVersion("2.2.0.2")]
+[assembly: AssemblyVersion("2.3.0.0")]
+[assembly: AssemblyFileVersion("2.3.0.0")]
+[assembly: AssemblyInformationalVersion("2.3.0-rc.1")]
 
 namespace MigradorSeguro {
+  static class AppInfo { public const string DisplayVersion="2.3.0-rc.1"; }
   static class Program {
     [STAThread] static void Main() {
       Application.EnableVisualStyles();
@@ -39,7 +41,10 @@ namespace MigradorSeguro {
       ClientSize=new Size(620,620);BackColor=Color.White;
       var picture=new PictureBox{Dock=DockStyle.Fill,SizeMode=PictureBoxSizeMode.Zoom,BackColor=Color.White};
       try{using(Stream imageStream=Assembly.GetExecutingAssembly().GetManifestResourceStream("MigradorSeguro.Splash.png")){if(imageStream!=null)picture.Image=new Bitmap(imageStream);}}catch{}
-      Controls.Add(picture);timer.Interval=1900;timer.Tick+=(s,e)=>{timer.Stop();Close();};Shown+=(s,e)=>timer.Start();
+      Controls.Add(picture);
+      var version=new Label{Text="Versión "+AppInfo.DisplayVersion,AutoSize=true,BackColor=Color.White,ForeColor=Color.FromArgb(35,58,82),Font=new Font("Segoe UI",9,FontStyle.Bold),Anchor=AnchorStyles.Top|AnchorStyles.Right};
+      version.Location=new Point(ClientSize.Width-version.PreferredWidth-16,12);Controls.Add(version);version.BringToFront();
+      timer.Interval=1900;timer.Tick+=(s,e)=>{timer.Stop();Close();};Shown+=(s,e)=>timer.Start();
     }
     protected override void Dispose(bool disposing){if(disposing)timer.Dispose();base.Dispose(disposing);}
   }
@@ -252,22 +257,29 @@ namespace MigradorSeguro {
       var syncClock=new Button{Text="Sincronizar ahora",Location=new Point(149,52),Size=new Size(126,28)};syncClock.Click+=(s,e)=>SynchronizeClock();timeGroup.Controls.Add(syncClock);
       var adjustClock=new Button{Text="Ajustar reloj",Location=new Point(286,52),Size=new Size(126,28)};adjustClock.Click+=(s,e)=>OpenDateTimeSettings();timeGroup.Controls.Add(adjustClock);
       var links=new GroupBox{Text="Descargas y sitios oficiales",Location=new Point(452,387),Size=new Size(424,150)};Controls.Add(links);
-      AddLinkButton(links,"VLC media player",18,27,"https://www.videolan.org/",185);
-      AddLinkButton(links,"Codec Guide",217,27,"https://www.codecguide.com/",185);
-      AddLinkButton(links,"WinRAR en español",18,64,"https://www.win-rar.com/predownload.html?&L=6",185);
-      AddLinkButton(links,"USB Image Tool",217,64,"https://www.osforensics.com/tools/write-usb-images.html",185);
-      AddLinkButton(links,"Adobe Acrobat Reader",18,101,"https://get.adobe.com/es/reader/",185);
-      AddLinkButton(links,"Microsoft PC Manager",217,101,"https://pcmanager.microsoft.com/en-us",185);
+      AddLinkButton(links,"VLC media player",18,27,"https://www.videolan.org/",185,"vlc");
+      AddLinkButton(links,"Codec Guide",217,27,"https://www.codecguide.com/",185,"codec");
+      AddLinkButton(links,"WinRAR en español",18,64,"https://www.win-rar.com/predownload.html?&L=6",185,"winrar");
+      AddLinkButton(links,"USB Image Tool",217,64,"https://www.osforensics.com/tools/write-usb-images.html",185,"usb");
+      AddLinkButton(links,"Adobe Acrobat Reader",18,101,"https://get.adobe.com/es/reader/",185,"adobe");
+      AddLinkButton(links,"Microsoft PC Manager",217,101,"https://pcmanager.microsoft.com/en-us",185,"microsoft");
       var browsers=new GroupBox{Text="Navegadores — descargas oficiales",Location=new Point(452,545),Size=new Size(424,110)};Controls.Add(browsers);
-      AddLinkButton(browsers,"Google Chrome",18,27,"https://www.google.com/chrome/download-chrome",116);
-      AddLinkButton(browsers,"Mozilla Firefox",145,27,"https://www.mozilla.org/firefox/new/",116);
-      AddLinkButton(browsers,"Brave",272,27,"https://brave.com/download/",116);
-      AddLinkButton(browsers,"Opera",80,67,"https://www.opera.com/download",116);
-      AddLinkButton(browsers,"Comet",208,67,"https://www.perplexity.ai/comet",116);
+      AddLinkButton(browsers,"Google Chrome",18,27,"https://www.google.com/chrome/download-chrome",116,"chrome");
+      AddLinkButton(browsers,"Mozilla Firefox",145,27,"https://www.mozilla.org/firefox/new/",116,"firefox");
+      AddLinkButton(browsers,"Brave",272,27,"https://brave.com/download/",116,"brave");
+      AddLinkButton(browsers,"Opera",80,67,"https://www.opera.com/download",116,"opera");
+      AddLinkButton(browsers,"Comet",208,67,"https://www.perplexity.ai/comet",116,"comet");
       var close=new Button{Text="Cerrar",Location=new Point(756,660),Size=new Size(120,29),DialogResult=DialogResult.OK};Controls.Add(close);AcceptButton=close;
     }
     static void AddToolButton(Control parent,string text,int x,int y,EventHandler click,int width=158){var b=new Button{Text=text,Location=new Point(x,y),Size=new Size(width,29)};b.Click+=click;parent.Controls.Add(b);}
-    static void AddLinkButton(Control parent,string text,int x,int y,string url,int width=388){var b=new Button{Text=text,Location=new Point(x,y),Size=new Size(width,28),Tag=url,TextAlign=ContentAlignment.MiddleCenter};b.Click+=(s,e)=>OpenUrl(Convert.ToString(((Button)s).Tag));parent.Controls.Add(b);}
+    static void AddLinkButton(Control parent,string text,int x,int y,string url,int width=388,string iconKind=null){var b=new Button{Text=text,Location=new Point(x,y),Size=new Size(width,28),Tag=url,TextAlign=ContentAlignment.MiddleCenter,ImageAlign=ContentAlignment.MiddleLeft,TextImageRelation=TextImageRelation.ImageBeforeText,Image=CreateLinkIcon(iconKind)};b.Click+=(s,e)=>OpenUrl(Convert.ToString(((Button)s).Tag));parent.Controls.Add(b);}
+    static Bitmap CreateLinkIcon(string kind){
+      try{using(Stream stream=Assembly.GetExecutingAssembly().GetManifestResourceStream("MigradorSeguro.LinkIcons."+kind+".png")){if(stream!=null){using(var source=new Bitmap(stream))return new Bitmap(source,18,18);}}}catch{}
+      var bmp=new Bitmap(18,18);using(var g=Graphics.FromImage(bmp)){g.SmoothingMode=System.Drawing.Drawing2D.SmoothingMode.AntiAlias;g.Clear(Color.Transparent);Color color=Color.SteelBlue;string mark="";
+        switch(kind){case "vlc":color=Color.FromArgb(245,124,0);mark="V";break;case "codec":color=Color.FromArgb(70,105,166);mark="C";break;case "winrar":color=Color.FromArgb(122,63,150);mark="R";break;case "usb":color=Color.FromArgb(73,137,160);mark="U";break;case "adobe":color=Color.FromArgb(227,38,46);mark="A";break;case "microsoft":color=Color.FromArgb(0,120,215);mark="M";break;case "chrome":color=Color.FromArgb(66,133,244);mark="G";break;case "firefox":color=Color.FromArgb(242,106,33);mark="F";break;case "brave":color=Color.FromArgb(251,84,43);mark="B";break;case "opera":color=Color.FromArgb(229,27,43);mark="O";break;case "comet":color=Color.FromArgb(110,87,224);mark="C";break;}
+        using(var fill=new SolidBrush(color))g.FillEllipse(fill,0,0,17,17);using(var font=new Font("Segoe UI",8,FontStyle.Bold,GraphicsUnit.Point))using(var ink=new SolidBrush(Color.White)){var size=g.MeasureString(mark,font);g.DrawString(mark,font,ink,(18-size.Width)/2f,(18-size.Height)/2f-1);}}
+      return bmp;
+    }
     static void Launch(string file,string args=null){try{var p=new ProcessStartInfo(file,args??""){UseShellExecute=true};Process.Start(p);}catch(Exception ex){MessageBox.Show("No se pudo abrir la herramienta:\n"+ex.Message,"Herramientas",MessageBoxButtons.OK,MessageBoxIcon.Error);}}
     static void OpenTerminal(){try{Process.Start(new ProcessStartInfo("wt.exe"){UseShellExecute=true});}catch{Launch("powershell.exe");}}
     static void OpenDateTimeSettings(){try{Process.Start(new ProcessStartInfo("ms-settings:dateandtime"){UseShellExecute=true});}catch{Launch("timedate.cpl");}}
