@@ -2,6 +2,14 @@
 
 Aplicación gráfica para trasladar Escritorio, Documentos, Descargas, Imágenes, Música y Vídeos a otra unidad sin arriesgar los archivos originales.
 
+## Finalidad de JANUS
+
+JANUS nace para agilizar y simplificar las tareas habituales después de formatear o realizar una instalación limpia de Windows. Está recomendado especialmente para instalaciones limpias y para equipos con más de una unidad o con un disco dividido en varias particiones, donde permite separar el sistema operativo y las aplicaciones de los archivos personales.
+
+La aplicación centraliza tareas de configuración y puesta a punto que normalmente se realizan de forma manual. Facilita asociar Escritorio, Documentos, Descargas, Imágenes, Música y Vídeos con una segunda unidad o partición, sin mover componentes críticos del perfil como AppData.
+
+Esta separación facilita futuras reinstalaciones de Windows al mantener los datos personales apartados del sistema. JANUS prioriza operaciones seguras, verificables y reversibles: crea respaldos, permite comprobar los cambios y nunca borra automáticamente los archivos originales.
+
 ## ¿Por qué Janus?
 
 La aplicación se llamó **Migrador Seguro** hasta la versión 1.x. Desde la versión 2.0 adopta el nombre **Janus** para representar mejor su propósito.
