@@ -57,6 +57,8 @@ El cambio de nombre no altera el objetivo ni las protecciones del programa. Janu
 
 ## Descargar
 
+La revisión 2.1.0.1 conserva exactamente la base funcional de JANUS 2.1.0 y añade únicamente un enlace para descargar el paquete visual adicional. JANUS no descarga, abre, extrae ni instala automáticamente ese ZIP.
+
 El ejecutable de Windows se publica en la sección **Releases** del repositorio. Windows SmartScreen puede advertir que el archivo no tiene firma digital; el hash SHA-256 se incluye en cada versión.
 
 ### Aviso de SmartScreen

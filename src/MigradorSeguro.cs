@@ -18,8 +18,8 @@ using Microsoft.Win32;
 [assembly: AssemblyCompany("Omar Aguila")]
 [assembly: AssemblyProduct("Janus")]
 [assembly: AssemblyCopyright("Copyright © Omar Aguila MMXXVI")]
-[assembly: AssemblyVersion("2.1.0.0")]
-[assembly: AssemblyFileVersion("2.1.0.0")]
+[assembly: AssemblyVersion("2.1.0.1")]
+[assembly: AssemblyFileVersion("2.1.0.1")]
 
 namespace MigradorSeguro {
   static class Program {
@@ -348,7 +348,8 @@ namespace MigradorSeguro {
 
     public JanusIconThemeForm(){Text="Tema de iconos JANUS";ClientSize=new Size(800,440);MinimumSize=MaximumSize=new Size(816,479);StartPosition=FormStartPosition.CenterParent;FormBorderStyle=FormBorderStyle.FixedDialog;MaximizeBox=false;MinimizeBox=false;BackColor=Color.White;try{Icon=Icon.ExtractAssociatedIcon(Application.ExecutablePath);}catch{}
       Controls.Add(new Label{Text="Tema de iconos JANUS",Font=new Font("Segoe UI",18,FontStyle.Bold),Location=new Point(24,18),AutoSize=true});
-      Controls.Add(new Label{Text="Elige qué iconos aplicar. JANUS respalda la configuración de Windows antes de modificarla.",Location=new Point(27,58),Size=new Size(742,22),ForeColor=Color.DimGray});
+      Controls.Add(new Label{Text="Elige qué iconos aplicar. JANUS respalda la configuración de Windows antes de modificarla.",Location=new Point(27,58),Size=new Size(560,22),ForeColor=Color.DimGray});
+      var download=new Button{Text="Descargar tema adicional",Location=new Point(596,52),Size=new Size(180,28)};download.Click+=(s,e)=>DownloadAdditionalTheme();Controls.Add(download);
       var preview=new GroupBox{Text="Vista previa",Location=new Point(24,91),Size=new Size(752,239)};Controls.Add(preview);
       AddChoice(preview,computer,"Este equipo","JanusIcons.Computer.png",10);
       AddChoice(preview,userFiles,"Archivos del usuario","JanusIcons.UserFiles.png",158);
@@ -361,6 +362,7 @@ namespace MigradorSeguro {
       var close=new Button{Text="Cerrar",Location=new Point(684,382),Size=new Size(92,32),DialogResult=DialogResult.Cancel};Controls.Add(close);CancelButton=close;
     }
     static void AddChoice(Control parent,CheckBox check,string label,string resource,int x){var box=new Panel{Location=new Point(x,25),Size=new Size(140,198),BackColor=Color.FromArgb(247,249,252),BorderStyle=BorderStyle.FixedSingle};var picture=new PictureBox{Location=new Point(10,10),Size=new Size(118,140),SizeMode=PictureBoxSizeMode.Zoom,BackColor=Color.Transparent};try{using(var stream=Assembly.GetExecutingAssembly().GetManifestResourceStream(resource))if(stream!=null)picture.Image=new Bitmap(stream);}catch{}check.Text=label;check.Checked=true;check.TextAlign=ContentAlignment.MiddleCenter;check.CheckAlign=ContentAlignment.MiddleCenter;check.Location=new Point(5,158);check.Size=new Size(130,32);box.Controls.Add(picture);box.Controls.Add(check);parent.Controls.Add(box);}
+    static void DownloadAdditionalTheme(){try{Process.Start(new ProcessStartInfo("https://github.com/momocrackcorp/janus-windows/releases/download/v2.2.0-rc2/Tema-Iconos-JANUS-v2.2.zip"){UseShellExecute=true});}catch(Exception ex){MessageBox.Show("No se pudo abrir la descarga:\n"+ex.Message,"Tema JANUS",MessageBoxButtons.OK,MessageBoxIcon.Error);}}
     static Dictionary<string,IconKeyBackup> CaptureIconKeys(){var result=new Dictionary<string,IconKeyBackup>();foreach(string id in new[]{ComputerId,UserFilesId,NetworkId,RecycleId}){string path=KeyPath(id);var item=new IconKeyBackup{Exists=false,Values=new Dictionary<string,string>()};using(var key=Registry.CurrentUser.OpenSubKey(path)){if(key!=null){item.Exists=true;foreach(string name in key.GetValueNames())item.Values[name]=Convert.ToString(key.GetValue(name,null,RegistryValueOptions.DoNotExpandEnvironmentNames));}}result[path]=item;}return result;}
     static void SaveBackup(string path,Dictionary<string,IconKeyBackup> state){Directory.CreateDirectory(Path.GetDirectoryName(path));File.WriteAllText(path,new JavaScriptSerializer().Serialize(state),System.Text.Encoding.UTF8);}
     static Dictionary<string,IconKeyBackup> ReadBackup(string path){return new JavaScriptSerializer().Deserialize<Dictionary<string,IconKeyBackup>>(File.ReadAllText(path,System.Text.Encoding.UTF8));}
