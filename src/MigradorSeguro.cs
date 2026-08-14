@@ -363,7 +363,8 @@ namespace MigradorSeguro {
       new ThemeOption{Id="crux",Name="Crux",FileName="Tema-Iconos-Crux.zip",Source="GNOME clásico / Arlo Rose",License="GPL-2.0-or-later",DownloadUrl="https://github.com/momocrackcorp/janus-windows/releases/download/v2.3.0-rc.2/Tema-Iconos-Crux.zip"},
       new ThemeOption{Id="newaita",Name="Newaita",FileName="Tema-Iconos-Newaita.zip",Source="cbrnix/Newaita",License="CC BY-NC-SA 3.0",DownloadUrl="https://github.com/momocrackcorp/janus-windows/releases/download/v2.3.0-rc.2/Tema-Iconos-Newaita.zip"},
       new ThemeOption{Id="papirus",Name="Papirus",FileName="Tema-Iconos-Papirus.zip",Source="PapirusDevelopmentTeam",License="GPL-3.0",DownloadUrl="https://github.com/momocrackcorp/janus-windows/releases/download/v2.3.0-rc.2/Tema-Iconos-Papirus.zip"},
-      new ThemeOption{Id="whitesur",Name="WhiteSur",FileName="Tema-Iconos-WhiteSur.zip",Source="vinceliuice",License="GPL-3.0",DownloadUrl="https://github.com/momocrackcorp/janus-windows/releases/download/v2.3.0-rc.2/Tema-Iconos-WhiteSur.zip"}
+      new ThemeOption{Id="whitesur",Name="WhiteSur",FileName="Tema-Iconos-WhiteSur.zip",Source="vinceliuice",License="GPL-3.0",DownloadUrl="https://github.com/momocrackcorp/janus-windows/releases/download/v2.3.0-rc.2/Tema-Iconos-WhiteSur.zip"},
+      new ThemeOption{Id="lacapitaine",Name="La Capitaine",FileName="Tema-Iconos-La-Capitaine.zip",Source="Keefer Rourke y colaboradores",License="GPL-3.0",DownloadUrl="https://github.com/momocrackcorp/janus-windows/releases/download/v2.3.0-rc.2/Tema-Iconos-La-Capitaine.zip"}
     };
     static string KeyPath(string id){return @"Software\Microsoft\Windows\CurrentVersion\Explorer\CLSID\"+id+@"\DefaultIcon";}
     static string LegacyKeyPath(string id){return @"Software\Classes\CLSID\"+id+@"\DefaultIcon";}

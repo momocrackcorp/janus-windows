@@ -9,9 +9,15 @@ BUILD = (ROOT / "build-native.ps1").read_text(encoding="utf-8")
 
 class ThemeCatalogTests(unittest.TestCase):
     def test_external_themes_are_listed(self):
-        for theme in ("Crux", "Newaita", "Papirus", "WhiteSur"):
-            self.assertIn(f'Name="{theme}"', SOURCE)
-            self.assertIn(f"Tema-Iconos-{theme}.zip", SOURCE)
+        for name, package in (
+            ("Crux", "Crux"),
+            ("Newaita", "Newaita"),
+            ("Papirus", "Papirus"),
+            ("WhiteSur", "WhiteSur"),
+            ("La Capitaine", "La-Capitaine"),
+        ):
+            self.assertIn(f'Name="{name}"', SOURCE)
+            self.assertIn(f"Tema-Iconos-{package}.zip", SOURCE)
 
     def test_theme_packages_are_not_embedded(self):
         self.assertNotIn("theme-packs", BUILD.lower())

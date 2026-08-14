@@ -1,5 +1,5 @@
 param(
-  [ValidateSet("janus", "crux", "newaita", "papirus", "whitesur")]
+  [ValidateSet("janus", "crux", "newaita", "papirus", "whitesur", "lacapitaine")]
   [string]$Theme = "janus"
 )
 
@@ -11,6 +11,7 @@ $themeNames = @{
   newaita = "Newaita"
   papirus = "Papirus"
   whitesur = "WhiteSur"
+  lacapitaine = "La-Capitaine"
 }
 $source = if ($Theme -eq "janus") {
   Join-Path $root "assets\janus-icons"
