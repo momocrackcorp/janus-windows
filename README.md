@@ -54,7 +54,8 @@ El cambio de nombre no altera el objetivo ni las protecciones del programa. Janu
 - Antes de aplicar el tema guarda la configuración anterior y ofrece **Restaurar iconos originales de Windows** con un clic.
 - La versión 2.1.1 corrige la ubicación del registro utilizada por el Explorador de Windows 11, verifica cada valor escrito y actualiza la caché de iconos al aplicar o restaurar.
 - La versión 2.2 amplía la familia a Documentos, Descargas, Escritorio, Imágenes, Música, Vídeos, HDD/SSD, USB y unidades de red. Los iconos personales usan un gran medallón circular y un símbolo central legible, sin la carpeta amarilla superpuesta.
-- El tema visual se distribuye aparte como **Tema-Iconos-JANUS-v2.2.zip** para mantener liviano `Janus.exe`. Desde **Herramientas → Tema JANUS** se puede abrir la descarga, cargar el ZIP, ver las vistas previas, aplicar elementos individuales y restaurar los originales.
+- Los temas visuales se distribuyen como paquetes ZIP separados para mantener liviano `Janus.exe`; ninguno viene incrustado en la aplicación. Desde **Herramientas → Tema JANUS** se puede elegir JANUS Fluent Soft 3D, Crux, Newaita, Papirus o WhiteSur, descargar el paquete seleccionado, cargarlo, ver sus vistas previas, aplicar elementos individuales y restaurar los iconos originales.
+- Cada tema queda instalado en su propia carpeta local, por lo que cambiar de diseño no sobrescribe los demás. Los paquetes derivados de terceros se publican por separado con su licencia y atribución correspondientes.
 
 ## Seguridad
 
@@ -91,10 +92,6 @@ Si las carpetas ya fueron migradas pero aparecen con iconos genéricos, pulsa **
 ## Diseño de recuperación
 
 Después de verificar durante varios días que todo funciona, el usuario puede archivar o borrar manualmente las carpetas originales. La aplicación no ofrece borrado para evitar pérdida accidental.
-
-## Futuras ampliaciones del tema JANUS
-
-La misma familia visual podrá ampliarse a Documentos, Descargas, Escritorio, Imágenes, Música, Vídeos, HDD/SSD, USB y unidades de red.
 
 ## Pruebas
 

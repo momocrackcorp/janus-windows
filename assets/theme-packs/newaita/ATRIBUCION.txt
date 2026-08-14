@@ -1,0 +1,5 @@
+Newaita Icon Theme
+Fuente: https://github.com/cbrnix/Newaita
+Licencia: Creative Commons Attribution-NonCommercial-ShareAlike 3.0
+Autor: cbrnix
+Adaptación para el paquete externo y gratuito de JANUS: cambio de nombres y conversión a PNG/ICO.

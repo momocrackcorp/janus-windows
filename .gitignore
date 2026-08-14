@@ -6,3 +6,7 @@ dist/
 *.spec
 .pytest_cache/
 *.log
+assets/theme-packs/**/*.pdf
+assets/theme-packs/**/*.svg
+tools/_vendor/
+tools/render-theme-pack.py

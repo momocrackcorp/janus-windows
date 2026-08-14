@@ -1,0 +1,6 @@
+Crux clásico (Quid) con herencia MATE
+Fuentes: https://github.com/mate-desktop/mate-themes y https://github.com/mate-desktop/mate-icon-theme
+Crux fue renombrado como Quid; su índice oficial indica que es un port del tema Crux y que hereda los iconos MATE.
+Autores: Arlo Rose y colaboradores de GNOME/MATE.
+Licencia: GNU General Public License v2.0 o posterior.
+Adaptación para el paquete externo de JANUS: selección, cambio de nombres y conversión a ICO.

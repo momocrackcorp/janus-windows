@@ -1,0 +1,5 @@
+WhiteSur Icon Theme
+Fuente: https://github.com/vinceliuice/WhiteSur-icon-theme
+Licencia: GNU General Public License v3.0
+Autor: Vince Liuice y colaboradores
+Adaptación para el paquete externo de JANUS: selección, cambio de nombres y conversión a PNG/ICO.
