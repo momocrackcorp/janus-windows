@@ -27,6 +27,11 @@ class ThemeCatalogTests(unittest.TestCase):
         self.assertIn('"IconPacks",SelectedTheme.Id', SOURCE)
         self.assertIn('"IconThemes",SelectedTheme.Id', SOURCE)
 
+    def test_folder_icon_changes_refresh_quick_access(self):
+        self.assertIn("NotifyFolderIconChanged(folder)", SOURCE)
+        self.assertIn("NotifyFolderIconChanged(item.Item2)", SOURCE)
+        self.assertIn('EntryPoint="SHChangeNotify"', SOURCE)
+
 
 if __name__ == "__main__":
     unittest.main()
