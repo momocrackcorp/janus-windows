@@ -46,6 +46,19 @@ class ThemeCatalogTests(unittest.TestCase):
         ):
             self.assertIn(clsid, SOURCE)
 
+    def test_explorer_shortcut_is_experimental_and_reversible(self):
+        self.assertIn('new TabPage("Accesos")', SOURCE)
+        self.assertIn('explorerShortcut.Checked=false', SOURCE)
+        self.assertIn('CreateExplorerShortcut(ExtractExplorerIcon())', SOURCE)
+        self.assertIn('RestoreExplorerShortcut()', SOURCE)
+        self.assertIn('Type.GetTypeFromProgID("WScript.Shell")', SOURCE)
+
+    def test_external_packs_include_explorer_artwork(self):
+        for theme in ("crux", "newaita", "papirus", "whitesur", "lacapitaine"):
+            folder = ROOT / "assets" / "theme-packs" / theme
+            self.assertTrue((folder / "explorador.png").is_file())
+            self.assertTrue((folder / "explorador.ico").is_file())
+
 
 if __name__ == "__main__":
     unittest.main()

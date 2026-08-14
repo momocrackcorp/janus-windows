@@ -56,6 +56,7 @@ El cambio de nombre no altera el objetivo ni las protecciones del programa. Janu
 - La versión 2.2 amplía la familia a Documentos, Descargas, Escritorio, Imágenes, Música, Vídeos, HDD/SSD, USB y unidades de red. Los iconos personales usan un gran medallón circular y un símbolo central legible, sin la carpeta amarilla superpuesta.
 - Los temas visuales se distribuyen como paquetes ZIP separados para mantener liviano `Janus.exe`; ninguno viene incrustado en la aplicación. Desde **Herramientas → Tema JANUS** se puede elegir JANUS Fluent Soft 3D, Crux, Newaita, Papirus, WhiteSur o La Capitaine, descargar el paquete seleccionado, cargarlo, ver sus vistas previas, aplicar elementos individuales y restaurar los iconos originales.
 - Cada tema queda instalado en su propia carpeta local, por lo que cambiar de diseño no sobrescribe los demás. Los paquetes derivados de terceros se publican por separado con su licencia y atribución correspondientes.
+- La pestaña **Accesos** permite probar, de forma experimental y reversible, un acceso del Explorador de archivos con el icono del tema. JANUS lo crea en el Escritorio sin modificar `explorer.exe` ni alterar automáticamente la barra de tareas; Windows 11 puede conservar el icono oficial mientras el Explorador está abierto.
 
 ## Seguridad
 
