@@ -31,8 +31,8 @@ if (Test-Path $target) { Remove-Item -LiteralPath $target -Force }
 $files = Get-ChildItem -LiteralPath $source -File | Where-Object {
   $_.Extension -in ".png", ".ico", ".txt"
 }
-if ($files.Count -lt 30) {
-  throw "El tema debe contener los 15 iconos en PNG e ICO, incluido Explorador, además de sus archivos de atribución."
+if ($files.Count -lt 28) {
+  throw "El tema debe contener los 14 iconos en PNG e ICO, además de sus archivos de atribución."
 }
 Compress-Archive -LiteralPath $files.FullName -DestinationPath $target -CompressionLevel Optimal
 Write-Host "Paquete creado: $target"
