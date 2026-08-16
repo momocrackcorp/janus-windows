@@ -21,17 +21,36 @@ using Microsoft.Win32;
 [assembly: AssemblyCopyright("Copyright © Omar Aguila MMXXVI")]
 [assembly: AssemblyVersion("2.3.0.0")]
 [assembly: AssemblyFileVersion("2.3.0.0")]
-[assembly: AssemblyInformationalVersion("2.3.0-rc.3")]
+[assembly: AssemblyInformationalVersion("2.3.0-rc.4")]
 
 namespace MigradorSeguro {
-  static class AppInfo { public const string DisplayVersion="2.3.0-rc.3"; }
+  static class AppInfo { public const string DisplayVersion="2.3.0-rc.4"; }
   static class Program {
     [STAThread] static void Main() {
       Application.EnableVisualStyles();
       Application.SetCompatibleTextRenderingDefault(false);
       using (var splash=new SplashForm()) splash.ShowDialog();
-      Application.Run(new MainForm());
+      Application.Run(new JanusShellForm());
     }
+  }
+
+  sealed class JanusShellForm:Form {
+    readonly TabControl navigation=new TabControl();
+    public JanusShellForm(){
+      Text="JANUS — Migración segura y puesta a punto";ClientSize=new Size(1100,810);MinimumSize=new Size(980,735);StartPosition=FormStartPosition.CenterScreen;BackColor=Color.FromArgb(244,246,248);Font=new Font("Segoe UI",9F);
+      try{Icon=Icon.ExtractAssociatedIcon(Application.ExecutablePath);}catch{}
+      navigation.Dock=DockStyle.Fill;navigation.Padding=new Point(22,7);Controls.Add(navigation);
+      var migration=new TabPage("Migración"){BackColor=Color.FromArgb(244,246,248)};
+      var tools=new TabPage("Herramientas"){BackColor=Color.White};
+      var bag=new TabPage("Mochila"){BackColor=Color.White};
+      var about=new TabPage("Acerca de"){BackColor=Color.White};
+      navigation.TabPages.AddRange(new[]{migration,tools,bag,about});
+      Host(migration,new MainForm(true));
+      Host(tools,new WindowsToolsForm(()=>navigation.SelectedTab=bag,true));
+      Host(bag,new ReinstallationCenterForm(true));
+      Host(about,new AboutForm(true));
+    }
+    static void Host(TabPage page,Form form){form.TopLevel=false;form.FormBorderStyle=FormBorderStyle.None;form.Dock=DockStyle.Fill;page.Controls.Add(form);form.Show();}
   }
 
   sealed class SplashForm:Form {
@@ -67,11 +86,11 @@ namespace MigradorSeguro {
     readonly FolderPiePanel folderPie = new FolderPiePanel();
     readonly Color[] folderColors={Color.FromArgb(39,125,161),Color.FromArgb(249,199,79),Color.FromArgb(244,162,97),Color.FromArgb(67,170,139),Color.FromArgb(153,102,204),Color.FromArgb(231,111,81)};
 
-    public MainForm() {
+    public MainForm(bool embedded=false) {
       Text = "Janus — Migración segura de carpetas"; Width = 1080; Height = 780;
       MinimumSize = new Size(920, 680); BackColor = Color.FromArgb(244,246,248);
       try { Icon=Icon.ExtractAssociatedIcon(Application.ExecutablePath); } catch {}
-      Font = new Font("Segoe UI", 9F); BuildFolders(); BuildUi();
+      Font = new Font("Segoe UI", 9F); BuildFolders(); BuildUi(embedded);
       Shown += async (s,e) => await RefreshData();
     }
 
@@ -90,12 +109,11 @@ namespace MigradorSeguro {
       return new FolderItem {Label=label,RegistryName=reg,DefaultName=fallback,KnownFolderId=knownFolderId,Source=Environment.ExpandEnvironmentVariables(value)};
     }
 
-    void BuildUi() {
+    void BuildUi(bool embedded) {
       var title=new Label{Text="Janus",Font=new Font("Segoe UI",19,FontStyle.Bold),AutoSize=true,Location=new Point(22,16)};
       var subtitle=new Label{Text="Copia, verifica y redirige tus carpetas personales sin borrar los originales.",AutoSize=true,Location=new Point(25,54)};
       Controls.Add(title); Controls.Add(subtitle);
-      var about=new Button{Text="Acerca de",Size=new Size(100,27),Location=new Point(940,10),Anchor=AnchorStyles.Top|AnchorStyles.Right}; about.Click+=(s,e)=>{using(var d=new AboutForm())d.ShowDialog(this);}; Controls.Add(about);
-      var toolsButton=new Button{Text="Herramientas",Size=new Size(100,27),Location=new Point(940,42),Anchor=AnchorStyles.Top|AnchorStyles.Right};toolsButton.Click+=(s,e)=>{using(var d=new WindowsToolsForm())d.ShowDialog(this);};Controls.Add(toolsButton);
+      if(!embedded){var about=new Button{Text="Acerca de",Size=new Size(100,27),Location=new Point(940,10),Anchor=AnchorStyles.Top|AnchorStyles.Right};about.Click+=(s,e)=>{using(var d=new AboutForm())d.ShowDialog(this);};Controls.Add(about);var toolsButton=new Button{Text="Herramientas",Size=new Size(100,27),Location=new Point(940,42),Anchor=AnchorStyles.Top|AnchorStyles.Right};toolsButton.Click+=(s,e)=>{using(var d=new WindowsToolsForm())d.ShowDialog(this);};Controls.Add(toolsButton);}
       var left=new Panel{BackColor=Color.White,Location=new Point(22,84),Size=new Size(650,585),Anchor=AnchorStyles.Top|AnchorStyles.Bottom|AnchorStyles.Left|AnchorStyles.Right};
       var right=new Panel{BackColor=Color.White,Location=new Point(690,84),Size=new Size(350,585),Anchor=AnchorStyles.Top|AnchorStyles.Bottom|AnchorStyles.Right};
       Controls.Add(left); Controls.Add(right);
@@ -222,10 +240,10 @@ namespace MigradorSeguro {
 
   sealed class WindowsToolsForm:Form {
     readonly CheckBox neverNotify=new CheckBox();
-    public WindowsToolsForm(){Text="Herramientas de Windows";ClientSize=new Size(900,695);MinimumSize=MaximumSize=new Size(916,734);StartPosition=FormStartPosition.CenterParent;FormBorderStyle=FormBorderStyle.FixedDialog;MaximizeBox=false;MinimizeBox=false;BackColor=Color.White;try{Icon=Icon.ExtractAssociatedIcon(Application.ExecutablePath);}catch{}
+    public WindowsToolsForm(Action openRecovery=null,bool embedded=false){Text="Herramientas de Windows";ClientSize=new Size(900,695);MinimumSize=MaximumSize=new Size(916,734);StartPosition=FormStartPosition.CenterParent;FormBorderStyle=FormBorderStyle.FixedDialog;MaximizeBox=false;MinimizeBox=false;BackColor=Color.White;try{Icon=Icon.ExtractAssociatedIcon(Application.ExecutablePath);}catch{}
       var title=new Label{Text="Herramientas de Windows",Font=new Font("Segoe UI",18,FontStyle.Bold),Location=new Point(24,17),AutoSize=true};Controls.Add(title);
       var subtitle=new Label{Text="Diagnóstico, administración y software recomendado.",Location=new Point(27,55),AutoSize=true,ForeColor=Color.DimGray};Controls.Add(subtitle);
-      var recoveryCenter=new Button{Text="Mochila de reinstalación…",Location=new Point(650,18),Size=new Size(226,32)};recoveryCenter.Click+=(s,e)=>{using(var form=new ReinstallationCenterForm())form.ShowDialog(this);};Controls.Add(recoveryCenter);
+      var recoveryCenter=new Button{Text="Mochila de reinstalación…",Location=new Point(650,18),Size=new Size(226,32)};recoveryCenter.Click+=(s,e)=>{if(openRecovery!=null)openRecovery();else using(var form=new ReinstallationCenterForm())form.ShowDialog(this);};Controls.Add(recoveryCenter);
       var systemGroup=new GroupBox{Text="Sistema y diagnóstico",Location=new Point(24,86),Size=new Size(408,234)};Controls.Add(systemGroup);
       AddToolButton(systemGroup,"Versión de Windows (Winver)",54,22,(s,e)=>Launch("winver.exe"),300);
       AddToolButton(systemGroup,"Información del sistema (MSInfo32)",54,57,(s,e)=>Launch("msinfo32.exe"),300);
@@ -271,7 +289,7 @@ namespace MigradorSeguro {
       AddLinkButton(browsers,"Brave",272,27,"https://brave.com/download/",116,"brave");
       AddLinkButton(browsers,"Opera",80,67,"https://www.opera.com/download",116,"opera");
       AddLinkButton(browsers,"Comet",208,67,"https://www.perplexity.ai/comet",116,"comet");
-      var close=new Button{Text="Cerrar",Location=new Point(756,660),Size=new Size(120,29),DialogResult=DialogResult.OK};Controls.Add(close);AcceptButton=close;
+      if(!embedded){var close=new Button{Text="Cerrar",Location=new Point(756,660),Size=new Size(120,29),DialogResult=DialogResult.OK};Controls.Add(close);AcceptButton=close;}
     }
     static void AddToolButton(Control parent,string text,int x,int y,EventHandler click,int width=158){var b=new Button{Text=text,Location=new Point(x,y),Size=new Size(width,29)};b.Click+=click;parent.Controls.Add(b);}
     static void AddLinkButton(Control parent,string text,int x,int y,string url,int width=388,string iconKind=null){var b=new Button{Text=text,Location=new Point(x,y),Size=new Size(width,28),Tag=url,TextAlign=ContentAlignment.MiddleCenter,ImageAlign=ContentAlignment.MiddleLeft,TextImageRelation=TextImageRelation.ImageBeforeText,Image=CreateLinkIcon(iconKind)};b.Click+=(s,e)=>OpenUrl(Convert.ToString(((Button)s).Tag));parent.Controls.Add(b);}
@@ -431,7 +449,7 @@ namespace MigradorSeguro {
 
   sealed class AboutForm:Form {
     int secretClicks;
-    public AboutForm(){Text="Acerca de Janus";ClientSize=new Size(620,550);MinimumSize=MaximumSize=new Size(636,589);StartPosition=FormStartPosition.CenterParent;MaximizeBox=false;MinimizeBox=false;BackColor=Color.White;ForeColor=Color.FromArgb(28,38,52);Icon appIcon=null;try{appIcon=Icon.ExtractAssociatedIcon(Application.ExecutablePath);Icon=appIcon;}catch{}
+    public AboutForm(bool embedded=false){Text="Acerca de Janus";ClientSize=new Size(620,550);MinimumSize=MaximumSize=new Size(636,589);StartPosition=FormStartPosition.CenterParent;MaximizeBox=false;MinimizeBox=false;BackColor=Color.White;ForeColor=Color.FromArgb(28,38,52);Icon appIcon=null;try{appIcon=Icon.ExtractAssociatedIcon(Application.ExecutablePath);Icon=appIcon;}catch{}
       var picture=new PictureBox{Location=new Point(28,28),Size=new Size(128,128),SizeMode=PictureBoxSizeMode.Zoom,Cursor=Cursors.Hand};try{using(Stream iconStream=Assembly.GetExecutingAssembly().GetManifestResourceStream("MigradorSeguro.AppIcon.png")){if(iconStream!=null)picture.Image=Image.FromStream(iconStream);else if(appIcon!=null)picture.Image=appIcon.ToBitmap();}}catch{if(appIcon!=null)picture.Image=appIcon.ToBitmap();}picture.Click+=(s,e)=>{secretClicks++;if(secretClicks>=5){secretClicks=0;using(var egg=new EasterEggForm())egg.ShowDialog(this);}};Controls.Add(picture);
       var title=new Label{Text="Janus",Font=new Font("Segoe UI",22,FontStyle.Bold),Location=new Point(180,27),AutoSize=true};Controls.Add(title);
       var version=new Label{Text="Versión "+Application.ProductVersion,Font=new Font("Segoe UI",11,FontStyle.Bold),ForeColor=Color.FromArgb(39,125,161),Location=new Point(183,74),AutoSize=true};Controls.Add(version);
@@ -440,7 +458,7 @@ namespace MigradorSeguro {
       var details=new Label{Text="NOMBRE\nJano (Janus), dios romano de las transiciones, comienzos, finales, puertas y cambios. Sus dos rostros miran al pasado y al futuro: sistema viejo → sistema nuevo.\n\nREALIZACIÓN\n12 de agosto de 2026\n\nCÓMO FUE REALIZADO\nAplicación nativa para Windows, desarrollada en C# con Windows Forms y .NET Framework, API oficiales y verificación SHA-256.",Font=new Font("Segoe UI",9.5F),Location=new Point(30,196),Size=new Size(560,190)};Controls.Add(details);
       var authorshipTitle=new Label{Text="AUTORÍA",Font=new Font("Segoe UI",9.5F),Location=new Point(30,398),AutoSize=true};Controls.Add(authorshipTitle);
       var authorship=new Label{Text="Omar Aguila\nLaboratorios Momocrackcorp\nPueblo Seco, Ñuble, Chile",Font=new Font("Segoe UI",10.5F,FontStyle.Bold),ForeColor=Color.FromArgb(25,92,135),Location=new Point(30,422),Size=new Size(560,72)};Controls.Add(authorship);
-      var close=new Button{Text="Cerrar",Location=new Point(472,501),Size=new Size(120,32)};close.Click+=(s,e)=>Close();Controls.Add(close);
+      if(!embedded){var close=new Button{Text="Cerrar",Location=new Point(472,501),Size=new Size(120,32)};close.Click+=(s,e)=>Close();Controls.Add(close);}
     }
   }
 

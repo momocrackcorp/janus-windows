@@ -12,8 +12,15 @@ class ReinstallationCenterTests(unittest.TestCase):
     def test_center_is_built_and_reachable(self):
         self.assertIn("ReinstallationCenter.cs", BUILD)
         self.assertIn("new ReinstallationCenterForm()", MAIN)
-        for tab in ("Mochila", "Puesta a punto", "Perfiles", "Respaldos e historial"):
+        for tab in ("Mochila", "Puesta a punto", "Perfiles", "Licencias", "Respaldos e historial"):
             self.assertIn(f'new TabPage("{tab}")', SOURCE)
+
+    def test_main_navigation_uses_embedded_tabs(self):
+        self.assertIn("new JanusShellForm()", MAIN)
+        for tab in ("Migración", "Herramientas", "Mochila", "Acerca de"):
+            self.assertIn(f'new TabPage("{tab}")', MAIN)
+        self.assertIn("form.TopLevel=false", MAIN)
+        self.assertIn("form.Dock=DockStyle.Fill", MAIN)
 
     def test_winget_export_import_have_preview_and_confirmation(self):
         self.assertIn('winget","export -o ', SOURCE)
@@ -62,9 +69,17 @@ class ReinstallationCenterTests(unittest.TestCase):
         self.assertNotIn("DigitalProductId", SOURCE)
         self.assertNotIn("password", SOURCE.lower())
 
-    def test_rc3_version_is_visible(self):
-        self.assertIn('DisplayVersion="2.3.0-rc.3"', MAIN)
-        self.assertIn('AssemblyInformationalVersion("2.3.0-rc.3")', MAIN)
+    def test_license_inspection_is_explicit_and_not_persisted(self):
+        self.assertIn("OA3xOriginalProductKey", SOURCE)
+        self.assertIn("vnextdiag.ps1", SOURCE)
+        self.assertIn("ospp.vbs", SOURCE)
+        self.assertIn("¿Consultar y mostrar la clave?", SOURCE)
+        self.assertIn("Las claves nunca se agregan a informes, historial ni a la Mochila completa", SOURCE)
+        self.assertNotIn('Record("Licencias"', SOURCE)
+
+    def test_rc4_version_is_visible(self):
+        self.assertIn('DisplayVersion="2.3.0-rc.4"', MAIN)
+        self.assertIn('AssemblyInformationalVersion("2.3.0-rc.4")', MAIN)
 
 
 if __name__ == "__main__":
