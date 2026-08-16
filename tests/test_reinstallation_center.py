@@ -11,7 +11,7 @@ BUILD = (ROOT / "build-native.ps1").read_text(encoding="utf-8")
 class ReinstallationCenterTests(unittest.TestCase):
     def test_center_is_built_and_reachable(self):
         self.assertIn("ReinstallationCenter.cs", BUILD)
-        self.assertIn("new ReinstallationCenterForm()", MAIN)
+        self.assertIn("new ReinstallationCenterForm(true)", MAIN)
         for tab in ("Mochila", "Puesta a punto", "Perfiles", "Licencias", "Respaldos e historial"):
             self.assertIn(f'new TabPage("{tab}")', SOURCE)
 
@@ -21,6 +21,14 @@ class ReinstallationCenterTests(unittest.TestCase):
             self.assertIn(f'new TabPage("{tab}")', MAIN)
         self.assertIn("form.TopLevel=false", MAIN)
         self.assertIn("form.Dock=DockStyle.Fill", MAIN)
+        self.assertIn("JanusTabControl", MAIN)
+
+    def test_tools_no_longer_repeat_the_reinstallation_button(self):
+        self.assertNotIn('Text="Mochila de reinstalación…"', MAIN)
+
+    def test_license_check_starts_only_when_its_tab_is_selected(self):
+        self.assertIn("tabs.SelectedTab==licenses&&!licensesLoaded", SOURCE)
+        self.assertNotIn("page.Enter+=async", SOURCE)
 
     def test_winget_export_import_have_preview_and_confirmation(self):
         self.assertIn('winget","export -o ', SOURCE)
