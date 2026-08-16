@@ -21,10 +21,10 @@ using Microsoft.Win32;
 [assembly: AssemblyCopyright("Copyright © Omar Aguila MMXXVI")]
 [assembly: AssemblyVersion("2.3.0.0")]
 [assembly: AssemblyFileVersion("2.3.0.0")]
-[assembly: AssemblyInformationalVersion("2.3.0-rc.2")]
+[assembly: AssemblyInformationalVersion("2.3.0-rc.3")]
 
 namespace MigradorSeguro {
-  static class AppInfo { public const string DisplayVersion="2.3.0-rc.2"; }
+  static class AppInfo { public const string DisplayVersion="2.3.0-rc.3"; }
   static class Program {
     [STAThread] static void Main() {
       Application.EnableVisualStyles();
@@ -161,7 +161,7 @@ namespace MigradorSeguro {
         long needed=selected.Sum(f=>f.Size)+100L*1024*1024; var drive=new DriveInfo(Path.GetPathRoot(root)); if(drive.AvailableFreeSpace<needed) throw new InvalidOperationException("Espacio insuficiente. Faltan "+FormatBytes(needed-drive.AvailableFreeSpace)+".");
         string summary=String.Join("\n\n",selected.Select(f=>"• "+f.Label+": "+FormatBytes(f.Size)+"\n  "+f.Source+"\n  → "+Path.Combine(root,f.DefaultName)));
         if(MessageBox.Show("Se copiarán y verificarán estas carpetas:\n\n"+summary+"\n\nSi el destino ya contiene datos, se fusionarán sin sobrescribir: los idénticos se omiten y los conflictos se guardan con otro nombre.\n\nLos originales NO se borrarán. ¿Continuar?","Confirmación final",MessageBoxButtons.YesNo,MessageBoxIcon.Warning)!=DialogResult.Yes)return;
-        apply.Enabled=false; string backup=BackupRegistry(); status.Text="Respaldo guardado en "+backup;
+        apply.Enabled=false; string backup=BackupRegistry();JanusRecovery.Record("Rutas personales","Crear respaldo","Correcto",backup);status.Text="Respaldo guardado en "+backup;
         long totalBytes=Math.Max(1,selected.Sum(f=>f.Size)),doneBytes=0;int totalFiles=selected.Sum(f=>f.Files),doneFiles=0;var watch=Stopwatch.StartNew();var stats=new MigrationStats();
         UpdateMigrationProgress(0,totalFiles,0,watch.Elapsed,"Preparando copia…");
         await Task.Run(()=> { foreach(var f in selected) CopyVerified(f.Source,Path.Combine(root,f.DefaultName),stats,(m,bytes,files)=>{Interlocked.Add(ref doneBytes,bytes);Interlocked.Add(ref doneFiles,files);long currentBytes=Interlocked.Read(ref doneBytes);int currentFiles=Volatile.Read(ref doneFiles);BeginInvoke((Action)(()=>UpdateMigrationProgress(currentBytes,totalBytes,currentFiles,totalFiles,watch.Elapsed,m)));}); });
@@ -170,9 +170,10 @@ namespace MigradorSeguro {
         try { foreach(var f in selected){SetKnownFolder(f,Path.Combine(root,f.DefaultName));changed.Add(f);} NotifyShell(); }
         catch { RestoreFile(backup,changed.Select(x=>x.Label)); throw; }
         ApplyDestinationDriveIcon(root); status.Text="Migración completada correctamente. Se aplicó el icono celeste a la unidad destino.";
+        JanusRecovery.Record("Migración","Copiar y redirigir","Correcto",root);
         using(var report=new SummaryForm(BuildSummary(selected,root,backup,stats,watch.Elapsed)))report.ShowDialog(this);
         if(MessageBox.Show("Windows ya apunta al nuevo destino.\n\nLos originales siguen intactos. ¿Reiniciar el Explorador ahora?","Migración completada",MessageBoxButtons.YesNo,MessageBoxIcon.Information)==DialogResult.Yes) RestartExplorer();
-      } catch(Exception ex) { MessageBox.Show(ex.Message+"\n\nNo se borraron archivos.","Operación detenida",MessageBoxButtons.OK,MessageBoxIcon.Error); status.Text="La operación fue detenida de forma segura."; }
+      } catch(Exception ex) { JanusRecovery.Record("Migración","Copiar y redirigir","Error: "+ex.Message,destination.Text);MessageBox.Show(ex.Message+"\n\nNo se borraron archivos.","Operación detenida",MessageBoxButtons.OK,MessageBoxIcon.Error); status.Text="La operación fue detenida de forma segura."; }
       finally { UpdatePreview(); }
     }
 
@@ -224,6 +225,7 @@ namespace MigradorSeguro {
     public WindowsToolsForm(){Text="Herramientas de Windows";ClientSize=new Size(900,695);MinimumSize=MaximumSize=new Size(916,734);StartPosition=FormStartPosition.CenterParent;FormBorderStyle=FormBorderStyle.FixedDialog;MaximizeBox=false;MinimizeBox=false;BackColor=Color.White;try{Icon=Icon.ExtractAssociatedIcon(Application.ExecutablePath);}catch{}
       var title=new Label{Text="Herramientas de Windows",Font=new Font("Segoe UI",18,FontStyle.Bold),Location=new Point(24,17),AutoSize=true};Controls.Add(title);
       var subtitle=new Label{Text="Diagnóstico, administración y software recomendado.",Location=new Point(27,55),AutoSize=true,ForeColor=Color.DimGray};Controls.Add(subtitle);
+      var recoveryCenter=new Button{Text="Mochila de reinstalación…",Location=new Point(650,18),Size=new Size(226,32)};recoveryCenter.Click+=(s,e)=>{using(var form=new ReinstallationCenterForm())form.ShowDialog(this);};Controls.Add(recoveryCenter);
       var systemGroup=new GroupBox{Text="Sistema y diagnóstico",Location=new Point(24,86),Size=new Size(408,234)};Controls.Add(systemGroup);
       AddToolButton(systemGroup,"Versión de Windows (Winver)",54,22,(s,e)=>Launch("winver.exe"),300);
       AddToolButton(systemGroup,"Información del sistema (MSInfo32)",54,57,(s,e)=>Launch("msinfo32.exe"),300);
@@ -332,7 +334,7 @@ namespace MigradorSeguro {
         if(RunElevatedRegistry("add \"HKLM\\SOFTWARE\\Policies\\Microsoft\\Windows\\OneDrive\" /v DisableFileSyncNGSC /t REG_DWORD /d 1 /f")!=0)throw new InvalidOperationException("Windows no pudo aplicar la directiva de OneDrive.");
         using(var run=Registry.CurrentUser.OpenSubKey(@"Software\Microsoft\Windows\CurrentVersion\Run",true)){if(run==null)throw new InvalidOperationException("No se pudo abrir la configuración de inicio del usuario.");object value=run.GetValue("OneDrive",null,RegistryValueOptions.DoNotExpandEnvironmentNames);if(value!=null)using(var backup=Registry.CurrentUser.CreateSubKey(@"Software\Janus\Backup"))backup.SetValue("OneDriveRun",Convert.ToString(value),RegistryValueKind.String);run.DeleteValue("OneDrive",false);}
         string exe=OneDriveExe();if(!String.IsNullOrWhiteSpace(exe))Process.Start(new ProcessStartInfo(exe,"/shutdown"){UseShellExecute=true});
-        MessageBox.Show("OneDrive quedó desactivado por directiva de Windows, cerrado y retirado del inicio automático. Puede ser necesario reiniciar Windows para que todas las aplicaciones reconozcan el cambio.","OneDrive desactivado",MessageBoxButtons.OK,MessageBoxIcon.Information);
+        JanusRecovery.Record("OneDrive","Desactivar","Correcto");MessageBox.Show("OneDrive quedó desactivado por directiva de Windows, cerrado y retirado del inicio automático. Puede ser necesario reiniciar Windows para que todas las aplicaciones reconozcan el cambio.","OneDrive desactivado",MessageBoxButtons.OK,MessageBoxIcon.Information);
       }catch(Exception ex){MessageBox.Show("No se pudo desactivar OneDrive:\n"+ex.Message+"\n\nSi cancelaste el aviso de administrador, no se realizó el cambio.","OneDrive",MessageBoxButtons.OK,MessageBoxIcon.Error);}
     }
     static void RestoreOneDriveStartup(){
@@ -341,7 +343,7 @@ namespace MigradorSeguro {
         RunElevatedRegistry("delete \"HKLM\\SOFTWARE\\Policies\\Microsoft\\Windows\\OneDrive\" /v DisableFileSyncNGSC /f");
         string command=null;using(var backup=Registry.CurrentUser.OpenSubKey(@"Software\Janus\Backup")){if(backup!=null)command=backup.GetValue("OneDriveRun") as string;}if(String.IsNullOrWhiteSpace(command))using(var oldBackup=Registry.CurrentUser.OpenSubKey(@"Software\MigradorSeguro\Backup")){if(oldBackup!=null)command=oldBackup.GetValue("OneDriveRun") as string;}
         string exe=OneDriveExe();if(String.IsNullOrWhiteSpace(command)&&!String.IsNullOrWhiteSpace(exe))command="\""+exe+"\" /background";if(!String.IsNullOrWhiteSpace(command))using(var run=Registry.CurrentUser.CreateSubKey(@"Software\Microsoft\Windows\CurrentVersion\Run"))run.SetValue("OneDrive",command,RegistryValueKind.String);if(!String.IsNullOrWhiteSpace(exe))Process.Start(new ProcessStartInfo(exe,"/background"){UseShellExecute=true});
-        MessageBox.Show("La directiva fue retirada y OneDrive quedó restaurado.","OneDrive restaurado",MessageBoxButtons.OK,MessageBoxIcon.Information);
+        JanusRecovery.Record("OneDrive","Restaurar","Correcto");MessageBox.Show("La directiva fue retirada y OneDrive quedó restaurado.","OneDrive restaurado",MessageBoxButtons.OK,MessageBoxIcon.Information);
       }catch(Exception ex){MessageBox.Show("No se pudo restaurar OneDrive:\n"+ex.Message,"OneDrive",MessageBoxButtons.OK,MessageBoxIcon.Error);}
     }
   }
@@ -419,7 +421,7 @@ namespace MigradorSeguro {
     void ApplyTheme(){var theme=SelectedTheme;if(MessageBox.Show("JANUS respaldará la configuración y aplicará "+theme.Name+" a los elementos seleccionados.\n\n¿Continuar?","Aplicar tema de iconos",MessageBoxButtons.YesNo,MessageBoxIcon.Question)!=DialogResult.Yes)return;try{EnsureBackups();string computerPath=ExtractIcon("JanusIcons.Computer.ico","este-equipo.ico"),userPath=ExtractIcon("JanusIcons.UserFiles.ico","archivos-usuario.ico"),networkPath=ExtractIcon("JanusIcons.Network.ico","red.ico"),emptyPath=ExtractIcon("JanusIcons.RecycleEmpty.ico","papelera-vacia.ico"),fullPath=ExtractIcon("JanusIcons.RecycleFull.ico","papelera-llena.ico");if(computer.Checked){SetDefaultIcon(ComputerId,computerPath);VerifyValue(ComputerId,"",computerPath);}if(userFiles.Checked){SetDefaultIcon(UserFilesId,userPath);VerifyValue(UserFilesId,"",userPath);}if(network.Checked){SetDefaultIcon(NetworkId,networkPath);VerifyValue(NetworkId,"",networkPath);}foreach(string path in new[]{KeyPath(RecycleId),LegacyKeyPath(RecycleId)})using(var recycle=Registry.CurrentUser.CreateSubKey(path)){if(recycleEmpty.Checked){recycle.SetValue("empty",emptyPath,RegistryValueKind.String);recycle.SetValue("",emptyPath,RegistryValueKind.String);}if(recycleFull.Checked)recycle.SetValue("full",fullPath,RegistryValueKind.String);}if(recycleEmpty.Checked)VerifyValue(RecycleId,"empty",emptyPath);if(recycleFull.Checked)VerifyValue(RecycleId,"full",fullPath);ApplyFolderIcons();ApplyDriveIcons();RefreshShell();OfferExplorerRestart("El tema "+theme.Name+" fue aplicado y verificado.");}catch(Exception ex){MessageBox.Show("No se pudo aplicar el tema:\n"+ex.Message,"Temas de iconos",MessageBoxButtons.OK,MessageBoxIcon.Error);}}
     void RestoreOriginals(){if(!File.Exists(OriginalBackup)){MessageBox.Show("No existe un respaldo original para esta versión del tema.","Restaurar iconos",MessageBoxButtons.OK,MessageBoxIcon.Information);return;}if(MessageBox.Show("Se restaurará la configuración guardada antes de aplicar el tema JANUS.\n\n¿Continuar?","Restaurar iconos originales",MessageBoxButtons.YesNo,MessageBoxIcon.Question)!=DialogResult.Yes)return;try{var state=ReadBackup(OriginalBackup);foreach(var entry in state){if(!entry.Value.Exists){Registry.CurrentUser.DeleteSubKeyTree(entry.Key,false);continue;}using(var key=Registry.CurrentUser.CreateSubKey(entry.Key)){foreach(string name in key.GetValueNames())key.DeleteValue(name,false);foreach(var value in entry.Value.Values)key.SetValue(value.Key,value.Value,RegistryValueKind.String);}}RestoreFolderIcons();File.Delete(OriginalBackup);RefreshShell();OfferExplorerRestart("Los iconos originales de Windows fueron restaurados.");}catch(Exception ex){MessageBox.Show("No se pudieron restaurar los iconos:\n"+ex.Message,"Restaurar iconos",MessageBoxButtons.OK,MessageBoxIcon.Error);}}
     void RestoreFolderIcons(){foreach(var item in SelectedFolders()){string marker=Path.Combine(FolderBackupDirectory,item.Item1.Text+".state");if(!File.Exists(marker)||!Directory.Exists(item.Item2))continue;string ini=Path.Combine(item.Item2,"desktop.ini"),copy=Path.Combine(FolderBackupDirectory,item.Item1.Text+".desktop.ini");try{if(File.Exists(ini))File.SetAttributes(ini,FileAttributes.Normal);if(File.ReadAllText(marker)=="exists"&&File.Exists(copy))File.Copy(copy,ini,true);else if(File.Exists(ini))File.Delete(ini);NotifyFolderIconChanged(item.Item2);}catch{}}}
-    static void OfferExplorerRestart(string message){if(MessageBox.Show(message+"\n\nPara actualizar la caché y mostrarlos inmediatamente es necesario reiniciar el Explorador de Windows. ¿Hacerlo ahora?","Tema JANUS",MessageBoxButtons.YesNo,MessageBoxIcon.Information)==DialogResult.Yes)try{foreach(var process in Process.GetProcessesByName("explorer"))process.Kill();Thread.Sleep(600);Process.Start("explorer.exe");Process.Start(new ProcessStartInfo("ie4uinit.exe","-show"){UseShellExecute=false,CreateNoWindow=true});}catch{}}
+    static void OfferExplorerRestart(string message){JanusRecovery.Record("Tema de iconos","Aplicar o restaurar","Correcto: "+message);if(MessageBox.Show(message+"\n\nPara actualizar la caché y mostrarlos inmediatamente es necesario reiniciar el Explorador de Windows. ¿Hacerlo ahora?","Tema JANUS",MessageBoxButtons.YesNo,MessageBoxIcon.Information)==DialogResult.Yes)try{foreach(var process in Process.GetProcessesByName("explorer"))process.Kill();Thread.Sleep(600);Process.Start("explorer.exe");Process.Start(new ProcessStartInfo("ie4uinit.exe","-show"){UseShellExecute=false,CreateNoWindow=true});}catch{}}
     static void NotifyFolderIconChanged(string folder){SHChangeNotifyPath(0x00002000,0x1005,folder,IntPtr.Zero);string parent=Path.GetDirectoryName(folder);if(!String.IsNullOrWhiteSpace(parent))SHChangeNotifyPath(0x00001000,0x1005,parent,IntPtr.Zero);}
     static void RefreshShell(){SHChangeNotify(0x08000000,0x1000,IntPtr.Zero,IntPtr.Zero);try{Process.Start(new ProcessStartInfo("ie4uinit.exe","-show"){UseShellExecute=false,CreateNoWindow=true});}catch{}}
     [DllImport("shell32.dll")] static extern void SHChangeNotify(uint eventId,uint flags,IntPtr item1,IntPtr item2);

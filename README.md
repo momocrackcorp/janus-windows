@@ -56,6 +56,15 @@ El cambio de nombre no altera el objetivo ni las protecciones del programa. Janu
 - La versión 2.2 amplía la familia a Documentos, Descargas, Escritorio, Imágenes, Música, Vídeos, HDD/SSD, USB y unidades de red. Los iconos personales usan un gran medallón circular y un símbolo central legible, sin la carpeta amarilla superpuesta.
 - Los temas visuales se distribuyen como paquetes ZIP separados para mantener liviano `Janus.exe`; ninguno viene incrustado en la aplicación. Desde **Herramientas → Tema JANUS** se puede elegir JANUS Fluent Soft 3D, Crux, Newaita, Papirus, WhiteSur o La Capitaine, descargar el paquete seleccionado, cargarlo, ver sus vistas previas, aplicar elementos individuales y restaurar los iconos originales.
 - Cada tema queda instalado en su propia carpeta local, por lo que cambiar de diseño no sobrescribe los demás. Los paquetes derivados de terceros se publican por separado con su licencia y atribución correspondientes.
+- La versión **2.3.0-rc.3** incorpora la **Mochila de reinstalación**, accesible desde Herramientas, para preparar y recuperar un equipo antes o después de una instalación limpia de Windows.
+- **Preparar mochila completa** reúne en una carpeta elegida por el usuario el informe del equipo, la lista WinGet disponible y los controladores exportados, además de un resumen `LEEME.txt`. Puede guardarse directamente en una segunda unidad antes de formatear.
+- La Mochila exporta a JSON las aplicaciones reconocidas por WinGet y muestra una vista previa de sus identificadores antes de iniciar una importación. Si WinGet no está disponible, ofrece un acceso oficial a **App Installer** en Microsoft Store.
+- Los perfiles permiten conservar distintas selecciones de aplicaciones sin instalar nada automáticamente al crearlos. También pueden compararse con el equipo actual para mostrar las aplicaciones reconocidas que todavía faltan.
+- Permite exportar controladores de terceros mediante la herramienta oficial PnPUtil y restaurar únicamente paquetes INF compatibles, siempre con confirmación y autorización de administrador.
+- Genera un informe HTML local con versión de Windows, unidades, rutas personales, aplicaciones registradas, paquetes de controladores y comprobaciones posteriores. No incorpora contraseñas, claves de producto ni contenido de archivos personales.
+- Incluye una lista de puesta a punto para WinGet, espacio del sistema, reinicios pendientes, separación de carpetas personales, dispositivos, red, Teams y OneDrive, junto con accesos a los paneles oficiales de Activación, Windows Update, aplicaciones de inicio, aplicaciones predeterminadas, almacenamiento, privacidad y Administrador de dispositivos.
+- Reúne perfiles, respaldos de aplicaciones, controladores, rutas personales e iconos en un centro común. Las rutas personales pueden restaurarse después de revisar una vista previa; los respaldos de iconos abren la herramienta específica del tema.
+- Conserva un historial local de las operaciones de JANUS con fecha, categoría, resultado y ruta asociada. El historial es informativo y nunca elimina respaldos automáticamente.
 
 ## Seguridad
 
