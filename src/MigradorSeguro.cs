@@ -19,12 +19,12 @@ using Microsoft.Win32;
 [assembly: AssemblyCompany("Omar Aguila")]
 [assembly: AssemblyProduct("Janus")]
 [assembly: AssemblyCopyright("Copyright © Omar Aguila MMXXVI")]
-[assembly: AssemblyVersion("3.0.0.0")]
-[assembly: AssemblyFileVersion("3.0.0.0")]
-[assembly: AssemblyInformationalVersion("3.0.0")]
+[assembly: AssemblyVersion("3.0.1.0")]
+[assembly: AssemblyFileVersion("3.0.1.0")]
+[assembly: AssemblyInformationalVersion("3.0.1")]
 
 namespace MigradorSeguro {
-  static class AppInfo { public const string DisplayVersion="3.0.0"; }
+  static class AppInfo { public const string DisplayVersion="3.0.1"; }
   static class Program {
     [STAThread] static void Main() {
       Application.EnableVisualStyles();
@@ -385,12 +385,12 @@ namespace MigradorSeguro {
     readonly ComboBox themeSelector=new ComboBox();
     readonly Label themeStatus=new Label();
     readonly ThemeOption[] themes=new[]{
-      new ThemeOption{Id="janus",Name="JANUS Fluent Soft 3D",FileName="Tema-Iconos-JANUS-v2.2.zip",Source="Momocrackcorp",License="Tema original de JANUS",DownloadUrl="https://github.com/momocrackcorp/janus-windows/releases/download/v2.2.0-rc2/Tema-Iconos-JANUS-v2.2.zip"},
-      new ThemeOption{Id="crux",Name="Crux",FileName="Tema-Iconos-Crux.zip",Source="GNOME clásico / Arlo Rose",License="GPL-2.0-or-later",DownloadUrl="https://github.com/momocrackcorp/janus-windows/releases/download/v2.3.0-rc.2/Tema-Iconos-Crux.zip"},
-      new ThemeOption{Id="newaita",Name="Newaita",FileName="Tema-Iconos-Newaita.zip",Source="cbrnix/Newaita",License="CC BY-NC-SA 3.0",DownloadUrl="https://github.com/momocrackcorp/janus-windows/releases/download/v2.3.0-rc.2/Tema-Iconos-Newaita.zip"},
-      new ThemeOption{Id="papirus",Name="Papirus",FileName="Tema-Iconos-Papirus.zip",Source="PapirusDevelopmentTeam",License="GPL-3.0",DownloadUrl="https://github.com/momocrackcorp/janus-windows/releases/download/v2.3.0-rc.2/Tema-Iconos-Papirus.zip"},
-      new ThemeOption{Id="whitesur",Name="WhiteSur",FileName="Tema-Iconos-WhiteSur.zip",Source="vinceliuice",License="GPL-3.0",DownloadUrl="https://github.com/momocrackcorp/janus-windows/releases/download/v2.3.0-rc.2/Tema-Iconos-WhiteSur.zip"},
-      new ThemeOption{Id="lacapitaine",Name="La Capitaine",FileName="Tema-Iconos-La-Capitaine.zip",Source="Keefer Rourke y colaboradores",License="GPL-3.0",DownloadUrl="https://github.com/momocrackcorp/janus-windows/releases/download/v2.3.0-rc.2/Tema-Iconos-La-Capitaine.zip"}
+      new ThemeOption{Id="janus",Name="JANUS Fluent Soft 3D",FileName="Tema-Iconos-JANUS-v2.2.zip",Source="Momocrackcorp",License="Tema original de JANUS",DownloadUrl="https://github.com/momocrackcorp/janus-windows/releases/download/icon-themes-v1/Tema-Iconos-JANUS-v2.2.zip"},
+      new ThemeOption{Id="crux",Name="Crux",FileName="Tema-Iconos-Crux.zip",Source="GNOME clásico / Arlo Rose",License="GPL-2.0-or-later",DownloadUrl="https://github.com/momocrackcorp/janus-windows/releases/download/icon-themes-v1/Tema-Iconos-Crux.zip"},
+      new ThemeOption{Id="newaita",Name="Newaita",FileName="Tema-Iconos-Newaita.zip",Source="cbrnix/Newaita",License="CC BY-NC-SA 3.0",DownloadUrl="https://github.com/momocrackcorp/janus-windows/releases/download/icon-themes-v1/Tema-Iconos-Newaita.zip"},
+      new ThemeOption{Id="papirus",Name="Papirus",FileName="Tema-Iconos-Papirus.zip",Source="PapirusDevelopmentTeam",License="GPL-3.0",DownloadUrl="https://github.com/momocrackcorp/janus-windows/releases/download/icon-themes-v1/Tema-Iconos-Papirus.zip"},
+      new ThemeOption{Id="whitesur",Name="WhiteSur",FileName="Tema-Iconos-WhiteSur.zip",Source="vinceliuice",License="GPL-3.0",DownloadUrl="https://github.com/momocrackcorp/janus-windows/releases/download/icon-themes-v1/Tema-Iconos-WhiteSur.zip"},
+      new ThemeOption{Id="lacapitaine",Name="La Capitaine",FileName="Tema-Iconos-La-Capitaine.zip",Source="Keefer Rourke y colaboradores",License="GPL-3.0",DownloadUrl="https://github.com/momocrackcorp/janus-windows/releases/download/icon-themes-v1/Tema-Iconos-La-Capitaine.zip"}
     };
     static string KeyPath(string id){return @"Software\Microsoft\Windows\CurrentVersion\Explorer\CLSID\"+id+@"\DefaultIcon";}
     static string LegacyKeyPath(string id){return @"Software\Classes\CLSID\"+id+@"\DefaultIcon";}
