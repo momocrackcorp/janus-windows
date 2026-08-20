@@ -1,0 +1,22 @@
+La Capitaine Icon Theme
+Autor: Keefer Rourke y colaboradores
+Fuente: https://github.com/keeferrourke/la-capitaine-icon-theme
+Revisión utilizada: 8370e7c8f1fbbfdb66f08a325a6c1cd8b932afb3
+Licencia del arte: GNU GPL v3
+
+Archivos adaptados para JANUS desde:
+- devices/scalable-light/computer.svg
+- places/scalable/user-home.svg
+- apps/scalable/network-workgroup.svg
+- places/scalable/user-trash.svg
+- places/scalable/user-trash-full.svg
+- places/scalable/folder-documents.svg
+- places/scalable/folder-download.svg
+- places/scalable/desktop.svg
+- places/scalable/folder-pictures.svg
+- places/scalable/folder-music.svg
+- places/scalable/folder-videos.svg
+- devices/scalable-light/drive-harddisk.svg
+- devices/scalable-light/drive-removable-media-usb.svg
+- places/scalable/folder-remote-smb.svg
+

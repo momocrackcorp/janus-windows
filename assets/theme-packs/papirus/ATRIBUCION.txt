@@ -1,0 +1,4 @@
+Papirus Icon Theme
+Fuente: https://github.com/PapirusDevelopmentTeam/papirus-icon-theme
+Licencia: GNU General Public License v3.0
+Adaptación para el paquete externo de JANUS: cambio de nombres y conversión a PNG/ICO.

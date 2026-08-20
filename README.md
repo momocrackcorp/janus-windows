@@ -44,8 +44,8 @@ El cambio de nombre no altera el objetivo ni las protecciones del programa. Janu
 - Desde **Herramientas de Windows** permite activar la zona horaria automática, forzar la sincronización inmediata mediante el servicio oficial de hora y abrir el panel de Windows para ajustar el reloj.
 - Desde el mismo panel permite mostrar u ocultar en el Escritorio **Equipo**, **Archivos del usuario**, **Red**, **Papelera de reciclaje** y **Panel de control**, respetando la selección actual de Windows.
 - En Windows 11 permite cambiar la alineación del menú Inicio entre el centro y la izquierda; la opción se desactiva automáticamente en versiones anteriores de Windows.
-- Integra accesos oficiales a VLC, Codec Guide, WinRAR, USB Image Tool, Adobe Reader y Microsoft PC Manager, junto a una fotografía monocromática integrada sin marco.
-- Incluye una sección de descarga para Google Chrome, Mozilla Firefox, Brave, Opera y Comet.
+- Integra en una cuadrícula compacta accesos oficiales a VLC, Codec Guide, WinRAR, USB Image Tool, Adobe Reader, Microsoft PC Manager, WinDirStat, Everything, Autoruns, IrfanView, Sysinternals, DropIt y PowerToys, además de Google Chrome, Mozilla Firefox, Brave, Opera y Comet.
+- Los accesos de descarga conservan sus iconos para reconocer rápidamente cada aplicación.
 - El botón **Desactivar OneDrive** aplica, con autorización de administrador, la directiva oficial `DisableFileSyncNGSC` que bloquea su sincronización; además cierra el cliente, retira su icono de la bandeja y elimina su inicio automático con respaldo. **Restaurar OneDrive** retira la directiva y repone el inicio. No desinstala, desvincula ni borra archivos.
 - La configuración de UAC se realiza únicamente desde el panel oficial de Windows; la aplicación no altera directamente sus políticas.
 - Reinicia el Explorador de Windows después de aplicar o restaurar cambios.
@@ -54,7 +54,21 @@ El cambio de nombre no altera el objetivo ni las protecciones del programa. Janu
 - Antes de aplicar el tema guarda la configuración anterior y ofrece **Restaurar iconos originales de Windows** con un clic.
 - La versión 2.1.1 corrige la ubicación del registro utilizada por el Explorador de Windows 11, verifica cada valor escrito y actualiza la caché de iconos al aplicar o restaurar.
 - La versión 2.2 amplía la familia a Documentos, Descargas, Escritorio, Imágenes, Música, Vídeos, HDD/SSD, USB y unidades de red. Los iconos personales usan un gran medallón circular y un símbolo central legible, sin la carpeta amarilla superpuesta.
-- El tema visual se distribuye aparte como **Tema-Iconos-JANUS-v2.2.zip** para mantener liviano `Janus.exe`. Desde **Herramientas → Tema JANUS** se puede abrir la descarga, cargar el ZIP, ver las vistas previas, aplicar elementos individuales y restaurar los originales.
+- Los temas visuales se distribuyen como paquetes ZIP separados para mantener liviano `Janus.exe`; ninguno viene incrustado en la aplicación. Desde **Herramientas → Tema JANUS** se puede elegir JANUS Fluent Soft 3D, Crux, Newaita, Papirus, WhiteSur o La Capitaine, descargar el paquete seleccionado, cargarlo, ver sus vistas previas, aplicar elementos individuales y restaurar los iconos originales.
+- Cada tema queda instalado en su propia carpeta local, por lo que cambiar de diseño no sobrescribe los demás. Los paquetes derivados de terceros se publican por separado con su licencia y atribución correspondientes.
+- La versión estable **3.0.0** presenta Migración, Herramientas, Mochila y Acerca de dentro de una sola ventana con navegación lateral. La sección activa utiliza un color identificador y las pantallas secundarias adaptan su distribución al espacio disponible. Las confirmaciones, vistas previas y selectores de archivos continúan apareciendo por separado cuando son necesarios para proteger una operación.
+- Herramientas permite desactivar y restaurar de forma reversible el inicio automático de Microsoft Teams cuando está instalado. JANUS respalda el estado anterior y no desinstala Teams ni borra conversaciones o archivos.
+- La **Mochila de reinstalación** permite preparar y recuperar un equipo antes o después de una instalación limpia de Windows.
+- **Preparar mochila completa** reúne en una carpeta elegida por el usuario el informe del equipo, la lista WinGet disponible y los controladores exportados, además de un resumen `LEEME.txt`. Puede guardarse directamente en una segunda unidad antes de formatear.
+- La Mochila exporta a JSON las aplicaciones reconocidas por WinGet y muestra una vista previa de sus identificadores antes de iniciar una importación. Si WinGet no está disponible, ofrece un acceso oficial a **App Installer** en Microsoft Store.
+- Los perfiles permiten conservar distintas selecciones de aplicaciones sin instalar nada automáticamente al crearlos. También pueden compararse con el equipo actual para mostrar las aplicaciones reconocidas que todavía faltan.
+- Permite exportar controladores de terceros mediante la herramienta oficial PnPUtil y restaurar únicamente paquetes INF compatibles, siempre con confirmación y autorización de administrador.
+- Genera un informe HTML local con versión de Windows, unidades, rutas personales, aplicaciones registradas, paquetes de controladores y comprobaciones posteriores. No incorpora contraseñas, claves de producto ni contenido de archivos personales.
+- Incluye una lista de puesta a punto para WinGet, espacio del sistema, reinicios pendientes, separación de carpetas personales, dispositivos, red, Teams y OneDrive, junto con accesos a los paneles oficiales de Activación, Windows Update, aplicaciones de inicio, aplicaciones predeterminadas, almacenamiento, privacidad y Administrador de dispositivos.
+- La pestaña **Licencias** consulta localmente el estado oficial de activación de Windows y Office. Muestra únicamente la clave parcial instalada de Windows y solo consulta una posible clave OEM de BIOS/UEFI después de una advertencia y confirmación explícita. Para Office utiliza `vnextdiag.ps1` en Microsoft 365 y `ospp.vbs` en ediciones perpetuas o por volumen, cuando esas herramientas están disponibles.
+- Las claves completas nunca se agregan a la Mochila, los informes, el historial ni los respaldos. La clave OEM permanece oculta hasta que el usuario decide mostrarla y solo se copia al portapapeles mediante una acción explícita.
+- Reúne perfiles, respaldos de aplicaciones, controladores, rutas personales e iconos en un centro común. Las rutas personales pueden restaurarse después de revisar una vista previa; los respaldos de iconos abren la herramienta específica del tema.
+- Conserva un historial local de las operaciones de JANUS con fecha, categoría, resultado y ruta asociada. El historial es informativo y nunca elimina respaldos automáticamente.
 
 ## Seguridad
 
@@ -91,10 +105,6 @@ Si las carpetas ya fueron migradas pero aparecen con iconos genéricos, pulsa **
 ## Diseño de recuperación
 
 Después de verificar durante varios días que todo funciona, el usuario puede archivar o borrar manualmente las carpetas originales. La aplicación no ofrece borrado para evitar pérdida accidental.
-
-## Futuras ampliaciones del tema JANUS
-
-La misma familia visual podrá ampliarse a Documentos, Descargas, Escritorio, Imágenes, Música, Vídeos, HDD/SSD, USB y unidades de red.
 
 ## Pruebas
 
