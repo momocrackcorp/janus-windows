@@ -112,11 +112,11 @@ class ReinstallationCenterTests(unittest.TestCase):
         self.assertIn("Las claves nunca se agregan a informes, historial ni a la Mochila completa", SOURCE)
         self.assertNotIn('Record("Licencias"', SOURCE)
 
-    def test_stable_3_version_is_visible(self):
-        self.assertIn('DisplayVersion="3.0.0"', MAIN)
-        self.assertIn('AssemblyVersion("3.0.0.0")', MAIN)
-        self.assertIn('AssemblyFileVersion("3.0.0.0")', MAIN)
-        self.assertIn('AssemblyInformationalVersion("3.0.0")', MAIN)
+    def test_stable_3_0_1_version_is_visible(self):
+        self.assertIn('DisplayVersion="3.0.1"', MAIN)
+        self.assertIn('AssemblyVersion("3.0.1.0")', MAIN)
+        self.assertIn('AssemblyFileVersion("3.0.1.0")', MAIN)
+        self.assertIn('AssemblyInformationalVersion("3.0.1")', MAIN)
 
 
 if __name__ == "__main__":
