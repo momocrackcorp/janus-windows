@@ -1,0 +1,20 @@
+;*** BEGIN **********************************************************
+;**                                                                **
+;** Automatically generated on: Thu Aug 20 01:19:09 2026           **
+;**                                                                **
+;** MakeCAB Version: 5.00                                 **
+;**                                                                **
+;*** BEGIN **********************************************************
+[disk list]
+1,Disk 1
+[cabinet list]
+1,1,JANUS-Duality-Oscuro.deskthemepack
+[file list]
+1,1,JANUS Duality Oscuro.theme,1019
+1,1,DesktopBackground\JANUS-Duality-Oscuro-4K.png,7206291
+1,1,DesktopBackground\JANUS-Duality-Oscuro-Ultrawide.png,5257110
+;*** END ************************************************************
+;**                                                                **
+;** Automatically generated on: Thu Aug 20 01:19:09 2026           **
+;**                                                                **
+;*** END ************************************************************

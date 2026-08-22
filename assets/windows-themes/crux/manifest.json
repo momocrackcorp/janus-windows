@@ -1,0 +1,26 @@
+﻿{
+    "id":  "janus-crux",
+    "version":  1,
+    "displayName":  "JANUS Crux",
+    "publisher":  "Momocrackcorp",
+    "variants":  [
+                     "Claro",
+                     "Oscuro"
+                 ],
+    "wallpapers":  [
+                       "Claro",
+                       "Oscuro"
+                   ],
+    "slideshowMinutes":  30,
+    "preserveWindowsMode":  true,
+    "components":  [
+                       "wallpapers",
+                       "colors",
+                       "cursors",
+                       "sounds"
+                   ],
+    "accentColor":  "#E87817",
+    "iconCompanion":  "Tema-Iconos-Crux.zip",
+    "safe":  true,
+    "reversible":  true
+}

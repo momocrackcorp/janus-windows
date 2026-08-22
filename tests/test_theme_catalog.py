@@ -24,8 +24,10 @@ class ThemeCatalogTests(unittest.TestCase):
         self.assertNotIn("releases/download/v2.3.0-rc.2/", SOURCE)
 
     def test_theme_packages_are_not_embedded(self):
-        self.assertNotIn("theme-packs", BUILD.lower())
         self.assertNotIn("janus-icons", BUILD.lower())
+        self.assertNotIn("tema-iconos-", BUILD.lower())
+        self.assertNotIn("janus-duality-v1.zip", BUILD.lower())
+        self.assertNotIn("janus-duality-iconos-v1.zip", BUILD.lower())
 
     def test_each_theme_has_its_own_storage(self):
         self.assertIn('"IconPacks",SelectedTheme.Id', SOURCE)

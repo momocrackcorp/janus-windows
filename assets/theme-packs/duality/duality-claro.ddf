@@ -1,0 +1,13 @@
+.OPTION EXPLICIT
+.Set Cabinet=on
+.Set Compress=on
+.Set CompressionType=LZX
+.Set CompressionMemory=21
+.Set MaxDiskSize=0
+.Set CabinetNameTemplate=JANUS-Duality-Claro.deskthemepack
+.Set DiskDirectoryTemplate=dist
+.Set DestinationDir=""
+"JANUS Duality Claro.theme"
+.Set DestinationDir=DesktopBackground
+"DesktopBackground\JANUS-Duality-Claro-4K.png"
+"DesktopBackground\JANUS-Duality-Claro-Ultrawide.png"

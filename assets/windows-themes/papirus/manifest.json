@@ -1,0 +1,30 @@
+﻿{
+    "id":  "janus-papirus",
+    "version":  1,
+    "displayName":  "JANUS Papirus",
+    "publisher":  "Momocrackcorp",
+    "variants":  [
+                     "Delta",
+                     "Piramides",
+                     "Jeroglificos"
+                 ],
+    "wallpapers":  [
+                       "Delta",
+                       "Piramides",
+                       "Jeroglificos"
+                   ],
+    "slideshowMinutes":  30,
+    "preserveWindowsMode":  true,
+    "components":  [
+                       "wallpapers",
+                       "colors",
+                       "cursors",
+                       "sounds"
+                   ],
+    "accentColor":  "#26A65B",
+    "secondaryAccentColor":  "#A6532A",
+    "soundStyle":  "Original Egyptian-inspired reed, plucked string and frame drum timbres",
+    "iconCompanion":  "Tema-Iconos-Papirus.zip",
+    "safe":  true,
+    "reversible":  true
+}

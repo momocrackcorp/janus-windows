@@ -18,8 +18,10 @@ class ReinstallationCenterTests(unittest.TestCase):
 
     def test_main_navigation_uses_one_embedded_content_area(self):
         self.assertIn("new JanusShellForm()", MAIN)
-        for section in ("Migración", "Herramientas", "Mochila", "Acerca de"):
+        for section in ("Migración", "Herramientas", "Mochila", "Temas", "Acerca de"):
             self.assertIn(f'AddPage(menu,"{section}"', MAIN)
+        self.assertIn('AddSection(menu,"PERSONALIZACIÓN")', MAIN)
+        self.assertIn('AddSection(menu,"INFORMACIÓN")', MAIN)
         self.assertIn("form.TopLevel=false", MAIN)
         self.assertIn("form.Dock=DockStyle.Fill", MAIN)
         self.assertIn("ShowPage", MAIN)
@@ -27,6 +29,7 @@ class ReinstallationCenterTests(unittest.TestCase):
 
     def test_tools_no_longer_repeat_the_reinstallation_button(self):
         self.assertNotIn('Text="Mochila de reinstalación…"', MAIN)
+        self.assertNotIn('ToolButton("Tema JANUS…"', MAIN)
 
     def test_license_check_starts_only_when_its_section_is_selected(self):
         self.assertIn("selected==3&&!licensesLoaded", SOURCE)
@@ -75,7 +78,7 @@ class ReinstallationCenterTests(unittest.TestCase):
         self.assertIn("Microsoft OneDrive", SOURCE)
 
     def test_compact_official_download_grid_contains_requested_apps(self):
-        self.assertIn("Grid(3,6,6,22)", MAIN)
+        self.assertIn("Grid(3,7,6,22)", MAIN)
         self.assertNotIn("Navegadores — descargas oficiales", MAIN)
         for app, url in (
             ("WinDirStat", "https://windirstat.net/download.html"),
@@ -89,6 +92,14 @@ class ReinstallationCenterTests(unittest.TestCase):
             self.assertIn(url, MAIN)
         self.assertIn("PowerToys", MAIN)
         self.assertIn("https://learn.microsoft.com/es-es/windows/powertoys/install", MAIN)
+        self.assertIn("AnyDesk", MAIN)
+        self.assertIn("https://anydesk.com/es/downloads/windows", MAIN)
+
+    def test_tools_keep_natural_height_and_scroll_in_small_displays(self):
+        self.assertIn("var scrollHost=new Panel{Dock=DockStyle.Fill,AutoScroll=true,BackColor=Color.White}", MAIN)
+        self.assertIn("Dock=DockStyle.Top,Height=720,MinimumSize=new Size(900,720)", MAIN)
+        tools_constructor = MAIN.split("public WindowsToolsForm(bool embedded=false)", 1)[1].split("public static GroupBox CreateDesktopPersonalizationGroup", 1)[0]
+        self.assertNotIn('Text="Escritorio y menú Inicio"', tools_constructor)
 
     def test_teams_startup_control_is_detected_backed_up_and_reversible(self):
         self.assertIn("TeamsTfwStartupTask", MAIN)
@@ -112,11 +123,14 @@ class ReinstallationCenterTests(unittest.TestCase):
         self.assertIn("Las claves nunca se agregan a informes, historial ni a la Mochila completa", SOURCE)
         self.assertNotIn('Record("Licencias"', SOURCE)
 
-    def test_stable_3_0_1_version_is_visible(self):
-        self.assertIn('DisplayVersion="3.0.1"', MAIN)
-        self.assertIn('AssemblyVersion("3.0.1.0")', MAIN)
-        self.assertIn('AssemblyFileVersion("3.0.1.0")', MAIN)
-        self.assertIn('AssemblyInformationalVersion("3.0.1")', MAIN)
+    def test_janus_plus_beta_version_is_visible(self):
+        self.assertIn('AssemblyTitle("JANUS+")', MAIN)
+        self.assertIn('AssemblyProduct("JANUS+")', MAIN)
+        self.assertIn('DisplayVersion="4.0 Beta"', MAIN)
+        self.assertIn('AssemblyVersion("4.0.0.0")', MAIN)
+        self.assertIn('AssemblyFileVersion("4.0.0.0")', MAIN)
+        self.assertIn('AssemblyInformationalVersion("4.0.0-beta")', MAIN)
+        self.assertIn('Text="JANUS+ — Migración segura y puesta a punto"', MAIN)
 
 
 if __name__ == "__main__":

@@ -1,0 +1,29 @@
+﻿{
+    "id":  "janus-newaita",
+    "version":  1,
+    "displayName":  "JANUS Newaita",
+    "publisher":  "Momocrackcorp",
+    "variants":  [
+                     "Nublado",
+                     "Noche",
+                     "Manana"
+                 ],
+    "wallpapers":  [
+                       "Nublado",
+                       "Noche",
+                       "Manana"
+                   ],
+    "slideshowMinutes":  30,
+    "preserveWindowsMode":  true,
+    "components":  [
+                       "wallpapers",
+                       "colors",
+                       "cursors",
+                       "sounds"
+                   ],
+    "accentColor":  "#5B8DAF",
+    "secondaryAccentColor":  "#A8C7DC",
+    "iconCompanion":  "Tema-Iconos-Newaita.zip",
+    "safe":  true,
+    "reversible":  true
+}

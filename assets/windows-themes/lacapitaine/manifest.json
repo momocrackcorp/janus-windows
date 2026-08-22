@@ -1,0 +1,35 @@
+﻿{
+    "id":  "janus-lacapitaine",
+    "version":  1,
+    "displayName":  "JANUS La Capitaine",
+    "publisher":  "Momocrackcorp",
+    "variants":  [
+                     "Muro",
+                     "Rio",
+                     "Panorama",
+                     "Invierno",
+                     "Nubes"
+                 ],
+    "previewVariants":  [
+                            "Muro",
+                            "Rio",
+                            "Invierno"
+                        ],
+    "components":  [
+                       "wallpapers",
+                       "colors",
+                       "cursors",
+                       "sounds"
+                   ],
+    "baseColor":  "#59656B",
+    "accentColor":  "#D64C3F",
+    "secondaryAccentColor":  "#2F6F89",
+    "slideshowIntervalMilliseconds":  1800000,
+    "shuffle":  true,
+    "preserveWindowsMode":  true,
+    "soundStyle":  "Original mountain wind, stone, rope and distant bell timbres",
+    "cursorStyle":  "Compass, rope and carabiner inspired",
+    "iconCompanion":  "Tema-Iconos-La-Capitaine.zip",
+    "safe":  true,
+    "reversible":  true
+}

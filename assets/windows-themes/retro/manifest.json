@@ -1,0 +1,38 @@
+﻿{
+    "id":  "janus-retro",
+    "version":  1,
+    "displayName":  "JANUS Retro",
+    "publisher":  "Momocrackcorp",
+    "variants":  [
+                     "Pradera",
+                     "Puma",
+                     "Mosaico98"
+                 ],
+    "wallpapers":  [
+                       "Pradera",
+                       "Nubes",
+                       "Bosque",
+                       "Puma",
+                       "Mosaico98"
+                   ],
+    "slideshowMinutes":  30,
+    "preserveWindowsMode":  true,
+    "watermarkedWallpapers":  [
+                                  "Nubes",
+                                  "Bosque"
+                              ],
+    "components":  [
+                       "wallpapers",
+                       "colors",
+                       "cursors",
+                       "sounds"
+                   ],
+    "baseColor":  "#008080",
+    "accentColor":  "#0054E3",
+    "secondaryAccentColor":  "#F29A2E",
+    "soundStyle":  "Original soft 1990s PC pulse, FM bell and digital startup signature",
+    "cursorStyle":  "Pixel-edged classic pointer adapted for high-DPI Windows 11",
+    "iconCompanion":  "Tema-Iconos-Retro.zip",
+    "safe":  true,
+    "reversible":  true
+}

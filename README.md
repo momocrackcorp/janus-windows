@@ -1,6 +1,8 @@
-# Janus para Windows
+# JANUS+ para Windows
 
 Aplicación gráfica para trasladar Escritorio, Documentos, Descargas, Imágenes, Música y Vídeos a otra unidad sin arriesgar los archivos originales.
+
+**Versión actual: JANUS+ 4.0 Beta.** Esta edición amplía el proyecto original con navegación integrada, Mochila de reinstalación, herramientas de puesta a punto y una sección de temas reversibles. Los temas visuales y complementos de iconos continúan distribuyéndose por separado y no aumentan el tamaño del ejecutable principal.
 
 ## Finalidad de JANUS
 

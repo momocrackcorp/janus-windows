@@ -1,0 +1,36 @@
+﻿{
+    "id":  "janus-whitesur",
+    "version":  1,
+    "displayName":  "JANUS WhiteSur",
+    "publisher":  "Momocrackcorp",
+    "variants":  [
+                     "Costa",
+                     "Boracay",
+                     "KohLipe",
+                     "Perhentian",
+                     "Guam",
+                     "Florida",
+                     "KohPoda"
+                 ],
+    "previewVariants":  [
+                            "Costa",
+                            "Boracay",
+                            "KohPoda"
+                        ],
+    "components":  [
+                       "wallpapers",
+                       "colors",
+                       "cursors",
+                       "sounds"
+                   ],
+    "baseColor":  "#647C64",
+    "accentColor":  "#00B7C3",
+    "slideshowIntervalMilliseconds":  1800000,
+    "shuffle":  true,
+    "preserveWindowsMode":  true,
+    "soundStyle":  "Original aquatic chimes, bubbles and sea foam",
+    "cursorStyle":  "Marine seafoam",
+    "iconCompanion":  "Tema-Iconos-WhiteSur.zip",
+    "safe":  true,
+    "reversible":  true
+}

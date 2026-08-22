@@ -1,0 +1,39 @@
+[Theme]
+DisplayName=JANUS Duality Oscuro
+SetLogonBackground=0
+
+[Control Panel\Cursors]
+AppStarting=%SystemRoot%\cursors\aero_working.ani
+Arrow=%SystemRoot%\cursors\aero_arrow.cur
+Hand=%SystemRoot%\cursors\aero_link.cur
+Help=%SystemRoot%\cursors\aero_helpsel.cur
+No=%SystemRoot%\cursors\aero_unavail.cur
+SizeAll=%SystemRoot%\cursors\aero_move.cur
+SizeNESW=%SystemRoot%\cursors\aero_nesw.cur
+SizeNS=%SystemRoot%\cursors\aero_ns.cur
+SizeNWSE=%SystemRoot%\cursors\aero_nwse.cur
+SizeWE=%SystemRoot%\cursors\aero_ew.cur
+UpArrow=%SystemRoot%\cursors\aero_up.cur
+Wait=%SystemRoot%\cursors\aero_busy.ani
+DefaultValue=Windows Default
+
+[Control Panel\Desktop]
+Wallpaper=DesktopBackground\JANUS-Duality-Oscuro-4K.png
+TileWallpaper=0
+WallpaperStyle=10
+Pattern=
+
+[VisualStyles]
+Path=%ResourceDir%\Themes\Aero\Aero.msstyles
+ColorStyle=NormalColor
+Size=NormalSize
+AutoColorization=0
+ColorizationColor=0XC4E7A62B
+SystemMode=Dark
+AppMode=Dark
+
+[MasterThemeSelector]
+MTSM=RJSPBS
+
+[Sounds]
+SchemeName=@%SystemRoot%\System32\mmres.dll,-800

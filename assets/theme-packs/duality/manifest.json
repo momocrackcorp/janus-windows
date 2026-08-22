@@ -1,0 +1,25 @@
+﻿{
+    "id":  "janus-duality",
+    "version":  1,
+    "displayName":  "JANUS Duality",
+    "publisher":  "Momocrackcorp",
+    "variants":  [
+                     "Claro",
+                     "Oscuro"
+                 ],
+    "wallpapers":  [
+                       "Claro",
+                       "Oscuro"
+                   ],
+    "slideshowMinutes":  30,
+    "preserveWindowsMode":  true,
+    "components":  [
+                       "wallpapers",
+                       "colors",
+                       "cursors",
+                       "sounds"
+                   ],
+    "iconCompanion":  "JANUS-Duality-Iconos-v1.zip",
+    "safe":  true,
+    "reversible":  true
+}
