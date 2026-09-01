@@ -2,6 +2,8 @@
 
 Aplicación gráfica para trasladar Escritorio, Documentos, Descargas, Imágenes, Música y Vídeos a otra unidad sin arriesgar los archivos originales.
 
+**Línea local actual: JANUS 3.1.x (3.1.0 RC1).** Este repositorio conserva la aplicación enfocada en migración, respaldo, recuperación y puesta a punto. JANUS+ se desarrolla por separado como una edición ampliada con temas de Windows.
+
 ## Finalidad de JANUS
 
 JANUS nace para agilizar y simplificar las tareas habituales después de formatear o realizar una instalación limpia de Windows. Está recomendado especialmente para instalaciones limpias y para equipos con más de una unidad o con un disco dividido en varias particiones, donde permite separar el sistema operativo y las aplicaciones de los archivos personales.
@@ -44,6 +46,8 @@ El cambio de nombre no altera el objetivo ni las protecciones del programa. Janu
 - Desde **Herramientas de Windows** permite activar la zona horaria automática, forzar la sincronización inmediata mediante el servicio oficial de hora y abrir el panel de Windows para ajustar el reloj.
 - Desde el mismo panel permite mostrar u ocultar en el Escritorio **Equipo**, **Archivos del usuario**, **Red**, **Papelera de reciclaje** y **Panel de control**, respetando la selección actual de Windows.
 - En Windows 11 permite cambiar la alineación del menú Inicio entre el centro y la izquierda; la opción se desactiva automáticamente en versiones anteriores de Windows.
+- En Windows 11 24H2 o posterior abre la configuración oficial para elegir las carpetas visibles en Inicio y la configuración oficial de **Sudo para Windows**. JANUS nunca activa Sudo automáticamente y recomienda el modo más seguro, **En una ventana nueva**.
+- Puede instalar para el usuario **Unidades en el escritorio v0.4.1**: muestra las unidades montadas mediante accesos permanentes, utiliza iconos acordes al tema activo y continúa funcionando aunque JANUS esté cerrado. La desactivación retira únicamente sus accesos administrados y conserva el programa y sus preferencias para una futura reactivación.
 - Integra en una cuadrícula compacta accesos oficiales a VLC, Codec Guide, WinRAR, USB Image Tool, Adobe Reader, Microsoft PC Manager, WinDirStat, Everything, Autoruns, IrfanView, Sysinternals, DropIt y PowerToys, además de Google Chrome, Mozilla Firefox, Brave, Opera y Comet.
 - Los accesos de descarga conservan sus iconos para reconocer rápidamente cada aplicación.
 - El botón **Desactivar OneDrive** aplica, con autorización de administrador, la directiva oficial `DisableFileSyncNGSC` que bloquea su sincronización; además cierra el cliente, retira su icono de la bandeja y elimina su inicio automático con respaldo. **Restaurar OneDrive** retira la directiva y repone el inicio. No desinstala, desvincula ni borra archivos.

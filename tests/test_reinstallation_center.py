@@ -113,10 +113,10 @@ class ReinstallationCenterTests(unittest.TestCase):
         self.assertNotIn('Record("Licencias"', SOURCE)
 
     def test_stable_3_0_1_version_is_visible(self):
-        self.assertIn('DisplayVersion="3.0.1"', MAIN)
-        self.assertIn('AssemblyVersion("3.0.1.0")', MAIN)
-        self.assertIn('AssemblyFileVersion("3.0.1.0")', MAIN)
-        self.assertIn('AssemblyInformationalVersion("3.0.1")', MAIN)
+        self.assertIn('DisplayVersion="3.1.0-rc.1"', MAIN)
+        self.assertIn('AssemblyVersion("3.1.0.0")', MAIN)
+        self.assertIn('AssemblyFileVersion("3.1.0.0")', MAIN)
+        self.assertIn('AssemblyInformationalVersion("3.1.0-rc.1")', MAIN)
 
 
 if __name__ == "__main__":

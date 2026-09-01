@@ -6,6 +6,10 @@ dist/
 *.spec
 .pytest_cache/
 *.log
+tmp/
+# Los temas completos pertenecen al repositorio independiente JANUS+.
+assets/theme-packs/
+assets/windows-themes/
 assets/theme-packs/**/*.pdf
 assets/theme-packs/**/*.svg
 tools/_vendor/
