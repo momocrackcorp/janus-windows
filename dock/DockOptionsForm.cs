@@ -59,12 +59,12 @@ public sealed class DockOptionsForm : Form
         var criticalLabel = new Label { Text = "Alerta desde (%):", Location = new Point(245, 56), AutoSize = true };
         var critical = new NumericUpDown { Location = new Point(360, 52), Width = 75, Minimum = 70, Maximum = 99, Value = Math.Clamp(config.CriticalPercent, 70, 99) };
         disks.Controls.AddRange(new Control[] { chooseColor, swatch, criticalLabel, critical });
-        chooseColor.Click += (_, _) => { using var picker = new ColorDialog { Color = diskColor, FullOpen = true }; if (picker.ShowDialog(this) == DialogResult.OK) { diskColor = picker.Color; swatch.BackColor = diskColor; foreach (var item in diskPanel.Controls.OfType<DiskUsageControl>()) item.SetAppearance(diskColor, (int)critical.Value); } };
-        critical.ValueChanged += (_, _) => { foreach (var item in diskPanel.Controls.OfType<DiskUsageControl>()) item.SetAppearance(diskColor, (int)critical.Value); };
         disks.Controls.Add(widget);
         disks.Controls.Add(new Label { Text = "Vista previa de capacidad (GB usados y libres):", Location = new Point(18, 102), AutoSize = true });
         var diskPanel = new FlowLayoutPanel { Location = new Point(18, 138), Size = new Size(530, 186), Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right, AutoScroll = true, FlowDirection = FlowDirection.TopDown, WrapContents = false };
         disks.Controls.Add(diskPanel);
+        chooseColor.Click += (_, _) => { using var picker = new ColorDialog { Color = diskColor, FullOpen = true }; if (picker.ShowDialog(this) == DialogResult.OK) { diskColor = picker.Color; swatch.BackColor = diskColor; foreach (var item in diskPanel.Controls.OfType<DiskUsageControl>()) item.SetAppearance(diskColor, (int)critical.Value); } };
+        critical.ValueChanged += (_, _) => { foreach (var item in diskPanel.Controls.OfType<DiskUsageControl>()) item.SetAppearance(diskColor, (int)critical.Value); };
         foreach (var drive in DriveInfo.GetDrives())
         {
             try
@@ -85,7 +85,7 @@ public sealed class DockOptionsForm : Form
         Controls.Add(bar); bar.BringToFront();
         var cancel = new Button { Text = "Cancelar", Width = 110, Height = 32, DialogResult = DialogResult.Cancel };
         var apply = new Button { Text = "Guardar cambios", Width = 135, Height = 32, DialogResult = DialogResult.OK };
-        bar.Controls.AddRange(new Control[] { cancel, apply });
+        bar.Controls.AddRange(new Control[] { apply, cancel });
         AcceptButton = apply; CancelButton = cancel;
         apply.Click += (_, _) =>
         {
