@@ -50,3 +50,22 @@ Clic derecho sobre la barra o en un icono → **Opciones**. Se abre una ventana 
 Al pulsar **Guardar** se conservan las rutas actuales en JSON, y la opción de inicio crea o elimina únicamente el valor `JANUS Dock` en la clave `HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Run`. El ocultamiento conserva una franja de aproximadamente seis píxeles como zona de recuperación.
 
 **Pendiente:** validar compilación de GitHub Actions y probar en Windows 11 los cambios de AppBar, especialmente con autoocultación, ubicación inferior y varios monitores. No distribuir como versión estable hasta completar estas pruebas.
+
+## Plan de versión 2.1 (en desarrollo)
+
+Versionado acordado: **10 modificaciones funcionales revisadas por versión publicada**. Los commits de corrección internos no cuentan automáticamente como versiones. Cada publicación requiere compilación exitosa en GitHub Actions y una prueba real en Windows 11, y se documentará con un changelog.
+
+Lote de cambios previstos para 2.1:
+
+1. Corregir solapamiento del selector de tamaño de iconos.
+2. Mantener Guardar/Cancelar visibles en el cuadro de opciones.
+3. Mostrar la letra C:, D:, etc. centrada en cada gráfico de disco.
+4. Elegir el color de las donas desde la pestaña Discos.
+5. Reutilizar el mismo color en los widgets de la barra.
+6. Ajustar el porcentaje crítico de ocupación.
+7. Mostrar exclamación pequeña en discos con ocupación crítica.
+8. Integrar el bloque de discos en el mismo orden que accesos y separadores.
+9. Mover el bloque de discos hacia arriba/abajo desde su menú contextual.
+10. Permitir insertar y desplazar separadores entre el bloque de discos y los accesos.
+
+**Estado:** cambios implementados en código en la rama de desarrollo. Quedan pendientes la compilación Windows, revisión de diseño con escalado de pantalla y prueba con datos reales antes de publicar la versión 2.1.
