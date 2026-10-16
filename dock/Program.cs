@@ -20,6 +20,9 @@ public class DockSettings
     public int IconSize { get; set; } = 40;
     public bool ShowNames { get; set; } = false;
     public string Edge { get; set; } = "Derecha";
+    public bool AlwaysOnTop { get; set; } = true;
+    public bool AutoHide { get; set; } = false;
+    public bool ShowDiskWidget { get; set; } = false;
 }
 internal static class Program
 {
@@ -76,6 +79,9 @@ public class Dock : Form
     bool registered, repositioning, resizeActive, light;
     int dragX, dragWidth;
     readonly System.Windows.Forms.Timer themeTimer = new() { Interval = 3000 };
+    readonly System.Windows.Forms.Timer hideTimer = new() { Interval = 400 };
+    bool collapsed;
+    const int RevealStrip = 6;
 
     AppBar Data() => new()
     {
@@ -93,7 +99,7 @@ public class Dock : Form
         Width = settings.Width;
         FormBorderStyle = FormBorderStyle.None;
         ShowInTaskbar = false;
-        TopMost = true;
+        TopMost = settings.AlwaysOnTop;
         AllowDrop = true;
         MinimumSize = new Size(64, 200);
         add.Click += (_, _) => AddDialog();
@@ -147,6 +153,8 @@ public class Dock : Form
             if (next != light) { light = next; ApplyTheme(); Render(); }
         };
         themeTimer.Start();
+        hideTimer.Tick += (_, _) => UpdateAutoHide();
+        hideTimer.Start();
     }
     void FinishResize()
     {
@@ -261,6 +269,21 @@ public class Dock : Form
             control.Dispose();
         }
         int width = Horizontal ? Math.Max(60, settings.IconSize + (settings.ShowNames ? 55 : 12)) : Math.Max(55, settings.Width - 18);
+        if (settings.ShowDiskWidget)
+        {
+            foreach (var drive in DriveInfo.GetDrives())
+            {
+                try
+                {
+                    if (!drive.IsReady || drive.TotalSize <= 0) continue;
+                    var view = new DiskUsageControl(drive) { Width = Horizontal ? 210 : Math.Max(80, settings.Width - 18), Height = 68, BackColor = BackColor };
+                    var tip = new ToolTip();
+                    tip.SetToolTip(view, $"{drive.Name}: {(drive.TotalSize-drive.TotalFreeSpace)/1073741824.0:F1} GB usados; {drive.TotalFreeSpace/1073741824.0:F1} GB libres");
+                    panel.Controls.Add(view);
+                }
+                catch { }
+            }
+        }
         foreach (var item in settings.Items.ToList())
         {
             if (item.IsSeparator)
@@ -347,6 +370,25 @@ public class Dock : Form
     }
     void ShowOptions()
     {
+        using var dlg = new DockOptionsForm(settings);
+        if (dlg.ShowDialog(this) != DialogResult.OK) return;
+        UnregisterBar();
+        settings.AlwaysOnTop = dlg.AlwaysOnTop;
+        settings.AutoHide = dlg.AutoHide;
+        settings.ShowNames = dlg.ShowNames;
+        settings.ShowDiskWidget = dlg.ShowDiskWidget;
+        settings.IconSize = dlg.IconSize;
+        settings.Edge = dlg.Edge;
+        TopMost = settings.AlwaysOnTop;
+        collapsed = false;
+        DockOptionsForm.SetStartup(dlg.StartWithWindows);
+        SetOrientation();
+        RegisterBar();
+        Store();
+        Render();
+    }
+    void ShowLegacyOptions()
+    {
         var menu = new ContextMenuStrip();
         var names = new ToolStripMenuItem("Mostrar nombres") { Checked = settings.ShowNames, CheckOnClick = true };
         names.CheckedChanged += (_, _) => { settings.ShowNames = names.Checked; Store(); Render(); };
@@ -425,6 +467,28 @@ public class Dock : Form
         registered = SHAppBarMessage(ABM_NEW, ref d) != IntPtr.Zero;
         Position();
     }
+    void UpdateAutoHide()
+    {
+        if (!settings.AutoHide || !Visible || resizeActive)
+        {
+            if (collapsed) { collapsed = false; Position(); }
+            return;
+        }
+        var mouse = Cursor.Position;
+        bool shouldExpand = Bounds.Contains(mouse);
+        if (collapsed)
+        {
+            var screen = Screen.PrimaryScreen?.Bounds ?? Screen.FromControl(this).Bounds;
+            shouldExpand = settings.Edge switch
+            {
+                "Derecha" => mouse.X >= screen.Right - 12,
+                "Izquierda" => mouse.X <= screen.Left + 12,
+                "Arriba" => mouse.Y <= screen.Top + 12,
+                _ => mouse.Y >= (Screen.PrimaryScreen?.WorkingArea.Bottom ?? screen.Bottom) - 12 && mouse.Y < (Screen.PrimaryScreen?.WorkingArea.Bottom ?? screen.Bottom)
+            };
+        }
+        if (shouldExpand == collapsed) { collapsed = !collapsed; Position(); }
+    }
     void Position()
     {
         if (repositioning) return;
@@ -432,12 +496,13 @@ public class Dock : Form
         try
         {
             var bounds = Screen.PrimaryScreen?.Bounds ?? Screen.FromControl(this).Bounds;
-            int thickness = Horizontal ? Math.Clamp(settings.IconSize + (settings.ShowNames ? 36 : 16), 48, 100) : settings.Width;
+            int thickness = collapsed ? RevealStrip : (Horizontal ? Math.Clamp(settings.IconSize + (settings.ShowNames ? 36 : 16), 48, 100) : settings.Width);
             if (settings.Edge == "Abajo")
             {
                 // Do not overlap the Windows taskbar or reserve a giant bottom strip.
                 var work = Screen.PrimaryScreen?.WorkingArea ?? Screen.FromControl(this).WorkingArea;
                 Bounds = new Rectangle(work.Left, work.Bottom - thickness, work.Width, thickness);
+                panel.Visible = !collapsed;
                 foreach (Control c in panel.Controls)
                 {
                     if (c is Button b) { b.Width = Math.Max(52, settings.IconSize + (settings.ShowNames ? 55 : 12)); b.Height = thickness - 8; }
@@ -465,6 +530,7 @@ public class Dock : Form
                 SHAppBarMessage(ABM_SETPOS, ref d);
             }
             Bounds = Rectangle.FromLTRB(d.rc.left, d.rc.top, d.rc.right, d.rc.bottom);
+            panel.Visible = !collapsed;
             footer.Width = Horizontal ? 80 : settings.Width;
             foreach (Control c in panel.Controls)
             {
@@ -491,6 +557,7 @@ public class Dock : Form
     protected override void OnFormClosing(FormClosingEventArgs e)
     {
         themeTimer.Stop();
+        hideTimer.Stop();
         UnregisterBar();
         base.OnFormClosing(e);
     }
