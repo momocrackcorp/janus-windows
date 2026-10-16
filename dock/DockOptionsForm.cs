@@ -149,7 +149,8 @@ public sealed class DiskUsageControl : Control
     {
         base.OnPaint(e);
         e.Graphics.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.AntiAlias;
-        var rect = new Rectangle(9, 9, 46, 46);
+        int ringX = compact ? Math.Max(9, (Width - 48) / 2) : 9;
+        var rect = new Rectangle(ringX, 9, 46, 46);
         using var back = new Pen(Color.FromArgb(190, 197, 207), 8);
         using var front = new Pen(accent, 8);
         e.Graphics.DrawEllipse(back, rect);
@@ -157,13 +158,13 @@ public sealed class DiskUsageControl : Control
         using var title = new Font("Segoe UI", 10, FontStyle.Bold);
         using var centered = new StringFormat { Alignment = StringAlignment.Center, LineAlignment = StringAlignment.Center };
         using var textBrush = new SolidBrush(ForeColor);
-        e.Graphics.DrawString(name, title, textBrush, new RectangleF(12, 14, 42, 38), centered);
+        e.Graphics.DrawString(name, title, textBrush, new RectangleF(ringX + 3, 14, 42, 38), centered);
         if (ratio * 100 >= threshold)
         {
             using var warning = new SolidBrush(Color.OrangeRed);
-            e.Graphics.FillEllipse(warning, 48, 5, 15, 15);
+            e.Graphics.FillEllipse(warning, ringX + 39, 5, 15, 15);
             using var symbol = new Font("Segoe UI", 9, FontStyle.Bold);
-            e.Graphics.DrawString("!", symbol, Brushes.White, new RectangleF(48, 4, 15, 16), centered);
+            e.Graphics.DrawString("!", symbol, Brushes.White, new RectangleF(ringX + 39, 4, 15, 16), centered);
         }
         if (!compact)
         {
