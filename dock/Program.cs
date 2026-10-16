@@ -354,7 +354,7 @@ public class Dock : Form
         }
         menu.Items.Add(sizes);
         menu.Items.Add("Cerrar JANUS Dock", null, (_, _) => Close());
-        menu.Show(options, new Point(0, -menu.PreferredSize.Height));
+        menu.Show(this, PointToClient(Cursor.Position));
     }
     void Move(DockItem item, int delta)
     {
