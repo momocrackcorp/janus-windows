@@ -213,7 +213,7 @@ public class Dock : Form
             if (Uri.TryCreate(path, UriKind.Absolute, out var uri) && uri.Scheme.StartsWith("http"))
                 return (Image)SystemIcons.Information.ToBitmap();
             IntPtr result = SHGetFileInfo(path, FILE_ATTRIBUTE_NORMAL, out var info,
-                (uint)Marshal.SizeOf<SHFILEINFO>(), SHGFI_ICON | SHGFI_LARGEICON | SHGFI_USEFILEATTRIBUTES);
+                (uint)Marshal.SizeOf<SHFILEINFO>(), SHGFI_ICON | SHGFI_LARGEICON);
             if (result != IntPtr.Zero && info.hIcon != IntPtr.Zero)
             {
                 try { using var icon = (Icon)Icon.FromHandle(info.hIcon).Clone(); return icon.ToBitmap(); }
@@ -226,8 +226,13 @@ public class Dock : Form
     void Render()
     {
         panel.SuspendLayout();
-        foreach (Control control in panel.Controls) { if (control is Button b) b.Image?.Dispose(); control.Dispose(); }
-        panel.Controls.Clear();
+        while (panel.Controls.Count > 0)
+        {
+            var control = panel.Controls[0];
+            panel.Controls.RemoveAt(0);
+            if (control is Button b) b.Image?.Dispose();
+            control.Dispose();
+        }
         int width = Math.Max(55, settings.Width - 18);
         foreach (var item in settings.Items.ToList())
         {
