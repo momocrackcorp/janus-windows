@@ -18,6 +18,7 @@ public class DockSettings
     public int Width { get; set; } = 88;
     public int IconSize { get; set; } = 40;
     public bool ShowNames { get; set; } = false;
+    public string Edge { get; set; } = "Derecha";
 }
 internal static class Program
 {
@@ -31,7 +32,8 @@ internal static class Program
 }
 public class Dock : Form
 {
-    const int ABM_NEW = 0, ABM_REMOVE = 1, ABM_QUERYPOS = 2, ABM_SETPOS = 3, ABE_RIGHT = 2;
+    const int ABM_NEW = 0, ABM_REMOVE = 1, ABM_QUERYPOS = 2, ABM_SETPOS = 3;
+    const int ABE_LEFT = 0, ABE_TOP = 1, ABE_RIGHT = 2, ABE_BOTTOM = 3;
     const int CallbackMessage = 0x8000 + 417;
     [StructLayout(LayoutKind.Sequential)]
     struct Rect { public int left, top, right, bottom; }
@@ -77,7 +79,7 @@ public class Dock : Form
     AppBar Data() => new()
     {
         cbSize = Marshal.SizeOf<AppBar>(), hWnd = Handle,
-        uCallbackMessage = CallbackMessage, uEdge = ABE_RIGHT
+        uCallbackMessage = CallbackMessage, uEdge = settings.Edge switch { "Izquierda" => ABE_LEFT, "Arriba" => ABE_TOP, "Abajo" => ABE_BOTTOM, _ => ABE_RIGHT }
     };
     public Dock()
     {
@@ -85,6 +87,7 @@ public class Dock : Form
         catch { }
         settings.Width = Math.Clamp(settings.Width, 64, 300);
         settings.IconSize = Math.Clamp(settings.IconSize, 24, 64);
+        if (!new[] { "Derecha", "Izquierda", "Arriba", "Abajo" }.Contains(settings.Edge)) settings.Edge = "Derecha";
         Text = "JANUS Dock";
         Width = settings.Width;
         FormBorderStyle = FormBorderStyle.None;
@@ -101,13 +104,14 @@ public class Dock : Form
         Controls.Add(panel);
         Controls.Add(footer);
         Controls.Add(grip);
+        SetOrientation();
         grip.MouseDown += (_, e) =>
         {
             if (e.Button == MouseButtons.Left)
             {
                 resizeActive = true;
-                dragX = Cursor.Position.X;
-                dragWidth = Width;
+                dragX = Horizontal ? Cursor.Position.Y : Cursor.Position.X;
+                dragWidth = settings.Width;
                 grip.Capture = true;
             }
         };
@@ -115,8 +119,10 @@ public class Dock : Form
         {
             if (resizeActive)
             {
-                settings.Width = Math.Clamp(dragWidth + dragX - Cursor.Position.X, 64, 300);
-                Width = settings.Width;
+                int current = Horizontal ? Cursor.Position.Y : Cursor.Position.X;
+                int sign = settings.Edge is "Izquierda" or "Arriba" ? 1 : -1;
+                settings.Width = Math.Clamp(dragWidth + sign * (current - dragX), 64, 300);
+                Position();
                 AlignFooter();
             }
         };
@@ -151,7 +157,7 @@ public class Dock : Form
         try
         {
             using var key = Registry.CurrentUser.OpenSubKey(@"Software\Microsoft\Windows\CurrentVersion\Themes\Personalize");
-            return Convert.ToInt32(key?.GetValue("AppsUseLightTheme", 1)) != 0;
+            return Convert.ToInt32(key?.GetValue("SystemUsesLightTheme", 1)) != 0;
         }
         catch { return true; }
     }
@@ -170,7 +176,7 @@ public class Dock : Form
     }
     void AlignFooter()
     {
-        int w = Math.Max(64, Width - grip.Width);
+        int w = Horizontal ? 80 : Math.Max(64, Width - grip.Width);
         add.Location = new Point(Math.Max(5, (w - 72) / 2), 7);
         options.Location = new Point(add.Right + 6, 7);
     }
@@ -233,13 +239,13 @@ public class Dock : Form
             if (control is Button b) b.Image?.Dispose();
             control.Dispose();
         }
-        int width = Math.Max(55, settings.Width - 18);
+        int width = Horizontal ? Math.Max(60, settings.IconSize + (settings.ShowNames ? 55 : 12)) : Math.Max(55, settings.Width - 18);
         foreach (var item in settings.Items.ToList())
         {
             var btn = new Button
             {
                 Width = width,
-                Height = settings.IconSize + (settings.ShowNames ? 45 : 14),
+                Height = Horizontal ? Math.Max(52, settings.Width - 17) : settings.IconSize + (settings.ShowNames ? 45 : 14),
                 Image = GetIcon(item.Path),
                 ImageAlign = settings.ShowNames ? ContentAlignment.TopCenter : ContentAlignment.MiddleCenter,
                 Text = settings.ShowNames ? item.Name : "",
@@ -280,6 +286,14 @@ public class Dock : Form
         var names = new ToolStripMenuItem("Mostrar nombres") { Checked = settings.ShowNames, CheckOnClick = true };
         names.CheckedChanged += (_, _) => { settings.ShowNames = names.Checked; Store(); Render(); };
         menu.Items.Add(names);
+        var locations = new ToolStripMenuItem("Ubicación");
+        foreach (string edge in new[] { "Derecha", "Izquierda", "Arriba", "Abajo" })
+        {
+            var opt = new ToolStripMenuItem(edge) { Checked = settings.Edge == edge };
+            opt.Click += (_, _) => { if (settings.Edge != edge) { UnregisterBar(); settings.Edge = edge; SetOrientation(); RegisterBar(); Store(); Render(); } };
+            locations.DropDownItems.Add(opt);
+        }
+        menu.Items.Add(locations);
         var sizes = new ToolStripMenuItem("Tamaño de iconos");
         foreach (int size in new[] { 24, 32, 40, 48, 56, 64 })
         {
@@ -302,34 +316,84 @@ public class Dock : Form
         try { Process.Start(new ProcessStartInfo(item.Path) { UseShellExecute = true }); }
         catch (Exception ex) { MessageBox.Show(ex.Message, "No se pudo abrir", MessageBoxButtons.OK, MessageBoxIcon.Warning); }
     }
+    bool Horizontal => settings.Edge == "Arriba" || settings.Edge == "Abajo";
+    void SetOrientation()
+    {
+        panel.FlowDirection = Horizontal ? FlowDirection.LeftToRight : FlowDirection.TopDown;
+        panel.Dock = DockStyle.Fill;
+        footer.Dock = Horizontal ? DockStyle.Right : DockStyle.Bottom;
+        footer.Width = Horizontal ? 80 : settings.Width;
+        footer.Height = Horizontal ? settings.Width : 44;
+        grip.Dock = settings.Edge switch
+        {
+            "Izquierda" => DockStyle.Right,
+            "Arriba" => DockStyle.Bottom,
+            "Abajo" => DockStyle.Top,
+            _ => DockStyle.Left
+        };
+        grip.Cursor = Horizontal ? Cursors.SizeNS : Cursors.SizeWE;
+        AlignFooter();
+    }
+    void UnregisterBar()
+    {
+        if (!registered) return;
+        var d = Data();
+        SHAppBarMessage(ABM_REMOVE, ref d);
+        registered = false;
+    }
+    void RegisterBar()
+    {
+        if (!IsHandleCreated) return;
+        var d = Data();
+        registered = SHAppBarMessage(ABM_NEW, ref d) != IntPtr.Zero;
+        Position();
+    }
     void Position()
     {
-        if (repositioning || !registered) return;
+        if (repositioning) return;
         repositioning = true;
         try
         {
             var bounds = Screen.PrimaryScreen?.Bounds ?? Screen.FromControl(this).Bounds;
-            var data = Data();
-            data.rc = new Rect { left = bounds.Right - settings.Width, top = bounds.Top, right = bounds.Right, bottom = bounds.Bottom };
-            SHAppBarMessage(ABM_QUERYPOS, ref data);
-            data.rc.left = data.rc.right - settings.Width;
-            SHAppBarMessage(ABM_SETPOS, ref data);
-            Bounds = new Rectangle(data.rc.left, data.rc.top, settings.Width, data.rc.bottom - data.rc.top);
-            foreach (Control c in panel.Controls) c.Width = Math.Max(55, settings.Width - 18);
+            int thickness = settings.Width;
+            var d = Data();
+            d.rc = new Rect
+            {
+                left = settings.Edge == "Derecha" ? bounds.Right - thickness : bounds.Left,
+                right = settings.Edge == "Izquierda" ? bounds.Left + thickness : bounds.Right,
+                top = settings.Edge == "Abajo" ? bounds.Bottom - thickness : bounds.Top,
+                bottom = settings.Edge == "Arriba" ? bounds.Top + thickness : bounds.Bottom
+            };
+            if (registered)
+            {
+                SHAppBarMessage(ABM_QUERYPOS, ref d);
+                switch (settings.Edge)
+                {
+                    case "Izquierda": d.rc.right = d.rc.left + thickness; break;
+                    case "Arriba": d.rc.bottom = d.rc.top + thickness; break;
+                    case "Abajo": d.rc.top = d.rc.bottom - thickness; break;
+                    default: d.rc.left = d.rc.right - thickness; break;
+                }
+                SHAppBarMessage(ABM_SETPOS, ref d);
+            }
+            Bounds = Rectangle.FromLTRB(d.rc.left, d.rc.top, d.rc.right, d.rc.bottom);
+            footer.Width = Horizontal ? 80 : settings.Width;
+            foreach (Control c in panel.Controls)
+            {
+                if (c is Button b)
+                {
+                    b.Width = Horizontal ? Math.Max(60, settings.IconSize + (settings.ShowNames ? 55 : 12)) : Math.Max(55, thickness - 18);
+                    b.Height = Horizontal ? Math.Max(52, thickness - 17) : settings.IconSize + (settings.ShowNames ? 45 : 14);
+                }
+            }
         }
         finally { repositioning = false; }
     }
     protected override void OnHandleCreated(EventArgs e)
     {
         base.OnHandleCreated(e);
-        var data = Data();
-        registered = SHAppBarMessage(ABM_NEW, ref data) != IntPtr.Zero;
-        if (registered) Position();
-        else
-        {
-            var b = Screen.PrimaryScreen!.Bounds;
-            Bounds = new Rectangle(b.Right - settings.Width, b.Top, settings.Width, b.Height);
-        }
+        SetOrientation();
+        RegisterBar();
     }
     protected override void WndProc(ref Message m)
     {
@@ -339,12 +403,7 @@ public class Dock : Form
     protected override void OnFormClosing(FormClosingEventArgs e)
     {
         themeTimer.Stop();
-        if (registered)
-        {
-            var data = Data();
-            SHAppBarMessage(ABM_REMOVE, ref data);
-            registered = false;
-        }
+        UnregisterBar();
         base.OnFormClosing(e);
     }
 }
