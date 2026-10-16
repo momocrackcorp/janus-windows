@@ -30,9 +30,9 @@ public sealed class DockOptionsForm : Form
     public DockOptionsForm(DockSettings config)
     {
         Text = "Opciones de JANUS Dock";
-        ClientSize = new Size(570, 440);
-        MinimumSize = new Size(590, 480);
-        AutoScaleMode = AutoScaleMode.Dpi;
+        AutoScaleMode = AutoScaleMode.Font;
+        ClientSize = new Size(720, 540);
+        MinimumSize = new Size(430, 340);
         MaximizeBox = false; MinimizeBox = false;
         StartPosition = FormStartPosition.CenterScreen;
         Font = new Font("Segoe UI", 9);
@@ -126,6 +126,23 @@ public sealed class DockOptionsForm : Form
             if (history.Count == 0) return;
             ordered = history.Pop();
             RefreshOrder(0);
+        // Organizing remains in Apariencia; use stacked rows on narrow/high-DPI displays.
+        appearance.Controls.Clear();
+        var appearanceRows = PageRows(appearance);
+        appearanceRows.Controls.Add(FieldRow(new Label { Text = "Estilo de los iconos:", AutoSize = true }, iconStyle));
+        appearanceRows.Controls.Add(new Label { Text = "Windows conserva los iconos originales; Lucide usa trazos para accesos integrados.", AutoSize = true });
+        appearanceRows.Controls.Add(new Label { Text = "Organizar accesos y separadores", AutoSize = true, Font = new Font("Segoe UI", 9, FontStyle.Bold) });
+        appearanceRows.Controls.Add(new Label { Text = "Arrastra filas o usa los botones. Guardar aplica los cambios.", AutoSize = true });
+        orderList.Height = 170;
+        appearanceRows.Controls.Add(orderList);
+        actions.FlowDirection = FlowDirection.LeftToRight;
+        actions.WrapContents = true;
+        actions.AutoScroll = false;
+        actions.AutoSize = true;
+        actions.AutoSizeMode = AutoSizeMode.GrowAndShrink;
+        foreach (Control control in actions.Controls) { control.Width = 112; control.Height = 32; }
+        appearanceRows.Controls.Add(actions);
+        appearanceRows.SizeChanged += (_, _) => FitRows(appearanceRows);
         };
         appearance.Controls.Add(actions);
         RefreshOrder(0);
@@ -165,6 +182,22 @@ public sealed class DockOptionsForm : Form
         var shutdown = new CheckBox { Text = "Apagar", AutoSize = true, Location = new Point(240, 292), Checked = config.ShowShutdown };
         var restart = new CheckBox { Text = "Reiniciar", AutoSize = true, Location = new Point(335, 292), Checked = config.ShowRestart };
         general.Controls.AddRange(new Control[] { powerTitle, shutdown, restart });
+        // Responsive layout: labels and inputs occupy separate rows so Windows 10
+        // at 200% DPI cannot make them overlap. The page scrolls if necessary.
+        general.Controls.Clear();
+        var generalRows = PageRows(general);
+        generalRows.Controls.Add(top);
+        generalRows.Controls.Add(hide);
+        generalRows.Controls.Add(startup);
+        generalRows.Controls.Add(FieldRow(names, nameMode));
+        generalRows.Controls.Add(FieldRow(new Label { Text = "Modo:", AutoSize = true }, dockMode));
+        generalRows.Controls.Add(FieldRow(new Label { Text = "Ubicación:", AutoSize = true }, location));
+        generalRows.Controls.Add(FieldRow(new Label { Text = "Tamaño iconos:", AutoSize = true }, size, smallIcons));
+        generalRows.Controls.Add(animation);
+        generalRows.Controls.Add(FieldRow(powerTitle, shutdown, restart));
+        generalRows.Controls.Add(new Label { Text = "Al ocultarse queda una franja para recuperar la barra con el mouse.", AutoSize = true });
+        generalRows.SizeChanged += (_, _) => FitRows(generalRows);
+
         var widget = new CheckBox { Text = "Mostrar indicador de uso de discos en la barra", Checked = config.ShowDiskWidget, Location = new Point(18, 20), AutoSize = true };
         var diskColors = new Dictionary<string,int>(config.DiskColors, StringComparer.OrdinalIgnoreCase);
         var widgetLabel = new Label { Text = "Cada unidad tiene su propio color. Selecciónalo con el botón de su fila.", Location = new Point(18, 54), AutoSize = true };
@@ -210,12 +243,21 @@ public sealed class DockOptionsForm : Form
         updates.Click += (_, _) => Process.Start(new ProcessStartInfo("https://github.com/momocrackcorp/janus-windows/actions/workflows/build-janus-dock.yml") { UseShellExecute = true });
         about.Controls.Add(updates);
 
-        var bar = new FlowLayoutPanel { Dock = DockStyle.Bottom, Height = 56, FlowDirection = FlowDirection.RightToLeft, WrapContents = false, Padding = new Padding(8) };
+        var bar = new FlowLayoutPanel { Dock = DockStyle.Bottom, Height = 64, FlowDirection = FlowDirection.RightToLeft, WrapContents = false, Padding = new Padding(8), AutoScroll = false };
         Controls.Add(bar); bar.BringToFront();
-        var cancel = new Button { Text = "Cancelar", Width = 110, Height = 32, DialogResult = DialogResult.Cancel };
-        var apply = new Button { Text = "Guardar cambios", Width = 135, Height = 32, DialogResult = DialogResult.OK };
+        var cancel = new Button { Text = "Cancelar", AutoSize = true, MinimumSize = new Size(110, 36), DialogResult = DialogResult.Cancel };
+        var apply = new Button { Text = "Guardar cambios", AutoSize = true, MinimumSize = new Size(150, 36), DialogResult = DialogResult.OK };
         bar.Controls.AddRange(new Control[] { apply, cancel });
         AcceptButton = apply; CancelButton = cancel;
+        Shown += (_, _) =>
+        {
+            var area = Screen.FromControl(this).WorkingArea;
+            Size = new Size(Math.Min(Width, Math.Max(420, area.Width - 24)), Math.Min(Height, Math.Max(320, area.Height - 24)));
+            Location = new Point(area.Left + Math.Max(0, (area.Width - Width) / 2), area.Top + Math.Max(0, (area.Height - Height) / 2));
+            bar.Height = Math.Max(64, apply.PreferredSize.Height + 20);
+            FitRows(generalRows);
+            FitRows(appearanceRows);
+        };
         apply.Click += (_, _) =>
         {
             AlwaysOnTop = top.Checked;
@@ -237,6 +279,55 @@ public sealed class DockOptionsForm : Form
             CriticalPercent = (int)critical.Value;
         };
     }
+    private static FlowLayoutPanel PageRows(TabPage page)
+    {
+        page.AutoScroll = true;
+        var rows = new FlowLayoutPanel
+        {
+            FlowDirection = FlowDirection.TopDown, WrapContents = false,
+            AutoScroll = false, Padding = new Padding(10), Margin = Padding.Empty,
+            Location = Point.Empty, Width = Math.Max(340, page.ClientSize.Width - 24),
+            Height = 630, Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right
+        };
+        page.Controls.Add(rows);
+        page.Resize += (_, _) => FitRows(rows);
+        return rows;
+    }
+
+    private static FlowLayoutPanel FieldRow(params Control[] controls)
+    {
+        var row = new FlowLayoutPanel
+        {
+            AutoSize = true, AutoSizeMode = AutoSizeMode.GrowAndShrink,
+            FlowDirection = FlowDirection.LeftToRight, WrapContents = true,
+            Margin = new Padding(0, 3, 0, 8), Padding = Padding.Empty,
+            MinimumSize = new Size(250, 32)
+        };
+        foreach (var control in controls)
+        {
+            control.Margin = new Padding(3, 5, 12, 5);
+            if (control is ComboBox combo) combo.Width = Math.Min(combo.Width, 235);
+            row.Controls.Add(control);
+        }
+        return row;
+    }
+
+    private static void FitRows(FlowLayoutPanel rows)
+    {
+        var page = rows.Parent;
+        if (page == null) return;
+        int width = Math.Max(290, page.ClientSize.Width - 28);
+        rows.Width = width;
+        foreach (Control control in rows.Controls)
+        {
+            if (control is ListBox list) list.Width = Math.Max(240, width - 24);
+            if (control is FlowLayoutPanel row)
+                row.Width = Math.Max(250, width - 24);
+            if (control is Label label) label.MaximumSize = new Size(Math.Max(260, width - 25), 0);
+        }
+        rows.Height = rows.Controls.Cast<Control>().Sum(x => x.Height + x.Margin.Vertical) + rows.Padding.Vertical + 24;
+    }
+
     public static bool IsStartupEnabled()
     {
         using var key = Registry.CurrentUser.OpenSubKey(RunPath);
