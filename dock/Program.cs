@@ -30,6 +30,8 @@ public class DockSettings
     public int CriticalPercent { get; set; } = 90;
     public Dictionary<string,int> DiskColors { get; set; } = new(StringComparer.OrdinalIgnoreCase);
     public bool HoverAnimation { get; set; } = true;
+    public bool ShowShutdown { get; set; } = false;
+    public bool ShowRestart { get; set; } = false;
 }
 internal static class Program
 {
@@ -152,6 +154,7 @@ public class Dock : Form
         if (settings.ShowDiskWidget && !settings.Items.Any(x => x.IsDiskWidget))
             settings.Items.Insert(0, new DockItem { Name = "Discos", IsDiskWidget = true });
         if (!new[] { "Derecha", "Izquierda", "Arriba", "Abajo" }.Contains(settings.Edge)) settings.Edge = "Derecha";
+        // Existing manually added power items remain until the user changes the settings.
         Text = "JANUS Dock";
         Width = settings.Width;
         FormBorderStyle = FormBorderStyle.None;
@@ -490,10 +493,6 @@ public class Dock : Form
             special.DropDownItems.Add("Descargas", null, (_, _) => Add("janus:downloads"));
             special.DropDownItems.Add("Carpeta de trabajo...", null, (_, _) => AddFolder());
             menu.Items.Add(special);
-            var power = new ToolStripMenuItem("Acciones de energía");
-            power.DropDownItems.Add("Apagar", null, (_, _) => Add("janus:shutdown"));
-            power.DropDownItems.Add("Reiniciar", null, (_, _) => Add("janus:restart"));
-            menu.Items.Add(power);
             menu.Items.Add("Agregar separador", null, (_, _) => { settings.Items.Add(new DockItem { Name = "Separador", IsSeparator = true }); Store(); Render(); });
             menu.Items.Add(new ToolStripSeparator());
             menu.Items.Add("Opciones...", null, (_, _) => ShowOptions());
@@ -517,6 +516,9 @@ public class Dock : Form
         settings.CriticalPercent = dlg.CriticalPercent;
         settings.DiskColors = dlg.DiskColors;
         settings.HoverAnimation = dlg.HoverAnimation;
+        settings.ShowShutdown = dlg.ShowShutdown;
+        settings.ShowRestart = dlg.ShowRestart;
+        SyncPowerButtons();
         var currentWidget = settings.Items.FirstOrDefault(i => i.IsDiskWidget);
         if (settings.ShowDiskWidget && currentWidget == null) settings.Items.Add(new DockItem { Name = "Discos", IsDiskWidget = true });
         if (!settings.ShowDiskWidget && currentWidget != null) settings.Items.Remove(currentWidget);
@@ -569,6 +571,18 @@ public class Dock : Form
         var old = btn.Image;
         btn.Image = new Bitmap(next);
         old.Dispose();
+    }
+    void SyncPowerButtons()
+    {
+        // Old manually inserted power shortcuts are managed by these switches.
+        foreach (var (path, enabled) in new[] { ("janus:shutdown", settings.ShowShutdown), ("janus:restart", settings.ShowRestart) })
+        {
+            var existing = settings.Items.Where(x => x.Path == path).ToList();
+            if (!enabled) foreach (var entry in existing) settings.Items.Remove(entry);
+            else if (existing.Count == 0)
+                settings.Items.Add(new DockItem { Path = path, Name = path == "janus:shutdown" ? "Apagar" : "Reiniciar" });
+            else foreach (var duplicate in existing.Skip(1)) settings.Items.Remove(duplicate);
+        }
     }
     void RefreshDock()
     {
