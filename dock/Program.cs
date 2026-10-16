@@ -68,6 +68,35 @@ public class Dock : Form
     [DllImport("shell32.dll", CharSet = CharSet.Unicode)]
     static extern IntPtr SHGetFileInfo(string pszPath, uint dwFileAttributes, out SHFILEINFO psfi, uint cbFileInfo, uint uFlags);
     [DllImport("user32.dll")] static extern bool DestroyIcon(IntPtr hIcon);
+    [DllImport("user32.dll")] static extern bool ReleaseCapture();
+    [DllImport("user32.dll")] static extern IntPtr SendMessage(IntPtr hWnd, int msg, IntPtr wParam, IntPtr lParam);
+    const int WM_NCLBUTTONDOWN = 0xA1, HTCAPTION = 2;
+    [ComImport, Guid("00021401-0000-0000-C000-000000000046")]
+    class ShellLink { }
+    [ComImport, InterfaceType(ComInterfaceType.InterfaceIsIUnknown), Guid("000214F9-0000-0000-C000-000000000046")]
+    interface IShellLinkW
+    {
+        void GetPath([Out, MarshalAs(UnmanagedType.LPWStr)] System.Text.StringBuilder file, int max, IntPtr data, uint flags);
+        void GetIDList(out IntPtr ptr);
+        void SetIDList(IntPtr ptr);
+        void GetDescription(IntPtr text, int max);
+        void SetDescription(string text);
+        void GetWorkingDirectory(IntPtr text, int max);
+        void SetWorkingDirectory(string text);
+        void GetArguments(IntPtr text, int max);
+        void SetArguments(string text);
+        void GetHotkey(out short hotkey);
+        void SetHotkey(short hotkey);
+        void GetShowCmd(out int command);
+        void SetShowCmd(int command);
+        void GetIconLocation([Out, MarshalAs(UnmanagedType.LPWStr)] System.Text.StringBuilder icon, int max, out int index);
+        void SetIconLocation(string path, int index);
+        void SetRelativePath(string relative, uint reserved);
+        void Resolve(IntPtr hwnd, uint flags);
+        void SetPath(string path);
+    }
+    [ComImport, InterfaceType(ComInterfaceType.InterfaceIsIUnknown), Guid("0000010B-0000-0000-C000-000000000046")]
+    interface IPersistFile { void GetClassID(out Guid id); void IsDirty(); void Load([MarshalAs(UnmanagedType.LPWStr)] string file, uint mode); void Save([MarshalAs(UnmanagedType.LPWStr)] string file, bool remember); void SaveCompleted([MarshalAs(UnmanagedType.LPWStr)] string file); void GetCurFile(out IntPtr file); }
     const uint SHGFI_ICON = 0x100, SHGFI_LARGEICON = 0, SHGFI_USEFILEATTRIBUTES = 0x10, FILE_ATTRIBUTE_NORMAL = 0x80;
 
     readonly string config = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "JANUS", "Dock", "config.json");
@@ -253,11 +282,47 @@ public class Dock : Form
     }
     Image GetIcon(string path)
     {
+        // Resolve the underlying target/icon of .lnk rather than asking the shell for
+        // the shortcut composite (which contains the arrow overlay).
+        if (Path.GetExtension(path).Equals(".lnk", StringComparison.OrdinalIgnoreCase))
+        {
+            try
+            {
+                var obj = new ShellLink();
+                try
+                {
+                    ((IPersistFile)obj).Load(path, 0);
+                    var link = (IShellLinkW)obj;
+                    var iconPath = new System.Text.StringBuilder(1024);
+                    link.GetIconLocation(iconPath, iconPath.Capacity, out int iconIndex);
+                    if (iconPath.Length > 0 && File.Exists(Environment.ExpandEnvironmentVariables(iconPath.ToString())))
+                    {
+                        using var ico = Icon.ExtractAssociatedIcon(Environment.ExpandEnvironmentVariables(iconPath.ToString()));
+                        if (ico != null) return ico.ToBitmap();
+                    }
+                    var target = new System.Text.StringBuilder(1024);
+                    link.GetPath(target, target.Capacity, IntPtr.Zero, 0);
+                    if (target.Length > 0 && File.Exists(target.ToString()))
+                    {
+                        using var ico = Icon.ExtractAssociatedIcon(target.ToString());
+                        if (ico != null) return ico.ToBitmap();
+                    }
+                }
+                finally { Marshal.FinalReleaseComObject(obj); }
+            }
+            catch { }
+        }
         try
         {
             if (Uri.TryCreate(path, UriKind.Absolute, out var uri) && uri.Scheme.StartsWith("http"))
                 return (Image)SystemIcons.Information.ToBitmap();
-            string iconPath = path == "shell:MyComputerFolder" ? "::{20D04FE0-3AEA-1069-A2D8-08002B30309D}" : path;
+            if (path == "shell:MyComputerFolder")
+            {
+                // Native Explorer/This PC icon from the system library.
+                using var pcIcon = Icon.ExtractAssociatedIcon(Path.Combine(Environment.SystemDirectory, "explorer.exe"));
+                if (pcIcon != null) return pcIcon.ToBitmap();
+            }
+            string iconPath = path;
             IntPtr result = SHGetFileInfo(iconPath, FILE_ATTRIBUTE_NORMAL, out var info,
                 (uint)Marshal.SizeOf<SHFILEINFO>(), SHGFI_ICON | SHGFI_LARGEICON);
             if (result != IntPtr.Zero && info.hIcon != IntPtr.Zero)
@@ -291,7 +356,7 @@ public class Dock : Form
                         if (!drive.IsReady || drive.TotalSize <= 0) continue;
                         var view = new DiskUsageControl(drive, Color.FromArgb(settings.DiskColorArgb), settings.CriticalPercent, true)
                         {
-                            Width = Horizontal ? 88 : Math.Max(65, settings.Width - 16), Height = Horizontal ? 67 : 67, BackColor = BackColor, ForeColor = ForeColor,
+                            Width = Horizontal ? 72 : Math.Max(65, settings.Width - 16), Height = 67, BackColor = BackColor, ForeColor = ForeColor,
                             Margin = new Padding(0, 1, 0, 1)
                         };
                         var diskMenu = new ContextMenuStrip();
@@ -299,6 +364,7 @@ public class Dock : Form
                         diskMenu.Items.Add("Mover bloque de discos hacia abajo", null, (_, _) => Move(item, 1));
                         diskMenu.Items.Add("Opciones...", null, (_, _) => ShowOptions());
                         view.ContextMenuStrip = diskMenu;
+                        view.Margin = Horizontal ? new Padding(2, 1, 2, 1) : new Padding(Math.Max(0, (settings.Width - 16 - view.Width) / 2), 1, 0, 1);
                         panel.Controls.Add(view);
                     }
                     catch { }
@@ -485,8 +551,21 @@ public class Dock : Form
         };
         grip.Cursor = Horizontal ? Cursors.SizeNS : Cursors.SizeWE;
         grip.Visible = settings.Edge != "Abajo" && settings.DockMode != "Flotante";
-        FormBorderStyle = settings.DockMode == "Flotante" ? FormBorderStyle.SizableToolWindow : FormBorderStyle.None;
+        FormBorderStyle = FormBorderStyle.None;
+        if (settings.DockMode == "Flotante")
+        {
+            MinimumSize = new Size(65, 65);
+            panel.MouseDown -= DragFloating;
+            panel.MouseDown += DragFloating;
+        }
+        else panel.MouseDown -= DragFloating;
         AlignFooter();
+    }
+    void DragFloating(object? sender, MouseEventArgs e)
+    {
+        if (settings.DockMode != "Flotante" || e.Button != MouseButtons.Left) return;
+        ReleaseCapture();
+        SendMessage(Handle, WM_NCLBUTTONDOWN, new IntPtr(HTCAPTION), IntPtr.Zero);
     }
     void UnregisterBar()
     {
@@ -507,7 +586,7 @@ public class Dock : Form
     }
     void UpdateAutoHide()
     {
-        if (!settings.AutoHide || !Visible || resizeActive)
+        if (settings.DockMode == "Flotante" || !settings.AutoHide || !Visible || resizeActive)
         {
             if (collapsed) { collapsed = false; Position(); }
             return;
@@ -537,7 +616,7 @@ public class Dock : Form
             if (settings.DockMode == "Flotante")
             {
                 panel.Visible = !collapsed;
-                if (Width < 80 || Height < 100) Bounds = new Rectangle(bounds.Left + 140, bounds.Top + 120, 130, 460);
+                if (Width < 65 || Height < 65 || (Left == 0 && Top == 0)) Bounds = new Rectangle(bounds.Left + 140, bounds.Top + 120, 110, 450);
                 return;
             }
             int thickness = collapsed ? RevealStrip : (Horizontal ? Math.Clamp(settings.IconSize + (settings.ShowNames ? 36 : 16), 48, 100) : settings.Width);
