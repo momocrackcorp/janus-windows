@@ -22,6 +22,7 @@ public sealed class DockOptionsForm : Form
     public int CriticalPercent { get; private set; }
     public int IconSize { get; private set; }
     public string IconStyle { get; private set; } = "Windows";
+    public List<DockItem> OrderedItems { get; private set; } = new();
     public string Edge { get; private set; } = "Derecha";
     const string RunPath = @"Software\Microsoft\Windows\CurrentVersion\Run";
     const string RunValue = "JANUS Dock";
@@ -51,7 +52,83 @@ public sealed class DockOptionsForm : Form
         appearance.Controls.Add(new Label { Text = "Windows: usa los iconos originales del sistema y de los accesos.", Location = new Point(22, 83), AutoSize = true });
         appearance.Controls.Add(new Label { Text = "Lucide: estilo de líneas para Mi PC, Documentos, Descargas,", Location = new Point(22, 113), AutoSize = true });
         appearance.Controls.Add(new Label { Text = "carpetas, Apagar y Reiniciar. Los programas conservan su icono.", Location = new Point(22, 135), AutoSize = true });
-        appearance.Controls.Add(new Label { Text = "El cambio se aplica al pulsar Guardar cambios.", Location = new Point(22, 186), AutoSize = true });
+        appearance.Controls.Add(new Label { Text = "Organizar accesos y separadores", Location = new Point(22, 177), AutoSize = true, Font = new Font("Segoe UI", 9, FontStyle.Bold) });
+        appearance.Controls.Add(new Label { Text = "Arrastra filas para ordenarlas o utiliza los botones. Guardar aplica los cambios.", Location = new Point(22, 200), AutoSize = true });
+        var ordered = config.Items.Select(i => new DockItem { Name = i.Name, Path = i.Path, IsSeparator = i.IsSeparator, IsDiskWidget = i.IsDiskWidget }).ToList();
+        var history = new Stack<List<DockItem>>();
+        var orderList = new ListBox { Location = new Point(22, 226), Size = new Size(365, 130), AllowDrop = true, IntegralHeight = false, Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right };
+        string LabelFor(DockItem i) => i.IsSeparator ? "──────── Separador ────────" : i.IsDiskWidget ? "▣ Indicadores de discos" : i.Path == "janus:shutdown" ? "⏻ Apagar" : i.Path == "janus:restart" ? "↻ Reiniciar" : (string.IsNullOrWhiteSpace(i.Name) ? i.Path : i.Name);
+        void RefreshOrder(int selected)
+        {
+            orderList.BeginUpdate();
+            orderList.Items.Clear();
+            foreach (var entry in ordered) orderList.Items.Add(LabelFor(entry));
+            orderList.EndUpdate();
+            if (ordered.Count > 0) orderList.SelectedIndex = Math.Clamp(selected, 0, ordered.Count - 1);
+        }
+        void Snapshot() => history.Push(new List<DockItem>(ordered));
+        void MoveSelected(int delta)
+        {
+            int from = orderList.SelectedIndex, to = from + delta;
+            if (from < 0 || to < 0 || to >= ordered.Count) return;
+            Snapshot();
+            var element = ordered[from]; ordered.RemoveAt(from); ordered.Insert(to, element);
+            RefreshOrder(to);
+        }
+        orderList.MouseDown += (_, e) =>
+        {
+            int from = orderList.IndexFromPoint(e.Location);
+            if (from >= 0 && from < ordered.Count)
+            {
+                orderList.SelectedIndex = from;
+                orderList.DoDragDrop(from, DragDropEffects.Move);
+            }
+        };
+        orderList.DragOver += (_, e) => { e.Effect = e.Data?.GetDataPresent(typeof(int)) == true ? DragDropEffects.Move : DragDropEffects.None; };
+        orderList.DragDrop += (_, e) =>
+        {
+            if (e.Data?.GetData(typeof(int)) is not int from || from < 0 || from >= ordered.Count) return;
+            var point = orderList.PointToClient(new Point(e.X, e.Y));
+            int to = orderList.IndexFromPoint(point);
+            if (to == ListBox.NoMatches) to = ordered.Count - 1;
+            if (to == from) return;
+            Snapshot();
+            var element = ordered[from]; ordered.RemoveAt(from); ordered.Insert(to, element);
+            RefreshOrder(to);
+        };
+        appearance.Controls.Add(orderList);
+        var actions = new FlowLayoutPanel { Location = new Point(395, 226), Size = new Size(128, 140), FlowDirection = FlowDirection.TopDown, WrapContents = false, AutoScroll = true, Anchor = AnchorStyles.Top | AnchorStyles.Right };
+        Button Action(string label)
+        {
+            var button = new Button { Text = label, Width = 110, Height = 26, Margin = new Padding(1) };
+            actions.Controls.Add(button);
+            return button;
+        }
+        Action("↑ Subir").Click += (_, _) => MoveSelected(-1);
+        Action("↓ Bajar").Click += (_, _) => MoveSelected(1);
+        Action("+ Separador").Click += (_, _) =>
+        {
+            Snapshot();
+            int index = Math.Clamp(orderList.SelectedIndex + 1, 0, ordered.Count);
+            ordered.Insert(index, new DockItem { Name = "Separador", IsSeparator = true });
+            RefreshOrder(index);
+        };
+        Action("Eliminar").Click += (_, _) =>
+        {
+            int index = orderList.SelectedIndex;
+            if (index < 0) return;
+            Snapshot();
+            ordered.RemoveAt(index);
+            RefreshOrder(index);
+        };
+        Action("↶ Deshacer").Click += (_, _) =>
+        {
+            if (history.Count == 0) return;
+            ordered = history.Pop();
+            RefreshOrder(0);
+        };
+        appearance.Controls.Add(actions);
+        RefreshOrder(0);
 
         var top = new CheckBox { Text = "Mantener siempre visible (encima de otras ventanas)", Checked = config.AlwaysOnTop, AutoSize = true, Location = new Point(18, 22) };
         var hide = new CheckBox { Text = "Ocultar automáticamente al alejar el puntero", Checked = config.AutoHide, AutoSize = true, Location = new Point(18, 54) };
@@ -150,6 +227,7 @@ public sealed class DockOptionsForm : Form
             ShowDiskWidget = widget.Checked;
             IconSize = (int)size.Value;
             IconStyle = iconStyle.SelectedIndex == 1 ? "Lucide" : "Windows";
+            OrderedItems = new List<DockItem>(ordered);
             Edge = (string)location.SelectedItem!;
             DiskColorArgb = config.DiskColorArgb;
             DiskColors = diskColors;
