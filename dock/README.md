@@ -30,3 +30,11 @@ No exige permisos de administrador, no modifica otros archivos JANUS, guarda dat
 - Separadores finos verticales u horizontales según la ubicación elegida; pueden subirse, bajarse o quitarse sin modificar los accesos.
 - Color derivado del modo claro/oscuro y del color de acento DWM de Windows, mediante mezcla aproximada; la barra de tareas de Windows 11 usa materiales/efectos que WinForms no reproduce exactamente.
 - Conserva los accesos de la configuración anterior. El comportamiento aún requiere compilación y prueba en Windows 11; no se ha validado como versión estable.
+
+## Corrección de barra inferior y accesos a discos
+
+- La ubicación **Abajo** ahora utiliza una franja baja (48–100 px) limitada a la zona de trabajo **por encima de la barra de tareas**, en lugar de registrar otra AppBar sobre el borde inferior de Windows. Así no debería tapar Inicio ni el área de notificaciones. En este modo la barra no reserva espacio adicional en Windows; puede superponerse a ventanas maximizadas y habrá que afinarlo en pruebas posteriores.
+- El menú contextual incluye **Agregar Este equipo** (abre todas las unidades en el Explorador) y **Agregar unidad de disco**, enumerando C:, D: y cualquier unidad detectada con su nombre. Los iconos se obtienen desde Windows Shell.
+- Si una versión anterior se queda cubriendo la barra de tareas, vuelve temporalmente a Derecha y cierra el Dock antes de lanzar la nueva compilación.
+
+**Pendiente de prueba en Windows 11 y comprobación de compilación GitHub Actions.**
