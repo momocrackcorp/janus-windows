@@ -12,6 +12,7 @@ public class DockItem
     public string Name { get; set; } = "";
     public string Path { get; set; } = "";
     public bool IsSeparator { get; set; } = false;
+    public bool IsDiskWidget { get; set; } = false;
 }
 public class DockSettings
 {
@@ -23,6 +24,8 @@ public class DockSettings
     public bool AlwaysOnTop { get; set; } = true;
     public bool AutoHide { get; set; } = false;
     public bool ShowDiskWidget { get; set; } = false;
+    public int DiskColorArgb { get; set; } = Color.FromArgb(48, 130, 222).ToArgb();
+    public int CriticalPercent { get; set; } = 90;
 }
 internal static class Program
 {
@@ -94,6 +97,10 @@ public class Dock : Form
         catch { }
         settings.Width = Math.Clamp(settings.Width, 64, 300);
         settings.IconSize = Math.Clamp(settings.IconSize, 24, 64);
+        settings.CriticalPercent = Math.Clamp(settings.CriticalPercent, 70, 99);
+        // Migrate old disk widget into the reorderable item list once.
+        if (settings.ShowDiskWidget && !settings.Items.Any(x => x.IsDiskWidget))
+            settings.Items.Insert(0, new DockItem { Name = "Discos", IsDiskWidget = true });
         if (!new[] { "Derecha", "Izquierda", "Arriba", "Abajo" }.Contains(settings.Edge)) settings.Edge = "Derecha";
         Text = "JANUS Dock";
         Width = settings.Width;
@@ -269,23 +276,31 @@ public class Dock : Form
             control.Dispose();
         }
         int width = Horizontal ? Math.Max(60, settings.IconSize + (settings.ShowNames ? 55 : 12)) : Math.Max(55, settings.Width - 18);
-        if (settings.ShowDiskWidget)
-        {
-            foreach (var drive in DriveInfo.GetDrives())
-            {
-                try
-                {
-                    if (!drive.IsReady || drive.TotalSize <= 0) continue;
-                    var view = new DiskUsageControl(drive) { Width = Horizontal ? 210 : Math.Max(80, settings.Width - 18), Height = 68, BackColor = BackColor };
-                    var tip = new ToolTip();
-                    tip.SetToolTip(view, $"{drive.Name}: {(drive.TotalSize-drive.TotalFreeSpace)/1073741824.0:F1} GB usados; {drive.TotalFreeSpace/1073741824.0:F1} GB libres");
-                    panel.Controls.Add(view);
-                }
-                catch { }
-            }
-        }
         foreach (var item in settings.Items.ToList())
         {
+            if (item.IsDiskWidget)
+            {
+                foreach (var drive in DriveInfo.GetDrives())
+                {
+                    try
+                    {
+                        if (!drive.IsReady || drive.TotalSize <= 0) continue;
+                        var view = new DiskUsageControl(drive, Color.FromArgb(settings.DiskColorArgb), settings.CriticalPercent, true)
+                        {
+                            Width = Horizontal ? 88 : Math.Max(65, settings.Width - 16), Height = Horizontal ? 67 : 67, BackColor = BackColor, ForeColor = ForeColor,
+                            Margin = new Padding(0, 2, 0, 2)
+                        };
+                        var diskMenu = new ContextMenuStrip();
+                        diskMenu.Items.Add("Mover bloque de discos hacia arriba", null, (_, _) => Move(item, -1));
+                        diskMenu.Items.Add("Mover bloque de discos hacia abajo", null, (_, _) => Move(item, 1));
+                        diskMenu.Items.Add("Opciones...", null, (_, _) => ShowOptions());
+                        view.ContextMenuStrip = diskMenu;
+                        panel.Controls.Add(view);
+                    }
+                    catch { }
+                }
+                continue;
+            }
             if (item.IsSeparator)
             {
                 var sep = new Panel { Width = Horizontal ? 2 : Math.Max(30, settings.Width - 25), Height = Horizontal ? Math.Max(30, settings.Width - 25) : 2, Margin = new Padding(8, 6, 8, 6), BackColor = light ? Color.FromArgb(170, 178, 190) : Color.FromArgb(105, 112, 125) };
@@ -377,6 +392,11 @@ public class Dock : Form
         settings.AutoHide = dlg.AutoHide;
         settings.ShowNames = dlg.ShowNames;
         settings.ShowDiskWidget = dlg.ShowDiskWidget;
+        settings.DiskColorArgb = dlg.DiskColorArgb;
+        settings.CriticalPercent = dlg.CriticalPercent;
+        var currentWidget = settings.Items.FirstOrDefault(i => i.IsDiskWidget);
+        if (settings.ShowDiskWidget && currentWidget == null) settings.Items.Add(new DockItem { Name = "Discos", IsDiskWidget = true });
+        if (!settings.ShowDiskWidget && currentWidget != null) settings.Items.Remove(currentWidget);
         settings.IconSize = dlg.IconSize;
         settings.Edge = dlg.Edge;
         TopMost = settings.AlwaysOnTop;
