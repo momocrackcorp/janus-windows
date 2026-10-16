@@ -12,6 +12,8 @@ public sealed class DockOptionsForm : Form
     public bool ShowNames { get; private set; }
     public bool ShowDiskWidget { get; private set; }
     public bool StartWithWindows { get; private set; }
+    public int DiskColorArgb { get; private set; }
+    public int CriticalPercent { get; private set; }
     public int IconSize { get; private set; }
     public string Edge { get; private set; }
     const string RunPath = @"Software\Microsoft\Windows\CurrentVersion\Run";
@@ -20,11 +22,13 @@ public sealed class DockOptionsForm : Form
     public DockOptionsForm(DockSettings config)
     {
         Text = "Opciones de JANUS Dock";
-        Size = new Size(565, 450); MinimumSize = Size;
+        ClientSize = new Size(620, 460);
+        MinimumSize = new Size(640, 500);
+        AutoScaleMode = AutoScaleMode.Dpi;
         MaximizeBox = false; MinimizeBox = false;
         StartPosition = FormStartPosition.CenterScreen;
         Font = new Font("Segoe UI", 9);
-        var tabs = new TabControl { Dock = DockStyle.Fill };
+        var tabs = new TabControl { Dock = DockStyle.Fill, Padding = new Point(12, 6) };
         Controls.Add(tabs);
 
         var general = new TabPage("General");
@@ -44,21 +48,29 @@ public sealed class DockOptionsForm : Form
         if (location.SelectedIndex < 0) location.SelectedIndex = 0;
         general.Controls.Add(location);
         general.Controls.Add(new Label { Text = "Tamaño iconos:", Location = new Point(18, 201), AutoSize = true });
-        var size = new NumericUpDown { Location = new Point(120, 198), Minimum = 24, Maximum = 64, Increment = 8, Value = Math.Clamp(config.IconSize, 24, 64), Width = 100 };
+        var size = new NumericUpDown { Location = new Point(165, 198), Minimum = 24, Maximum = 64, Increment = 8, Value = Math.Clamp(config.IconSize, 24, 64), Width = 100 };
         general.Controls.Add(size);
         general.Controls.Add(new Label { Text = "Nota: al ocultarse, queda una franja para recuperar la barra con el mouse.", Location = new Point(18, 247), AutoSize = true });
 
         var widget = new CheckBox { Text = "Mostrar indicador de uso de discos en la barra", Checked = config.ShowDiskWidget, Location = new Point(18, 20), AutoSize = true };
+        var diskColor = Color.FromArgb(config.DiskColorArgb);
+        var chooseColor = new Button { Text = "Color del indicador...", Location = new Point(18, 51), Width = 165, Height = 28 };
+        var swatch = new Panel { Location = new Point(191, 55), Size = new Size(25, 20), BackColor = diskColor };
+        var criticalLabel = new Label { Text = "Alerta desde (%):", Location = new Point(245, 56), AutoSize = true };
+        var critical = new NumericUpDown { Location = new Point(360, 52), Width = 75, Minimum = 70, Maximum = 99, Value = Math.Clamp(config.CriticalPercent, 70, 99) };
+        disks.Controls.AddRange(new Control[] { chooseColor, swatch, criticalLabel, critical });
+        chooseColor.Click += (_, _) => { using var picker = new ColorDialog { Color = diskColor, FullOpen = true }; if (picker.ShowDialog(this) == DialogResult.OK) { diskColor = picker.Color; swatch.BackColor = diskColor; foreach (var item in diskPanel.Controls.OfType<DiskUsageControl>()) item.SetAppearance(diskColor, (int)critical.Value); } };
+        critical.ValueChanged += (_, _) => { foreach (var item in diskPanel.Controls.OfType<DiskUsageControl>()) item.SetAppearance(diskColor, (int)critical.Value); };
         disks.Controls.Add(widget);
-        disks.Controls.Add(new Label { Text = "Vista previa de capacidad (GB usados y libres):", Location = new Point(18, 58), AutoSize = true });
-        var diskPanel = new FlowLayoutPanel { Location = new Point(18, 88), Size = new Size(475, 225), AutoScroll = true, FlowDirection = FlowDirection.TopDown, WrapContents = false };
+        disks.Controls.Add(new Label { Text = "Vista previa de capacidad (GB usados y libres):", Location = new Point(18, 102), AutoSize = true });
+        var diskPanel = new FlowLayoutPanel { Location = new Point(18, 138), Size = new Size(530, 186), Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right, AutoScroll = true, FlowDirection = FlowDirection.TopDown, WrapContents = false };
         disks.Controls.Add(diskPanel);
         foreach (var drive in DriveInfo.GetDrives())
         {
             try
             {
                 if (!drive.IsReady || drive.TotalSize <= 0) continue;
-                diskPanel.Controls.Add(new DiskUsageControl(drive) { Width = 455, Height = 68 });
+                diskPanel.Controls.Add(new DiskUsageControl(drive, diskColor, (int)critical.Value, false) { Width = 490, Height = 68 });
             }
             catch { }
         }
@@ -69,10 +81,10 @@ public sealed class DockOptionsForm : Form
         updates.Click += (_, _) => Process.Start(new ProcessStartInfo("https://github.com/momocrackcorp/janus-windows/actions/workflows/build-janus-dock.yml") { UseShellExecute = true });
         about.Controls.Add(updates);
 
-        var bar = new Panel { Dock = DockStyle.Bottom, Height = 52 };
+        var bar = new FlowLayoutPanel { Dock = DockStyle.Bottom, Height = 56, FlowDirection = FlowDirection.RightToLeft, WrapContents = false, Padding = new Padding(8) };
         Controls.Add(bar); bar.BringToFront();
-        var cancel = new Button { Text = "Cancelar", Location = new Point(341, 10), Width = 94, DialogResult = DialogResult.Cancel };
-        var apply = new Button { Text = "Guardar", Location = new Point(440, 10), Width = 94, DialogResult = DialogResult.OK };
+        var cancel = new Button { Text = "Cancelar", Width = 110, Height = 32, DialogResult = DialogResult.Cancel };
+        var apply = new Button { Text = "Guardar cambios", Width = 135, Height = 32, DialogResult = DialogResult.OK };
         bar.Controls.AddRange(new Control[] { cancel, apply });
         AcceptButton = apply; CancelButton = cancel;
         apply.Click += (_, _) =>
@@ -84,6 +96,8 @@ public sealed class DockOptionsForm : Form
             ShowDiskWidget = widget.Checked;
             IconSize = (int)size.Value;
             Edge = (string)location.SelectedItem!;
+            DiskColorArgb = diskColor.ToArgb();
+            CriticalPercent = (int)critical.Value;
         };
     }
     public static bool IsStartupEnabled()
@@ -104,25 +118,44 @@ public sealed class DiskUsageControl : Control
     readonly string name;
     readonly double ratio;
     readonly string details;
-    public DiskUsageControl(DriveInfo drive)
+    readonly bool compact;
+    Color accent;
+    int threshold;
+    public DiskUsageControl(DriveInfo drive, Color color, int criticalPercent, bool compactMode = false)
     {
-        name = drive.Name;
+        name = drive.Name.TrimEnd('\\');
         ratio = Math.Clamp((double)(drive.TotalSize - drive.TotalFreeSpace) / drive.TotalSize, 0, 1);
         details = $"{(drive.TotalSize - drive.TotalFreeSpace) / 1073741824.0:F1} GB usados · {drive.TotalFreeSpace / 1073741824.0:F1} GB libres";
+        accent = color;
+        threshold = criticalPercent;
+        compact = compactMode;
         DoubleBuffered = true;
     }
+    public void SetAppearance(Color color, int criticalPercent) { accent = color; threshold = criticalPercent; Invalidate(); }
     protected override void OnPaint(PaintEventArgs e)
     {
         base.OnPaint(e);
         e.Graphics.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.AntiAlias;
-        var rect = new Rectangle(8, 8, 48, 48);
+        var rect = new Rectangle(9, 9, 46, 46);
         using var back = new Pen(Color.FromArgb(190, 197, 207), 8);
-        using var front = new Pen(Color.FromArgb(48, 130, 222), 8);
+        using var front = new Pen(accent, 8);
         e.Graphics.DrawEllipse(back, rect);
         e.Graphics.DrawArc(front, rect, -90, (float)(ratio * 360));
         using var title = new Font("Segoe UI", 10, FontStyle.Bold);
-        using var sub = new Font("Segoe UI", 9);
-        e.Graphics.DrawString(name, title, Brushes.Black, 80, 9);
-        e.Graphics.DrawString(details, sub, Brushes.DimGray, 80, 34);
+        using var centered = new StringFormat { Alignment = StringAlignment.Center, LineAlignment = StringAlignment.Center };
+        using var textBrush = new SolidBrush(ForeColor);
+        e.Graphics.DrawString(name, title, textBrush, new RectangleF(12, 14, 42, 38), centered);
+        if (ratio * 100 >= threshold)
+        {
+            using var warning = new SolidBrush(Color.OrangeRed);
+            e.Graphics.FillEllipse(warning, 48, 5, 15, 15);
+            using var symbol = new Font("Segoe UI", 9, FontStyle.Bold);
+            e.Graphics.DrawString("!", symbol, Brushes.White, new RectangleF(48, 4, 15, 16), centered);
+        }
+        if (!compact)
+        {
+            using var sub = new Font("Segoe UI", 9);
+            e.Graphics.DrawString(details, sub, textBrush, 80, 28);
+        }
     }
 }
