@@ -52,12 +52,13 @@ internal static class LucideDockIcons
                 Line(12, 7, 12, 16); Line(8, 12, 12, 16); Line(16, 12, 12, 16);
                 break;
             case "power":
-                // GDI+ angles are clockwise from 3 o’clock; leave the opening at the TOP.
-                g.DrawArc(pen, 3, 3, 18, 18, -45, 270); Line(12, 2, 12, 12);
+                // Continuous ring; the power stem is drawn above it.
+                g.DrawEllipse(pen, 3, 3, 18, 18);
+                Line(12, 2, 12, 12);
                 break;
             case "restart":
-                // Nearly closed loop with a small opening near the top-right arrow.
-                g.DrawArc(pen, 3, 3, 18, 18, -58, 310);
+                // Continuous ring; arrow is overlaid, never a missing arc.
+                g.DrawEllipse(pen, 3, 3, 18, 18);
                 Line(20, 4, 20, 10); Line(20, 10, 14, 10);
                 break;
         }
