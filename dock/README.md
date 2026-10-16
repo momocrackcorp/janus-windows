@@ -1,4 +1,21 @@
-# JANUS Dock — complemento para Windows 11
+# JANUS Dock 5.0 — candidata pública
+
+JANUS Dock es una barra independiente para Windows 10/11 que organiza accesos a programas, documentos, carpetas y unidades. Puede colocarse a los lados o arriba/abajo, con iconos de Windows o trazos tipo Lucide, e indicadores circulares por disco.
+
+**Publicación:** el repositorio es público, pero la versión sigue siendo **candidata en pruebas**, no una versión estable. Los últimos binarios se descargan desde [Build JANUS Dock](https://github.com/momocrackcorp/janus-windows/actions/workflows/build-janus-dock.yml) → ejecución verde → **Artifacts**. Los ZIP de GitHub Actions pueden requerir iniciar sesión en GitHub.
+
+## Distribución de botones de energía
+Los botones Apagar y Reiniciar, cuando estén activados en General, se muestran en un grupo independiente: **derecha** para barra horizontal y **abajo** para barra vertical. Por seguridad, ambas acciones piden confirmación. Sus imágenes PNG se mantienen para el estilo Windows; el estilo Lucide usa iconos de trazo.
+
+## Organización y privacidad
+Opciones → Apariencia permite elegir estilo, reordenar accesos con arrastrar y soltar o botones y manejar separadores. Guardar aplica los cambios; Cancelar los descarta. La configuración se guarda en `%APPDATA%\JANUS\Dock\config.json`. El Dock no necesita JANUS Plus para funcionar.
+
+## Pruebas solicitadas
+Comprobar barra derecha/izquierda/arriba/abajo, energía separada, animación, escala de Windows 100/200 %, autoocultación y persistencia de configuración. Se publica el código fuente para evaluación; no se garantiza todavía la estabilidad en todas las configuraciones.
+
+---
+
+# JANUS Dock — barra de accesos rápidos para Windows 10/11
 
 Primera versión nativa experimental, **no sustituye el migrador JANUS**.
 
