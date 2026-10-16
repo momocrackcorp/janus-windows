@@ -581,6 +581,7 @@ public class Dock : Form
         settings.HoverAnimation = dlg.HoverAnimation;
         settings.ShowShutdown = dlg.ShowShutdown;
         settings.ShowRestart = dlg.ShowRestart;
+        settings.Items = dlg.OrderedItems;
         SyncPowerButtons();
         var currentWidget = settings.Items.FirstOrDefault(i => i.IsDiskWidget);
         if (settings.ShowDiskWidget && currentWidget == null) settings.Items.Add(new DockItem { Name = "Discos", IsDiskWidget = true });
