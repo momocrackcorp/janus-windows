@@ -10,6 +10,8 @@ public sealed class DockOptionsForm : Form
     public bool AlwaysOnTop { get; private set; }
     public bool AutoHide { get; private set; }
     public bool ShowNames { get; private set; }
+    public string NameMode { get; private set; } = "Tooltip";
+    public string DockMode { get; private set; } = "Acoplada";
     public bool ShowDiskWidget { get; private set; }
     public bool StartWithWindows { get; private set; }
     public int DiskColorArgb { get; private set; }
@@ -39,18 +41,27 @@ public sealed class DockOptionsForm : Form
         var top = new CheckBox { Text = "Mantener siempre visible (encima de otras ventanas)", Checked = config.AlwaysOnTop, AutoSize = true, Location = new Point(18, 22) };
         var hide = new CheckBox { Text = "Ocultar automáticamente al alejar el puntero", Checked = config.AutoHide, AutoSize = true, Location = new Point(18, 54) };
         var startup = new CheckBox { Text = "Cargar JANUS Dock al iniciar Windows", Checked = IsStartupEnabled(), AutoSize = true, Location = new Point(18, 86) };
-        var names = new CheckBox { Text = "Mostrar nombres de los accesos", Checked = config.ShowNames, AutoSize = true, Location = new Point(18, 118) };
-        general.Controls.AddRange(new Control[] { top, hide, startup, names });
-        general.Controls.Add(new Label { Text = "Ubicación:", Location = new Point(18, 162), AutoSize = true });
-        var location = new ComboBox { DropDownStyle = ComboBoxStyle.DropDownList, Location = new Point(120, 158), Width = 180 };
+        var names = new Label { Text = "Nombres de accesos:", AutoSize = true, Location = new Point(18, 115) };
+        var nameMode = new ComboBox { DropDownStyle = ComboBoxStyle.DropDownList, Location = new Point(190, 110), Width = 205 };
+        nameMode.Items.AddRange(new object[] { "Solo iconos", "Al pasar el mouse", "Iconos con nombres" });
+        nameMode.SelectedIndex = config.NameMode switch { "None" => 0, "Written" => 2, _ => config.ShowNames ? 2 : 1 };
+        general.Controls.AddRange(new Control[] { top, hide, startup, names, nameMode });
+        general.Controls.Add(new Label { Text = "Modo:", Location = new Point(18, 151), AutoSize = true });
+        var dockMode = new ComboBox { DropDownStyle = ComboBoxStyle.DropDownList, Location = new Point(190, 147), Width = 205 };
+        dockMode.Items.AddRange(new object[] { "Acoplada", "Flotante" });
+        dockMode.SelectedItem = config.DockMode;
+        if (dockMode.SelectedIndex < 0) dockMode.SelectedIndex = 0;
+        general.Controls.Add(dockMode);
+        general.Controls.Add(new Label { Text = "Ubicación:", Location = new Point(18, 190), AutoSize = true });
+        var location = new ComboBox { DropDownStyle = ComboBoxStyle.DropDownList, Location = new Point(190, 186), Width = 180 };
         location.Items.AddRange(new object[] { "Derecha", "Izquierda", "Arriba", "Abajo" });
         location.SelectedItem = config.Edge;
         if (location.SelectedIndex < 0) location.SelectedIndex = 0;
         general.Controls.Add(location);
-        general.Controls.Add(new Label { Text = "Tamaño iconos:", Location = new Point(18, 201), AutoSize = true });
-        var size = new NumericUpDown { Location = new Point(165, 198), Minimum = 24, Maximum = 64, Increment = 8, Value = Math.Clamp(config.IconSize, 24, 64), Width = 100 };
+        general.Controls.Add(new Label { Text = "Tamaño iconos:", Location = new Point(18, 231), AutoSize = true });
+        var size = new NumericUpDown { Location = new Point(190, 227), Minimum = 16, Maximum = 64, Increment = 8, Value = Math.Clamp(config.IconSize, 16, 64), Width = 100 };
         general.Controls.Add(size);
-        general.Controls.Add(new Label { Text = "Nota: al ocultarse, queda una franja para recuperar la barra con el mouse.", Location = new Point(18, 247), AutoSize = true });
+        general.Controls.Add(new Label { Text = "Nota: al ocultarse, queda una franja para recuperar la barra con el mouse.", Location = new Point(18, 286), AutoSize = true });
 
         var widget = new CheckBox { Text = "Mostrar indicador de uso de discos en la barra", Checked = config.ShowDiskWidget, Location = new Point(18, 20), AutoSize = true };
         var diskColor = Color.FromArgb(config.DiskColorArgb);
@@ -92,7 +103,9 @@ public sealed class DockOptionsForm : Form
             AlwaysOnTop = top.Checked;
             AutoHide = hide.Checked;
             StartWithWindows = startup.Checked;
-            ShowNames = names.Checked;
+            NameMode = nameMode.SelectedIndex switch { 0 => "None", 2 => "Written", _ => "Tooltip" };
+            ShowNames = NameMode == "Written";
+            DockMode = dockMode.SelectedItem?.ToString() ?? "Acoplada";
             ShowDiskWidget = widget.Checked;
             IconSize = (int)size.Value;
             Edge = (string)location.SelectedItem!;
