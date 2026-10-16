@@ -91,3 +91,13 @@ Versión de trabajo: **2.6.0-preview**. No es una versión final certificada has
 - La pestaña Acerca de identifica **JANUS Dock (LNK)**, idea desarrollada en **Pueblo Seco, Ñuble, Chile**, fecha **16 de octubre de 2026**, autoría **Omar Aguila / Laboratorios Momocrackcorp**.
 - El proyecto liviano depende de **.NET Desktop Runtime 8**; para distribución pública se evaluará una versión LTS con soporte vigente.
 - La versión final requiere validación en las cuatro ubicaciones, modo flotante y varios factores de escalado antes de integrar con JANUS Plus.
+
+## 3.3 — nueva tanda de pruebas (16 de octubre de 2026)
+
+- Color **independiente por unidad** (configurado por letra, guardado en `DiskColors` en JSON). Se usa tanto en el panel Discos como en los indicadores de la barra.
+- Panel Discos con lista desplazable, botones individuales de color, porcentaje crítico separado y sin campos montados.
+- Casilla para animar el icono bajo el mouse mediante ampliación de la imagen dentro de su espacio, sin alterar el área reservada para el escritorio; desactivable.
+- Clic derecho: carpetas especiales Documentos y Descargas, selector de carpeta personalizada y acciones Apagar/Reiniciar. **Las acciones de energía siempre solicitan confirmación**.
+- El contenido anterior de accesos y separadores se preserva; los campos nuevos del JSON usan valores predeterminados.
+
+**Pendiente de validar**: GitHub Actions, escalado de pantalla, acceso a carpetas redirigidas, iconos de energía, colocación AppBar y animación en diferentes tamaños. La denominación 3.3 sigue siendo *preview* hasta completar las pruebas en Windows 10/11.
