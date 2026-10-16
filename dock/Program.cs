@@ -464,7 +464,21 @@ public class Dock : Form
             }
             if (item.IsSeparator)
             {
-                var sep = new Panel { Width = Horizontal ? 2 : Math.Max(30, settings.Width - 25), Height = Horizontal ? Math.Max(30, settings.Width - 25) : 2, Margin = new Padding(8, 6, 8, 6), BackColor = light ? Color.FromArgb(170, 178, 190) : Color.FromArgb(105, 112, 125) };
+                // A wide transparent hit area makes a thin separator practical to select.
+                var sep = new Panel
+                {
+                    Width = Horizontal ? 18 : Math.Max(30, settings.Width - 25),
+                    Height = Horizontal ? Math.Max(30, settings.Width - 25) : 18,
+                    Margin = new Padding(4, 2, 4, 2),
+                    BackColor = BackColor,
+                    Cursor = Cursors.Hand
+                };
+                sep.Paint += (_, e) =>
+                {
+                    using var line = new Pen(light ? Color.FromArgb(170, 178, 190) : Color.FromArgb(105, 112, 125), 2);
+                    if (Horizontal) e.Graphics.DrawLine(line, sep.Width / 2, 3, sep.Width / 2, sep.Height - 3);
+                    else e.Graphics.DrawLine(line, 3, sep.Height / 2, sep.Width - 3, sep.Height / 2);
+                };
                 var separatorMenu = new ContextMenuStrip();
                 separatorMenu.Items.Add("Quitar separador", null, (_, _) => { settings.Items.Remove(item); Store(); Render(); });
                 separatorMenu.Items.Add("Subir", null, (_, _) => Move(item, -1));
@@ -543,6 +557,20 @@ public class Dock : Form
             special.DropDownItems.Add("Carpeta de trabajo...", null, (_, _) => AddFolder());
             menu.Items.Add(special);
             menu.Items.Add("Agregar separador", null, (_, _) => { settings.Items.Add(new DockItem { Name = "Separador", IsSeparator = true }); Store(); Render(); });
+            var manageSeparators = new ToolStripMenuItem("Administrar separadores");
+            int number = 0;
+            foreach (var separator in settings.Items.Where(i => i.IsSeparator).ToList())
+            {
+                number++;
+                var current = separator;
+                var submenu = new ToolStripMenuItem($"Separador {number}");
+                submenu.DropDownItems.Add("Mover hacia arriba", null, (_, _) => Move(current, -1));
+                submenu.DropDownItems.Add("Mover hacia abajo", null, (_, _) => Move(current, 1));
+                submenu.DropDownItems.Add("Eliminar separador", null, (_, _) => { settings.Items.Remove(current); Store(); Render(); });
+                manageSeparators.DropDownItems.Add(submenu);
+            }
+            manageSeparators.Enabled = number > 0;
+            menu.Items.Add(manageSeparators);
             menu.Items.Add(new ToolStripSeparator());
             menu.Items.Add("Opciones...", null, (_, _) => ShowOptions());
             menu.Items.Add("Refrescar barra", null, (_, _) => RefreshDock());
