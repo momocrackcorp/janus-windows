@@ -17,6 +17,8 @@ public sealed class DockOptionsForm : Form
     public int DiskColorArgb { get; private set; }
     public Dictionary<string,int> DiskColors { get; private set; } = new(StringComparer.OrdinalIgnoreCase);
     public bool HoverAnimation { get; private set; } = true;
+    public bool ShowShutdown { get; private set; }
+    public bool ShowRestart { get; private set; }
     public int CriticalPercent { get; private set; }
     public int IconSize { get; private set; }
     public string Edge { get; private set; } = "Derecha";
@@ -26,8 +28,8 @@ public sealed class DockOptionsForm : Form
     public DockOptionsForm(DockSettings config)
     {
         Text = "Opciones de JANUS Dock";
-        ClientSize = new Size(570, 392);
-        MinimumSize = new Size(590, 430);
+        ClientSize = new Size(570, 440);
+        MinimumSize = new Size(590, 480);
         AutoScaleMode = AutoScaleMode.Dpi;
         MaximizeBox = false; MinimizeBox = false;
         StartPosition = FormStartPosition.CenterScreen;
@@ -69,8 +71,12 @@ public sealed class DockOptionsForm : Form
         general.Controls.Add(smallIcons);
         smallIcons.CheckedChanged += (_, _) => { if (smallIcons.Checked) size.Value = 24; else if (size.Value == 24) size.Value = 48; };
         // Explicit quick preset; manual numeric sizes remain independent.
-        general.Controls.Add(new Label { Text = "Nota: al ocultarse, queda una franja para recuperar la barra con el mouse.", Location = new Point(18, 298), AutoSize = true });
+        general.Controls.Add(new Label { Text = "Nota: al ocultarse, queda una franja para recuperar la barra con el mouse.", Location = new Point(18, 347), AutoSize = true });
 
+        var powerTitle = new Label { Text = "Botones de energía en la barra:", AutoSize = true, Location = new Point(18, 292) };
+        var shutdown = new CheckBox { Text = "Apagar", AutoSize = true, Location = new Point(240, 292), Checked = config.ShowShutdown };
+        var restart = new CheckBox { Text = "Reiniciar", AutoSize = true, Location = new Point(335, 292), Checked = config.ShowRestart };
+        general.Controls.AddRange(new Control[] { powerTitle, shutdown, restart });
         var widget = new CheckBox { Text = "Mostrar indicador de uso de discos en la barra", Checked = config.ShowDiskWidget, Location = new Point(18, 20), AutoSize = true };
         var diskColors = new Dictionary<string,int>(config.DiskColors, StringComparer.OrdinalIgnoreCase);
         var widgetLabel = new Label { Text = "Cada unidad tiene su propio color. Selecciónalo con el botón de su fila.", Location = new Point(18, 54), AutoSize = true };
@@ -136,6 +142,8 @@ public sealed class DockOptionsForm : Form
             DiskColorArgb = config.DiskColorArgb;
             DiskColors = diskColors;
             HoverAnimation = animation.Checked;
+            ShowShutdown = shutdown.Checked;
+            ShowRestart = restart.Checked;
             CriticalPercent = (int)critical.Value;
         };
     }
