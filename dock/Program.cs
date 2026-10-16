@@ -11,6 +11,7 @@ public class DockItem
 {
     public string Name { get; set; } = "";
     public string Path { get; set; } = "";
+    public bool IsSeparator { get; set; } = false;
 }
 public class DockSettings
 {
@@ -68,7 +69,7 @@ public class Dock : Form
         WrapContents = false, AutoScroll = true, Padding = new Padding(5)
     };
     readonly Panel grip = new() { Dock = DockStyle.Left, Width = 7, Cursor = Cursors.SizeWE };
-    readonly Panel footer = new() { Dock = DockStyle.Bottom, Height = 44 };
+    readonly Panel footer = new() { Dock = DockStyle.Bottom, Height = 0, Visible = false };
     readonly Button add = new() { Text = "+", Width = 32, Height = 30, FlatStyle = FlatStyle.Flat };
     readonly Button options = new() { Text = "⚙", Width = 32, Height = 30, FlatStyle = FlatStyle.Flat };
     DockSettings settings = new();
@@ -105,6 +106,9 @@ public class Dock : Form
         Controls.Add(footer);
         Controls.Add(grip);
         SetOrientation();
+        panel.ContextMenuStrip = MakeDockMenu();
+        grip.ContextMenuStrip = MakeDockMenu();
+        ContextMenuStrip = MakeDockMenu();
         grip.MouseDown += (_, e) =>
         {
             if (e.Button == MouseButtons.Left)
@@ -161,9 +165,25 @@ public class Dock : Form
         }
         catch { return true; }
     }
+    Color TaskbarColor()
+    {
+        // DWM system accent is not guaranteed to equal Windows 11 taskbar material.
+        // Blend it subtly with the system light/dark surface for a closer match.
+        Color surface = light ? Color.FromArgb(245, 246, 249) : Color.FromArgb(32, 34, 40);
+        try
+        {
+            using var key = Registry.CurrentUser.OpenSubKey(@"Software\Microsoft\Windows\DWM");
+            int raw = Convert.ToInt32(key?.GetValue("ColorizationColor", 0));
+            if (raw == 0) return surface;
+            var accent = Color.FromArgb((raw >> 16) & 255, (raw >> 8) & 255, raw & 255);
+            double mix = light ? 0.10 : 0.18;
+            return Color.FromArgb((int)(surface.R*(1-mix)+accent.R*mix), (int)(surface.G*(1-mix)+accent.G*mix), (int)(surface.B*(1-mix)+accent.B*mix));
+        }
+        catch { return surface; }
+    }
     void ApplyTheme()
     {
-        BackColor = light ? Color.FromArgb(245, 246, 249) : Color.FromArgb(32, 34, 40);
+        BackColor = TaskbarColor();
         ForeColor = light ? Color.FromArgb(28, 30, 35) : Color.FromArgb(241, 241, 244);
         footer.BackColor = BackColor;
         panel.BackColor = BackColor;
@@ -242,6 +262,17 @@ public class Dock : Form
         int width = Horizontal ? Math.Max(60, settings.IconSize + (settings.ShowNames ? 55 : 12)) : Math.Max(55, settings.Width - 18);
         foreach (var item in settings.Items.ToList())
         {
+            if (item.IsSeparator)
+            {
+                var sep = new Panel { Width = Horizontal ? 2 : Math.Max(30, settings.Width - 25), Height = Horizontal ? Math.Max(30, settings.Width - 25) : 2, Margin = new Padding(8, 6, 8, 6), BackColor = light ? Color.FromArgb(170, 178, 190) : Color.FromArgb(105, 112, 125) };
+                var separatorMenu = new ContextMenuStrip();
+                separatorMenu.Items.Add("Quitar separador", null, (_, _) => { settings.Items.Remove(item); Store(); Render(); });
+                separatorMenu.Items.Add("Subir", null, (_, _) => Move(item, -1));
+                separatorMenu.Items.Add("Bajar", null, (_, _) => Move(item, 1));
+                sep.ContextMenuStrip = separatorMenu;
+                panel.Controls.Add(sep);
+                continue;
+            }
             var btn = new Button
             {
                 Width = width,
@@ -253,16 +284,18 @@ public class Dock : Form
                 TextImageRelation = TextImageRelation.ImageAboveText,
                 AutoEllipsis = true,
                 FlatStyle = FlatStyle.Flat,
-                BackColor = light ? Color.FromArgb(234, 237, 244) : Color.FromArgb(53, 58, 68),
+                BackColor = BackColor,
                 ForeColor = ForeColor,
                 Font = new Font("Segoe UI", 8),
-                Margin = new Padding(0, 3, 0, 3)
+                Margin = new Padding(0, 2, 0, 2)
             };
             // WinForms Button.Image is drawn at native size; resize the extracted image to chosen dock size.
             var source = btn.Image;
             btn.Image = new Bitmap(source!, new Size(settings.IconSize, settings.IconSize));
             source?.Dispose();
             btn.FlatAppearance.BorderSize = 0;
+            btn.FlatAppearance.MouseOverBackColor = light ? Color.FromArgb(225, 233, 244) : Color.FromArgb(62, 67, 77);
+            btn.FlatAppearance.MouseDownBackColor = light ? Color.FromArgb(210, 222, 239) : Color.FromArgb(78, 83, 97);
             btn.Click += (_, _) => Open(item);
             var tips = new ToolTip { ShowAlways = true };
             tips.SetToolTip(btn, item.Name + "\n" + item.Path);
@@ -271,6 +304,8 @@ public class Dock : Form
             context.Items.Add("Subir", null, (_, _) => Move(item, -1));
             context.Items.Add("Bajar", null, (_, _) => Move(item, 1));
             context.Items.Add("Quitar acceso", null, (_, _) => { settings.Items.Remove(item); Store(); Render(); });
+            context.Items.Add(new ToolStripSeparator());
+            context.Items.Add("Opciones de la barra", null, (_, _) => ShowOptions());
             btn.ContextMenuStrip = context;
             btn.AllowDrop = true;
             btn.DragEnter += EnterDrag;
@@ -280,12 +315,28 @@ public class Dock : Form
         panel.ResumeLayout();
         AlignFooter();
     }
+    ContextMenuStrip MakeDockMenu()
+    {
+        var menu = new ContextMenuStrip();
+        menu.Opening += (_, _) =>
+        {
+            menu.Items.Clear();
+            menu.Items.Add("Agregar acceso...", null, (_, _) => AddDialog());
+            menu.Items.Add("Agregar separador", null, (_, _) => { settings.Items.Add(new DockItem { Name = "Separador", IsSeparator = true }); Store(); Render(); });
+            menu.Items.Add(new ToolStripSeparator());
+            menu.Items.Add("Opciones...", null, (_, _) => ShowOptions());
+            menu.Items.Add("Salir de JANUS Dock", null, (_, _) => Close());
+        };
+        return menu;
+    }
     void ShowOptions()
     {
         var menu = new ContextMenuStrip();
         var names = new ToolStripMenuItem("Mostrar nombres") { Checked = settings.ShowNames, CheckOnClick = true };
         names.CheckedChanged += (_, _) => { settings.ShowNames = names.Checked; Store(); Render(); };
         menu.Items.Add(names);
+        menu.Items.Add("Agregar acceso...", null, (_, _) => AddDialog());
+        menu.Items.Add("Agregar separador", null, (_, _) => { settings.Items.Add(new DockItem { Name = "Separador", IsSeparator = true }); Store(); Render(); });
         var locations = new ToolStripMenuItem("Ubicación");
         foreach (string edge in new[] { "Derecha", "Izquierda", "Arriba", "Abajo" })
         {
@@ -323,7 +374,8 @@ public class Dock : Form
         panel.Dock = DockStyle.Fill;
         footer.Dock = Horizontal ? DockStyle.Right : DockStyle.Bottom;
         footer.Width = Horizontal ? 80 : settings.Width;
-        footer.Height = Horizontal ? settings.Width : 44;
+        footer.Height = 0;
+        footer.Visible = false;
         grip.Dock = settings.Edge switch
         {
             "Izquierda" => DockStyle.Right,
