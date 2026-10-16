@@ -410,7 +410,6 @@ public class Dock : Form
     }
     void Render()
     {
-        HideHoverPreview();
         panel.SuspendLayout();
         while (panel.Controls.Count > 0)
         {
@@ -419,7 +418,7 @@ public class Dock : Form
             if (control is Button b) { b.Image?.Dispose(); (b.Tag as Image)?.Dispose(); }
             control.Dispose();
         }
-        int width = Horizontal ? Math.Max(60, settings.IconSize + (settings.NameMode == "Written" ? 55 : 12)) : Math.Max(55, settings.Width - 18);
+        int width = Horizontal ? Math.Max(60, (int)Math.Ceiling(settings.IconSize * (settings.HoverAnimation ? 1.8 : 1.0)) + 12) : Math.Max(55, settings.Width - 18);
         foreach (var item in settings.Items.ToList())
         {
             if (item.IsDiskWidget)
@@ -457,11 +456,14 @@ public class Dock : Form
                 panel.Controls.Add(sep);
                 continue;
             }
-            var btn = new Button
+            var btn = new ZoomShortcutButton
             {
                 Width = width,
-                Height = Horizontal ? Math.Clamp(settings.IconSize + (settings.NameMode == "Written" ? 28 : 10), 40, 92) : settings.IconSize + (settings.NameMode == "Written" ? 45 : 14),
-                Image = GetIcon(item.Path),
+                Height = Math.Max(settings.IconSize + (settings.NameMode == "Written" ? 45 : 14), (int)Math.Ceiling(settings.IconSize * (settings.HoverAnimation ? 1.8 : 1.0)) + (settings.NameMode == "Written" ? 30 : 8)),
+                SourceIcon = GetIcon(item.Path),
+                BaseIconSize = settings.IconSize,
+                ZoomEnabled = settings.HoverAnimation,
+                ShowCaption = settings.NameMode == "Written",
                 ImageAlign = settings.NameMode == "Written" ? ContentAlignment.TopCenter : ContentAlignment.MiddleCenter,
                 Text = settings.NameMode == "Written" ? item.Name : "",
                 TextAlign = ContentAlignment.BottomCenter,
@@ -473,17 +475,11 @@ public class Dock : Form
                 Font = new Font("Segoe UI", 8),
                 Margin = new Padding(0, 2, 0, 2)
             };
-            // WinForms Button.Image is drawn at native size; resize the extracted image to chosen dock size.
-            var source = btn.Image;
-            btn.Tag = new Bitmap(source!);
-            btn.Image = new Bitmap(source!, new Size(settings.IconSize, settings.IconSize));
-            source?.Dispose();
             btn.FlatAppearance.BorderSize = 0;
             btn.FlatAppearance.MouseOverBackColor = light ? Color.FromArgb(225, 233, 244) : Color.FromArgb(62, 67, 77);
             btn.FlatAppearance.MouseDownBackColor = light ? Color.FromArgb(210, 222, 239) : Color.FromArgb(78, 83, 97);
             btn.Click += (_, _) => Open(item);
-            btn.MouseEnter += (_, _) => ShowHoverPreview(btn);
-            btn.MouseLeave += (_, _) => HideHoverPreview();
+
             var tips = new ToolTip { ShowAlways = true };
             if (settings.NameMode != "None") tips.SetToolTip(btn, item.Name + "\n" + item.Path);
             var context = new ContextMenuStrip();
@@ -595,57 +591,6 @@ public class Dock : Form
         menu.Items.Add("Refrescar barra", null, (_, _) => RefreshDock());
         menu.Items.Add("Cerrar JANUS Dock", null, (_, _) => Close());
         menu.Show(this, PointToClient(Cursor.Position));
-    }
-    // Large, non-activating preview floats above the dock rather than being
-    // clipped to the original button's small rectangle.
-    sealed class HoverPreview : Form
-    {
-        const int WS_EX_NOACTIVATE = 0x08000000, WS_EX_TOOLWINDOW = 0x00000080;
-        public HoverPreview()
-        {
-            FormBorderStyle = FormBorderStyle.None;
-            ShowInTaskbar = false;
-            TopMost = true;
-            StartPosition = FormStartPosition.Manual;
-            BackColor = Color.Magenta;
-            TransparencyKey = Color.Magenta;
-        }
-        protected override bool ShowWithoutActivation => true;
-        protected override CreateParams CreateParams
-        {
-            get { var p = base.CreateParams; p.ExStyle |= WS_EX_NOACTIVATE | WS_EX_TOOLWINDOW; return p; }
-        }
-    }
-    HoverPreview? hoverPreview;
-    Button? hoveredButton;
-    void ShowHoverPreview(Button btn)
-    {
-        if (!settings.HoverAnimation || btn.IsDisposed || btn.Tag is not Image original) return;
-        HideHoverPreview();
-        hoveredButton = btn;
-        int zoom = Math.Clamp((int)Math.Round(settings.IconSize * 2.0), 40, 128);
-        var rect = btn.RectangleToScreen(btn.ClientRectangle);
-        var screen = Screen.FromControl(btn).WorkingArea;
-        int x = Horizontal ? rect.Left + (rect.Width - zoom) / 2 :
-            settings.Edge == "Izquierda" ? rect.Right + 7 : rect.Left - zoom - 7;
-        int y = Horizontal ? settings.Edge == "Arriba" ? rect.Bottom + 7 : rect.Top - zoom - 7 :
-            rect.Top + (rect.Height - zoom) / 2;
-        x = Math.Clamp(x, screen.Left, Math.Max(screen.Left, screen.Right - zoom));
-        y = Math.Clamp(y, screen.Top, Math.Max(screen.Top, screen.Bottom - zoom));
-        var preview = new HoverPreview { Bounds = new Rectangle(x, y, zoom, zoom) };
-        var image = new PictureBox { Dock = DockStyle.Fill, SizeMode = PictureBoxSizeMode.Zoom, Image = new Bitmap(original, new Size(zoom, zoom)) };
-        preview.Controls.Add(image);
-        hoverPreview = preview;
-        preview.Show(this);
-    }
-    void HideHoverPreview()
-    {
-        hoveredButton = null;
-        if (hoverPreview == null) return;
-        foreach (Control c in hoverPreview.Controls) if (c is PictureBox p) p.Image?.Dispose();
-        hoverPreview.Close();
-        hoverPreview.Dispose();
-        hoverPreview = null;
     }
     void SyncPowerButtons()
     {
@@ -840,7 +785,6 @@ public class Dock : Form
     {
         themeTimer.Stop();
         hideTimer.Stop();
-        HideHoverPreview();
         UnregisterBar();
         base.OnFormClosing(e);
     }
