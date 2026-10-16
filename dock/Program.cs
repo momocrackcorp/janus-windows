@@ -601,7 +601,13 @@ public class Dock : Form
         // Resize only the image, not the control: other shortcuts and AppBar dimensions stay fixed.
         var original = btn.Tag as Image;
         if (original == null) return;
-        int target = enlarged ? Math.Min(settings.IconSize * 2, Math.Max(settings.IconSize, btn.Height - 8)) : settings.IconSize;
+        // Pronounced zoom (up to 1.9x), limited to the current button area so
+        // hovering does not move other shortcuts or resize the Windows AppBar.
+        int availableWidth = Math.Max(settings.IconSize, btn.ClientSize.Width - 4);
+        int availableHeight = Math.Max(settings.IconSize, btn.ClientSize.Height - (settings.NameMode == "Written" ? 26 : 4));
+        int target = enlarged
+            ? Math.Min((int)Math.Round(settings.IconSize * 1.9), Math.Min(availableWidth, availableHeight))
+            : settings.IconSize;
         using var next = new Bitmap(original, new Size(target, target));
         var old = btn.Image;
         btn.Image = new Bitmap(next);
