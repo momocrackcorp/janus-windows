@@ -15,6 +15,8 @@ public sealed class DockOptionsForm : Form
     public bool ShowDiskWidget { get; private set; }
     public bool StartWithWindows { get; private set; }
     public int DiskColorArgb { get; private set; }
+    public Dictionary<string,int> DiskColors { get; private set; } = new(StringComparer.OrdinalIgnoreCase);
+    public bool HoverAnimation { get; private set; } = true;
     public int CriticalPercent { get; private set; }
     public int IconSize { get; private set; }
     public string Edge { get; private set; } = "Derecha";
@@ -61,31 +63,45 @@ public sealed class DockOptionsForm : Form
         general.Controls.Add(new Label { Text = "Tamaño iconos:", Location = new Point(18, 231), AutoSize = true });
         var size = new NumericUpDown { Location = new Point(190, 227), Minimum = 16, Maximum = 64, Increment = 8, Value = Math.Clamp(config.IconSize, 16, 64), Width = 100 };
         general.Controls.Add(size);
+        var animation = new CheckBox { Text = "Animar iconos al pasar el mouse", AutoSize = true, Location = new Point(18, 263), Checked = config.HoverAnimation };
+        general.Controls.Add(animation);
         var smallIcons = new CheckBox { Text = "Iconos pequeños (24 px)", AutoSize = true, Location = new Point(310, 230), Checked = config.IconSize <= 24 };
         general.Controls.Add(smallIcons);
         smallIcons.CheckedChanged += (_, _) => { if (smallIcons.Checked) size.Value = 24; else if (size.Value == 24) size.Value = 48; };
         // Explicit quick preset; manual numeric sizes remain independent.
-        general.Controls.Add(new Label { Text = "Nota: al ocultarse, queda una franja para recuperar la barra con el mouse.", Location = new Point(18, 276), AutoSize = true });
+        general.Controls.Add(new Label { Text = "Nota: al ocultarse, queda una franja para recuperar la barra con el mouse.", Location = new Point(18, 298), AutoSize = true });
 
         var widget = new CheckBox { Text = "Mostrar indicador de uso de discos en la barra", Checked = config.ShowDiskWidget, Location = new Point(18, 20), AutoSize = true };
-        var diskColor = Color.FromArgb(config.DiskColorArgb);
-        var chooseColor = new Button { Text = "Color del indicador...", Location = new Point(18, 51), Width = 165, Height = 28 };
-        var swatch = new Panel { Location = new Point(191, 55), Size = new Size(25, 20), BackColor = diskColor };
-        var criticalLabel = new Label { Text = "Alerta desde (%):", Location = new Point(245, 56), AutoSize = true };
-        var critical = new NumericUpDown { Location = new Point(360, 52), Width = 75, Minimum = 70, Maximum = 99, Value = Math.Clamp(config.CriticalPercent, 70, 99) };
-        disks.Controls.AddRange(new Control[] { chooseColor, swatch, criticalLabel, critical });
+        var diskColors = new Dictionary<string,int>(config.DiskColors, StringComparer.OrdinalIgnoreCase);
+        var widgetLabel = new Label { Text = "Cada unidad tiene su propio color. Selecciónalo con el botón de su fila.", Location = new Point(18, 54), AutoSize = true };
         disks.Controls.Add(widget);
-        disks.Controls.Add(new Label { Text = "Vista previa de capacidad (GB usados y libres):", Location = new Point(18, 102), AutoSize = true });
-        var diskPanel = new FlowLayoutPanel { Location = new Point(18, 138), Size = new Size(500, 146), Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right, AutoScroll = true, FlowDirection = FlowDirection.TopDown, WrapContents = false };
+        disks.Controls.Add(widgetLabel);
+        disks.Controls.Add(new Label { Text = "Avisar desde (%):", Location = new Point(18, 88), AutoSize = true });
+        var critical = new NumericUpDown { Location = new Point(150, 84), Width = 80, Minimum = 70, Maximum = 99, Value = Math.Clamp(config.CriticalPercent, 70, 99) };
+        disks.Controls.Add(critical);
+        var diskPanel = new FlowLayoutPanel { Location = new Point(18, 124), Size = new Size(510, 175), Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right, AutoScroll = true, FlowDirection = FlowDirection.TopDown, WrapContents = false, Padding = new Padding(2) };
         disks.Controls.Add(diskPanel);
-        chooseColor.Click += (_, _) => { using var picker = new ColorDialog { Color = diskColor, FullOpen = true }; if (picker.ShowDialog(this) == DialogResult.OK) { diskColor = picker.Color; swatch.BackColor = diskColor; foreach (var item in diskPanel.Controls.OfType<DiskUsageControl>()) item.SetAppearance(diskColor, (int)critical.Value); } };
-        critical.ValueChanged += (_, _) => { foreach (var item in diskPanel.Controls.OfType<DiskUsageControl>()) item.SetAppearance(diskColor, (int)critical.Value); };
         foreach (var drive in DriveInfo.GetDrives())
         {
             try
             {
                 if (!drive.IsReady || drive.TotalSize <= 0) continue;
-                diskPanel.Controls.Add(new DiskUsageControl(drive, diskColor, (int)critical.Value, false) { Width = 475, Height = 68 });
+                string letter = drive.Name.Substring(0, 2).ToUpperInvariant();
+                Color color = Color.FromArgb(diskColors.TryGetValue(letter, out int existing) ? existing : config.DiskColorArgb);
+                var line = new Panel { Width = 476, Height = 69 };
+                var preview = new DiskUsageControl(drive, color, (int)critical.Value, false) { Location = new Point(0, 0), Size = new Size(335, 65), ForeColor = SystemColors.ControlText };
+                var choose = new Button { Text = "Color...", Location = new Point(355, 16), Size = new Size(95, 30), BackColor = color, UseVisualStyleBackColor = false };
+                choose.Click += (_, _) =>
+                {
+                    using var picker = new ColorDialog { Color = choose.BackColor, FullOpen = true };
+                    if (picker.ShowDialog(this) != DialogResult.OK) return;
+                    diskColors[letter] = picker.Color.ToArgb();
+                    choose.BackColor = picker.Color;
+                    preview.SetAppearance(picker.Color, (int)critical.Value);
+                };
+                critical.ValueChanged += (_, _) => preview.SetAppearance(choose.BackColor, (int)critical.Value);
+                line.Controls.Add(preview); line.Controls.Add(choose);
+                diskPanel.Controls.Add(line);
             }
             catch { }
         }
@@ -117,7 +133,9 @@ public sealed class DockOptionsForm : Form
             ShowDiskWidget = widget.Checked;
             IconSize = (int)size.Value;
             Edge = (string)location.SelectedItem!;
-            DiskColorArgb = diskColor.ToArgb();
+            DiskColorArgb = config.DiskColorArgb;
+            DiskColors = diskColors;
+            HoverAnimation = animation.Checked;
             CriticalPercent = (int)critical.Value;
         };
     }
