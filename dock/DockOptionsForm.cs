@@ -21,6 +21,7 @@ public sealed class DockOptionsForm : Form
     public bool ShowRestart { get; private set; }
     public int CriticalPercent { get; private set; }
     public int IconSize { get; private set; }
+    public string IconStyle { get; private set; } = "Windows";
     public string Edge { get; private set; } = "Derecha";
     const string RunPath = @"Software\Microsoft\Windows\CurrentVersion\Run";
     const string RunValue = "JANUS Dock";
@@ -38,9 +39,19 @@ public sealed class DockOptionsForm : Form
         Controls.Add(tabs);
 
         var general = new TabPage("General");
+        var appearance = new TabPage("Apariencia");
         var disks = new TabPage("Discos");
         var about = new TabPage("Acerca de");
-        tabs.TabPages.AddRange(new[] { general, disks, about });
+        tabs.TabPages.AddRange(new[] { general, appearance, disks, about });
+        appearance.Controls.Add(new Label { Text = "Estilo de los iconos:", Location = new Point(22, 32), AutoSize = true });
+        var iconStyle = new ComboBox { DropDownStyle = ComboBoxStyle.DropDownList, Location = new Point(175, 28), Width = 260 };
+        iconStyle.Items.AddRange(new object[] { "Iconos de Windows", "Iconos Lucide" });
+        iconStyle.SelectedIndex = config.IconStyle == "Lucide" ? 1 : 0;
+        appearance.Controls.Add(iconStyle);
+        appearance.Controls.Add(new Label { Text = "Windows: usa los iconos originales del sistema y de los accesos.", Location = new Point(22, 83), AutoSize = true });
+        appearance.Controls.Add(new Label { Text = "Lucide: estilo de líneas para Mi PC, Documentos, Descargas,", Location = new Point(22, 113), AutoSize = true });
+        appearance.Controls.Add(new Label { Text = "carpetas, Apagar y Reiniciar. Los programas conservan su icono.", Location = new Point(22, 135), AutoSize = true });
+        appearance.Controls.Add(new Label { Text = "El cambio se aplica al pulsar Guardar cambios.", Location = new Point(22, 186), AutoSize = true });
 
         var top = new CheckBox { Text = "Mantener siempre visible (encima de otras ventanas)", Checked = config.AlwaysOnTop, AutoSize = true, Location = new Point(18, 22) };
         var hide = new CheckBox { Text = "Ocultar automáticamente al alejar el puntero", Checked = config.AutoHide, AutoSize = true, Location = new Point(18, 54) };
@@ -138,6 +149,7 @@ public sealed class DockOptionsForm : Form
             DockMode = dockMode.SelectedItem?.ToString() ?? "Acoplada";
             ShowDiskWidget = widget.Checked;
             IconSize = (int)size.Value;
+            IconStyle = iconStyle.SelectedIndex == 1 ? "Lucide" : "Windows";
             Edge = (string)location.SelectedItem!;
             DiskColorArgb = config.DiskColorArgb;
             DiskColors = diskColors;
