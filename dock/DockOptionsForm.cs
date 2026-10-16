@@ -17,15 +17,15 @@ public sealed class DockOptionsForm : Form
     public int DiskColorArgb { get; private set; }
     public int CriticalPercent { get; private set; }
     public int IconSize { get; private set; }
-    public string Edge { get; private set; }
+    public string Edge { get; private set; } = "Derecha";
     const string RunPath = @"Software\Microsoft\Windows\CurrentVersion\Run";
     const string RunValue = "JANUS Dock";
 
     public DockOptionsForm(DockSettings config)
     {
         Text = "Opciones de JANUS Dock";
-        ClientSize = new Size(620, 460);
-        MinimumSize = new Size(640, 500);
+        ClientSize = new Size(570, 392);
+        MinimumSize = new Size(590, 430);
         AutoScaleMode = AutoScaleMode.Dpi;
         MaximizeBox = false; MinimizeBox = false;
         StartPosition = FormStartPosition.CenterScreen;
@@ -61,7 +61,7 @@ public sealed class DockOptionsForm : Form
         general.Controls.Add(new Label { Text = "Tamaño iconos:", Location = new Point(18, 231), AutoSize = true });
         var size = new NumericUpDown { Location = new Point(190, 227), Minimum = 16, Maximum = 64, Increment = 8, Value = Math.Clamp(config.IconSize, 16, 64), Width = 100 };
         general.Controls.Add(size);
-        general.Controls.Add(new Label { Text = "Nota: al ocultarse, queda una franja para recuperar la barra con el mouse.", Location = new Point(18, 286), AutoSize = true });
+        general.Controls.Add(new Label { Text = "Nota: al ocultarse, queda una franja para recuperar la barra con el mouse.", Location = new Point(18, 276), AutoSize = true });
 
         var widget = new CheckBox { Text = "Mostrar indicador de uso de discos en la barra", Checked = config.ShowDiskWidget, Location = new Point(18, 20), AutoSize = true };
         var diskColor = Color.FromArgb(config.DiskColorArgb);
@@ -72,7 +72,7 @@ public sealed class DockOptionsForm : Form
         disks.Controls.AddRange(new Control[] { chooseColor, swatch, criticalLabel, critical });
         disks.Controls.Add(widget);
         disks.Controls.Add(new Label { Text = "Vista previa de capacidad (GB usados y libres):", Location = new Point(18, 102), AutoSize = true });
-        var diskPanel = new FlowLayoutPanel { Location = new Point(18, 138), Size = new Size(530, 186), Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right, AutoScroll = true, FlowDirection = FlowDirection.TopDown, WrapContents = false };
+        var diskPanel = new FlowLayoutPanel { Location = new Point(18, 138), Size = new Size(500, 146), Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right, AutoScroll = true, FlowDirection = FlowDirection.TopDown, WrapContents = false };
         disks.Controls.Add(diskPanel);
         chooseColor.Click += (_, _) => { using var picker = new ColorDialog { Color = diskColor, FullOpen = true }; if (picker.ShowDialog(this) == DialogResult.OK) { diskColor = picker.Color; swatch.BackColor = diskColor; foreach (var item in diskPanel.Controls.OfType<DiskUsageControl>()) item.SetAppearance(diskColor, (int)critical.Value); } };
         critical.ValueChanged += (_, _) => { foreach (var item in diskPanel.Controls.OfType<DiskUsageControl>()) item.SetAppearance(diskColor, (int)critical.Value); };
@@ -81,12 +81,12 @@ public sealed class DockOptionsForm : Form
             try
             {
                 if (!drive.IsReady || drive.TotalSize <= 0) continue;
-                diskPanel.Controls.Add(new DiskUsageControl(drive, diskColor, (int)critical.Value, false) { Width = 490, Height = 68 });
+                diskPanel.Controls.Add(new DiskUsageControl(drive, diskColor, (int)critical.Value, false) { Width = 475, Height = 68 });
             }
             catch { }
         }
 
-        var info = new Label { Text = "JANUS Dock\n\nBarra de acceso rápido para Windows 11.\nInspirada en las barras de herramientas clásicas de Windows.\n\nDesarrollada como complemento del proyecto JANUS.\nConfiguración y accesos personales almacenados localmente.", Location = new Point(20, 25), Size = new Size(460, 190) };
+        var info = new Label { Text = "JANUS Dock (LNK)\n\nBarra de accesos rápidos para Windows 11.\nDesarrollada en C# con Windows Forms y .NET.\n\nIdeada en Pueblo Seco, Ñuble, Chile.\n16 de octubre de 2026.\n\nAutoría: Omar Aguila\nLaboratorios Momocrackcorp", Location = new Point(20, 20), Size = new Size(490, 215) };
         about.Controls.Add(info);
         var updates = new Button { Text = "Buscar actualizaciones en GitHub", Location = new Point(20, 235), Size = new Size(260, 35) };
         updates.Click += (_, _) => Process.Start(new ProcessStartInfo("https://github.com/momocrackcorp/janus-windows/actions/workflows/build-janus-dock.yml") { UseShellExecute = true });
