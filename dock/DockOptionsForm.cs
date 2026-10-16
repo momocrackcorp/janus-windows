@@ -233,6 +233,17 @@ public sealed class DockOptionsForm : Form
             catch { }
         }
 
+        // Disk settings use the same scrollable stack for 200% DPI.
+        disks.Controls.Clear();
+        var diskRows = PageRows(disks);
+        diskRows.Controls.Add(widget);
+        diskRows.Controls.Add(widgetLabel);
+        diskRows.Controls.Add(FieldRow(new Label { Text = "Avisar desde (%):", AutoSize = true }, critical));
+        diskPanel.Height = 220;
+        diskPanel.AutoScroll = true;
+        diskRows.Controls.Add(diskPanel);
+        diskRows.SizeChanged += (_, _) => FitRows(diskRows);
+
         var info = new Label { Text = "JANUS Dock (LNK) — v5.0 (candidata)\n\nBarra de accesos rápidos para Windows 11.\nDesarrollada en C# con Windows Forms y .NET.\n\nIdeada en Pueblo Seco, Ñuble, Chile.\n16 de octubre de 2026.\n\nAutoría: Omar Aguila\nLaboratorios Momocrackcorp", Location = new Point(104, 20), Size = new Size(420, 215) };
         var appIcon = new PictureBox { Location = new Point(20, 25), Size = new Size(64, 64), SizeMode = PictureBoxSizeMode.Zoom };
         try { using var ico = Icon.ExtractAssociatedIcon(Application.ExecutablePath); appIcon.Image = ico?.ToBitmap() ?? SystemIcons.Application.ToBitmap(); }
@@ -242,6 +253,17 @@ public sealed class DockOptionsForm : Form
         var updates = new Button { Text = "Buscar actualizaciones en GitHub", Location = new Point(20, 235), Size = new Size(260, 35) };
         updates.Click += (_, _) => Process.Start(new ProcessStartInfo("https://github.com/momocrackcorp/janus-windows/actions/workflows/build-janus-dock.yml") { UseShellExecute = true });
         about.Controls.Add(updates);
+        about.Controls.Clear();
+        var aboutRows = PageRows(about);
+        appIcon.Size = new Size(64, 64);
+        info.AutoSize = true;
+        info.MaximumSize = new Size(480, 0);
+        aboutRows.Controls.Add(appIcon);
+        aboutRows.Controls.Add(info);
+        updates.AutoSize = true;
+        aboutRows.Controls.Add(updates);
+        aboutRows.SizeChanged += (_, _) => FitRows(aboutRows);
+
 
         var bar = new FlowLayoutPanel { Dock = DockStyle.Bottom, Height = 64, FlowDirection = FlowDirection.RightToLeft, WrapContents = false, Padding = new Padding(8), AutoScroll = false };
         Controls.Add(bar); bar.BringToFront();
@@ -257,6 +279,8 @@ public sealed class DockOptionsForm : Form
             bar.Height = Math.Max(64, apply.PreferredSize.Height + 20);
             FitRows(generalRows);
             FitRows(appearanceRows);
+            FitRows(diskRows);
+            FitRows(aboutRows);
         };
         apply.Click += (_, _) =>
         {
