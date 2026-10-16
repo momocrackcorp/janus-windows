@@ -194,7 +194,6 @@ public class Dock : Form
                 int sign = settings.Edge is "Izquierda" or "Arriba" ? 1 : -1;
                 settings.Width = Math.Clamp(dragWidth + sign * (current - dragX), 64, 300);
                 Position();
-                Render();
             }
         };
         grip.MouseUp += (_, _) => FinishResize();
