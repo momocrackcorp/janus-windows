@@ -19,6 +19,7 @@ public class DockSettings
     public List<DockItem> Items { get; set; } = new();
     public int Width { get; set; } = 88;
     public int IconSize { get; set; } = 40;
+    public string IconStyle { get; set; } = "Windows";
     public bool ShowNames { get; set; } = false;
     public string NameMode { get; set; } = "Tooltip";
     public string DockMode { get; set; } = "Acoplada";
@@ -335,6 +336,11 @@ public class Dock : Form
     Image EnergyIcon(bool shutdown) => PowerImages.Load(shutdown);
     Image GetIcon(string path)
     {
+        if (settings.IconStyle == "Lucide")
+        {
+            var lucide = LucideDockIcons.Load(path, light);
+            if (lucide != null) return lucide;
+        }
         if (path == "janus:shutdown") return EnergyIcon(true);
         if (path == "janus:restart") return EnergyIcon(false);
         if (path == "janus:documents") return ShellFolderIcon(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments));
@@ -579,6 +585,7 @@ public class Dock : Form
         var currentWidget = settings.Items.FirstOrDefault(i => i.IsDiskWidget);
         if (settings.ShowDiskWidget && currentWidget == null) settings.Items.Add(new DockItem { Name = "Discos", IsDiskWidget = true });
         if (!settings.ShowDiskWidget && currentWidget != null) settings.Items.Remove(currentWidget);
+        settings.IconStyle = dlg.IconStyle;
         settings.IconSize = dlg.IconSize;
         settings.Edge = dlg.Edge;
         TopMost = settings.AlwaysOnTop;
