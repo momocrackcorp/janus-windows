@@ -21,7 +21,7 @@ public sealed class ZoomShortcutButton : Button
         SetStyle(ControlStyles.UserPaint | ControlStyles.AllPaintingInWmPaint | ControlStyles.OptimizedDoubleBuffer, true);
         animation.Tick += (_, _) =>
         {
-            zoom += (goal - zoom) * .27f;
+            zoom += (goal - zoom) * .34f;
             if (Math.Abs(goal - zoom) < .015f) { zoom = goal; animation.Stop(); }
             Invalidate();
         };
@@ -29,7 +29,7 @@ public sealed class ZoomShortcutButton : Button
     protected override void OnMouseEnter(EventArgs e)
     {
         base.OnMouseEnter(e);
-        goal = ZoomEnabled ? 1.8f : 1f;
+        goal = ZoomEnabled ? 2.05f : 1f;
         animation.Start();
     }
     protected override void OnMouseLeave(EventArgs e)
@@ -49,11 +49,15 @@ public sealed class ZoomShortcutButton : Button
             using var hover = new SolidBrush(Color.FromArgb(25, ForeColor));
             e.Graphics.FillRectangle(hover, ClientRectangle);
         }
-        int size = (int)Math.Round(BaseIconSize * zoom);
+        // Give the animation a visibly smaller resting size, leaving room to grow
+        // inside narrow vertical bars without clipping at high DPI.
+        float baseFactor = ZoomEnabled ? .80f : 1f;
+        int size = (int)Math.Round(BaseIconSize * baseFactor * zoom);
         size = Math.Min(size, Math.Min(ClientSize.Width - 2, ClientSize.Height - (ShowCaption ? 29 : 2)));
         size = Math.Max(1, size);
         int x = (ClientSize.Width - size) / 2;
         int y = (ClientSize.Height - (ShowCaption ? 24 : 0) - size) / 2;
+        if (ZoomEnabled) y = Math.Max(1, y - (int)(Math.Max(0, zoom - 1f) * 3));
         if (SourceIcon is not null) e.Graphics.DrawImage(SourceIcon, new Rectangle(x, y, size, size));
         if (ShowCaption)
         {
