@@ -277,7 +277,7 @@ public class Dock : Form
             var btn = new Button
             {
                 Width = width,
-                Height = Horizontal ? Math.Max(52, settings.Width - 17) : settings.IconSize + (settings.ShowNames ? 45 : 14),
+                Height = Horizontal ? Math.Clamp(settings.IconSize + (settings.ShowNames ? 28 : 10), 40, 92) : settings.IconSize + (settings.ShowNames ? 45 : 14),
                 Image = GetIcon(item.Path),
                 ImageAlign = settings.ShowNames ? ContentAlignment.TopCenter : ContentAlignment.MiddleCenter,
                 Text = settings.ShowNames ? item.Name : "",
@@ -336,8 +336,6 @@ public class Dock : Form
         {
             menu.Items.Clear();
             menu.Items.Add("Agregar acceso...", null, (_, _) => AddDialog());
-        menu.Items.Add("Agregar Este equipo", null, (_, _) => Add("shell:MyComputerFolder"));
-        menu.Items.Add(DrivesMenu());
             menu.Items.Add("Agregar Este equipo", null, (_, _) => Add("shell:MyComputerFolder"));
             menu.Items.Add(DrivesMenu());
             menu.Items.Add("Agregar separador", null, (_, _) => { settings.Items.Add(new DockItem { Name = "Separador", IsSeparator = true }); Store(); Render(); });
