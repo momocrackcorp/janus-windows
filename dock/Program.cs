@@ -79,7 +79,7 @@ public class Dock : Form
     }
     [DllImport("shell32.dll", CharSet = CharSet.Unicode)]
     static extern int SHGetStockIconInfo(int id, uint flags, ref SHSTOCKICONINFO info);
-    const int SIID_MYCOMPUTER = 15;
+    const int SIID_DESKTOPPC = 94;
     const uint SHGSI_ICON = 0x100, SHGSI_LARGEICON = 0;
     [DllImport("user32.dll")] static extern bool DestroyIcon(IntPtr hIcon);
     [DllImport("user32.dll")] static extern bool ReleaseCapture();
@@ -334,7 +334,7 @@ public class Dock : Form
             {
                 // Use the Windows stock "This PC" icon, not explorer.exe's application icon.
                 var stock = new SHSTOCKICONINFO { cbSize = (uint)Marshal.SizeOf<SHSTOCKICONINFO>(), szPath = "" };
-                if (SHGetStockIconInfo(SIID_MYCOMPUTER, SHGSI_ICON | SHGSI_LARGEICON, ref stock) == 0 && stock.hIcon != IntPtr.Zero)
+                if (SHGetStockIconInfo(SIID_DESKTOPPC, SHGSI_ICON | SHGSI_LARGEICON, ref stock) == 0 && stock.hIcon != IntPtr.Zero)
                 {
                     try { using var pcIcon = (Icon)Icon.FromHandle(stock.hIcon).Clone(); return pcIcon.ToBitmap(); }
                     finally { DestroyIcon(stock.hIcon); }
