@@ -38,3 +38,15 @@ No exige permisos de administrador, no modifica otros archivos JANUS, guarda dat
 - Si una versión anterior se queda cubriendo la barra de tareas, vuelve temporalmente a Derecha y cierra el Dock antes de lanzar la nueva compilación.
 
 **Pendiente de prueba en Windows 11 y comprobación de compilación GitHub Actions.**
+
+## Ventana de opciones
+
+Clic derecho sobre la barra o en un icono → **Opciones**. Se abre una ventana con tres pestañas:
+
+- **General**: Siempre visible, ocultar automáticamente, ejecutar al inicio, mostrar nombres, ubicación y tamaño de iconos.
+- **Discos**: vista previa del uso de las unidades (indicador circular de ocupación y GB usados/libres), y casilla para incorporar indicadores a la barra.
+- **Acerca de**: finalidad del proyecto y acceso a las compilaciones para comprobar actualizaciones. No instala actualizaciones silenciosamente.
+
+Al pulsar **Guardar** se conservan las rutas actuales en JSON, y la opción de inicio crea o elimina únicamente el valor `JANUS Dock` en la clave `HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Run`. El ocultamiento conserva una franja de aproximadamente seis píxeles como zona de recuperación.
+
+**Pendiente:** validar compilación de GitHub Actions y probar en Windows 11 los cambios de AppBar, especialmente con autoocultación, ubicación inferior y varios monitores. No distribuir como versión estable hasta completar estas pruebas.
