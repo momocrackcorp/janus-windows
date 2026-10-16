@@ -274,11 +274,16 @@ public class Dock : Form
     }
     void Add(string path)
     {
-        if (path != "shell:MyComputerFolder" && !File.Exists(path) && !Directory.Exists(path) &&
+        if (!path.StartsWith("janus:", StringComparison.OrdinalIgnoreCase) && path != "shell:MyComputerFolder" && !File.Exists(path) && !Directory.Exists(path) &&
             !(Uri.TryCreate(path, UriKind.Absolute, out var uri) && (uri.Scheme == "https" || uri.Scheme == "http"))) return;
-        string name = path == "shell:MyComputerFolder" ? "Este equipo" : Path.GetFileNameWithoutExtension(path.TrimEnd('\\', '/'));
+        string name = path switch { "shell:MyComputerFolder" => "Este equipo", "janus:documents" => "Documentos", "janus:downloads" => "Descargas", "janus:shutdown" => "Apagar", "janus:restart" => "Reiniciar", _ => Path.GetFileNameWithoutExtension(path.TrimEnd('\\', '/')) };
         settings.Items.Add(new DockItem { Name = string.IsNullOrWhiteSpace(name) ? path : name, Path = path });
         Store(); Render();
+    }
+    void AddFolder()
+    {
+        using var dialog = new FolderBrowserDialog { Description = "Elige tu carpeta de trabajo" };
+        if (dialog.ShowDialog(this) == DialogResult.OK) Add(dialog.SelectedPath);
     }
     void AddDialog()
     {
@@ -331,6 +336,16 @@ public class Dock : Form
         }
         try
         {
+            if (path.StartsWith("janus:", StringComparison.OrdinalIgnoreCase))
+            {
+                var stockId = path switch { "janus:documents" => 77, "janus:downloads" => 122, "janus:shutdown" => 27, "janus:restart" => 238, _ => 0 };
+                var stockIcon = new SHSTOCKICONINFO { cbSize = (uint)Marshal.SizeOf<SHSTOCKICONINFO>(), szPath = "" };
+                if (SHGetStockIconInfo(stockId, SHGSI_ICON | SHGSI_LARGEICON, ref stockIcon) == 0 && stockIcon.hIcon != IntPtr.Zero)
+                {
+                    try { using var icon = (Icon)Icon.FromHandle(stockIcon.hIcon).Clone(); return icon.ToBitmap(); }
+                    finally { DestroyIcon(stockIcon.hIcon); }
+                }
+            }
             if (Uri.TryCreate(path, UriKind.Absolute, out var uri) && uri.Scheme.StartsWith("http"))
                 return (Image)SystemIcons.Information.ToBitmap();
             if (path == "shell:MyComputerFolder")
@@ -470,6 +485,15 @@ public class Dock : Form
             menu.Items.Add("Agregar acceso...", null, (_, _) => AddDialog());
             menu.Items.Add("Agregar Este equipo", null, (_, _) => Add("shell:MyComputerFolder"));
             menu.Items.Add(DrivesMenu());
+            var special = new ToolStripMenuItem("Carpetas del usuario");
+            special.DropDownItems.Add("Documentos", null, (_, _) => Add("janus:documents"));
+            special.DropDownItems.Add("Descargas", null, (_, _) => Add("janus:downloads"));
+            special.DropDownItems.Add("Carpeta de trabajo...", null, (_, _) => AddFolder());
+            menu.Items.Add(special);
+            var power = new ToolStripMenuItem("Acciones de energía");
+            power.DropDownItems.Add("Apagar", null, (_, _) => Add("janus:shutdown"));
+            power.DropDownItems.Add("Reiniciar", null, (_, _) => Add("janus:restart"));
+            menu.Items.Add(power);
             menu.Items.Add("Agregar separador", null, (_, _) => { settings.Items.Add(new DockItem { Name = "Separador", IsSeparator = true }); Store(); Render(); });
             menu.Items.Add(new ToolStripSeparator());
             menu.Items.Add("Opciones...", null, (_, _) => ShowOptions());
@@ -565,7 +589,15 @@ public class Dock : Form
     {
         try
         {
-            if (item.Path == "shell:MyComputerFolder") Process.Start(new ProcessStartInfo("explorer.exe", "shell:MyComputerFolder") { UseShellExecute = true });
+            if (item.Path is "janus:shutdown" or "janus:restart")
+            {
+                string verb = item.Path == "janus:shutdown" ? "apagar" : "reiniciar";
+                if (MessageBox.Show($"¿Seguro que quieres {verb} el equipo? Guarda tus documentos primero.", "Confirmar acción de energía", MessageBoxButtons.YesNo, MessageBoxIcon.Warning, MessageBoxDefaultButton.Button2) != DialogResult.Yes) return;
+                Process.Start(new ProcessStartInfo("shutdown.exe", item.Path == "janus:shutdown" ? "/s /t 0" : "/r /t 0") { UseShellExecute = true });
+            }
+            else if (item.Path == "janus:documents") Process.Start(new ProcessStartInfo("explorer.exe", $"\"{Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments)}\"") { UseShellExecute = true });
+            else if (item.Path == "janus:downloads") Process.Start(new ProcessStartInfo("explorer.exe", $"\"{Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "Downloads")}\"") { UseShellExecute = true });
+            else if (item.Path == "shell:MyComputerFolder") Process.Start(new ProcessStartInfo("explorer.exe", "shell:MyComputerFolder") { UseShellExecute = true });
             else Process.Start(new ProcessStartInfo(item.Path) { UseShellExecute = true });
         }
         catch (Exception ex) { MessageBox.Show(ex.Message, "No se pudo abrir", MessageBoxButtons.OK, MessageBoxIcon.Warning); }
