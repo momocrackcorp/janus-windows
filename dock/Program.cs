@@ -332,42 +332,7 @@ public class Dock : Form
         }
         return SystemIcons.Application.ToBitmap();
     }
-    Image EnergyIcon(bool shutdown)
-    {
-        // High-resolution icon inspired by the user's selected red/green round designs.
-        // Drawn locally: no external image downloads or shortcut modifications.
-        const int pixels = 128;
-        var bitmap = new Bitmap(pixels, pixels);
-        using var g = Graphics.FromImage(bitmap);
-        g.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.AntiAlias;
-        g.CompositingQuality = System.Drawing.Drawing2D.CompositingQuality.HighQuality;
-        var bounds = new Rectangle(3, 3, 122, 122);
-        using (var baseBrush = new System.Drawing.Drawing2D.LinearGradientBrush(
-            bounds, shutdown ? Color.FromArgb(236, 68, 52) : Color.FromArgb(178, 226, 45),
-            shutdown ? Color.FromArgb(193, 26, 27) : Color.FromArgb(32, 178, 55), 40f))
-            g.FillEllipse(baseBrush, bounds);
-        using var pen = new Pen(Color.White, 15)
-        {
-            StartCap = System.Drawing.Drawing2D.LineCap.Round,
-            EndCap = System.Drawing.Drawing2D.LineCap.Round,
-            LineJoin = System.Drawing.Drawing2D.LineJoin.Round
-        };
-        if (shutdown)
-        {
-            // Power symbol: open circular stroke plus vertical stem.
-            g.DrawArc(pen, 30, 34, 68, 68, 222, 276);
-            g.DrawLine(pen, 64, 26, 64, 65);
-        }
-        else
-        {
-            // Restart symbol: circular arrow with a vertical power-style stem.
-            g.DrawArc(pen, 29, 28, 70, 72, -35, 292);
-            g.DrawLine(pen, 63, 48, 63, 86);
-            using var arrow = new SolidBrush(Color.White);
-            g.FillPolygon(arrow, new[] { new Point(102, 27), new Point(99, 57), new Point(75, 40) });
-        }
-        return bitmap;
-    }
+    Image EnergyIcon(bool shutdown) => PowerImages.Load(shutdown);
     Image GetIcon(string path)
     {
         if (path == "janus:shutdown") return EnergyIcon(true);
