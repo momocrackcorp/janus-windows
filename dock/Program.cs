@@ -307,11 +307,28 @@ public class Dock : Form
     }
     Image ShellFolderIcon(string folder)
     {
+        // Retrieve the actual known-folder icon when available; otherwise use
+        // Windows' stock folder icon instead of the blank document icon.
+        if (!Directory.Exists(folder))
+        {
+            var stock = new SHSTOCKICONINFO { cbSize = (uint)Marshal.SizeOf<SHSTOCKICONINFO>(), szPath = "" };
+            if (SHGetStockIconInfo(3, SHGSI_ICON | SHGSI_LARGEICON, ref stock) == 0 && stock.hIcon != IntPtr.Zero)
+            {
+                try { using var icon = (Icon)Icon.FromHandle(stock.hIcon).Clone(); return icon.ToBitmap(); }
+                finally { DestroyIcon(stock.hIcon); }
+            }
+        }
         IntPtr result = SHGetFileInfo(folder, FILE_ATTRIBUTE_NORMAL, out var info, (uint)Marshal.SizeOf<SHFILEINFO>(), SHGFI_ICON | SHGFI_LARGEICON);
         if (result != IntPtr.Zero && info.hIcon != IntPtr.Zero)
         {
             try { using var icon = (Icon)Icon.FromHandle(info.hIcon).Clone(); return icon.ToBitmap(); }
             finally { DestroyIcon(info.hIcon); }
+        }
+        var fallback = new SHSTOCKICONINFO { cbSize = (uint)Marshal.SizeOf<SHSTOCKICONINFO>(), szPath = "" };
+        if (SHGetStockIconInfo(3, SHGSI_ICON | SHGSI_LARGEICON, ref fallback) == 0 && fallback.hIcon != IntPtr.Zero)
+        {
+            try { using var icon = (Icon)Icon.FromHandle(fallback.hIcon).Clone(); return icon.ToBitmap(); }
+            finally { DestroyIcon(fallback.hIcon); }
         }
         return SystemIcons.Application.ToBitmap();
     }
