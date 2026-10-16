@@ -334,22 +334,37 @@ public class Dock : Form
     }
     Image EnergyIcon(bool shutdown)
     {
-        var bitmap = new Bitmap(64, 64);
-        using var graphics = Graphics.FromImage(bitmap);
-        graphics.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.AntiAlias;
-        using var color = new SolidBrush(shutdown ? Color.FromArgb(208, 43, 48) : Color.FromArgb(35, 157, 91));
-        using var pen = new Pen(Color.White, 5) { StartCap = System.Drawing.Drawing2D.LineCap.Round, EndCap = System.Drawing.Drawing2D.LineCap.Round };
-        graphics.FillRectangle(color, new Rectangle(3, 3, 58, 58));
+        // High-resolution icon inspired by the user's selected red/green round designs.
+        // Drawn locally: no external image downloads or shortcut modifications.
+        const int pixels = 128;
+        var bitmap = new Bitmap(pixels, pixels);
+        using var g = Graphics.FromImage(bitmap);
+        g.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.AntiAlias;
+        g.CompositingQuality = System.Drawing.Drawing2D.CompositingQuality.HighQuality;
+        var bounds = new Rectangle(3, 3, 122, 122);
+        using (var baseBrush = new System.Drawing.Drawing2D.LinearGradientBrush(
+            bounds, shutdown ? Color.FromArgb(236, 68, 52) : Color.FromArgb(178, 226, 45),
+            shutdown ? Color.FromArgb(193, 26, 27) : Color.FromArgb(32, 178, 55), 40f))
+            g.FillEllipse(baseBrush, bounds);
+        using var pen = new Pen(Color.White, 15)
+        {
+            StartCap = System.Drawing.Drawing2D.LineCap.Round,
+            EndCap = System.Drawing.Drawing2D.LineCap.Round,
+            LineJoin = System.Drawing.Drawing2D.LineJoin.Round
+        };
         if (shutdown)
         {
-            graphics.DrawArc(pen, 19, 21, 26, 26, 135, 270);
-            graphics.DrawLine(pen, 32, 13, 32, 33);
+            // Power symbol: open circular stroke plus vertical stem.
+            g.DrawArc(pen, 30, 34, 68, 68, 222, 276);
+            g.DrawLine(pen, 64, 26, 64, 65);
         }
         else
         {
-            graphics.DrawArc(pen, 15, 15, 34, 34, -30, 305);
-            graphics.DrawLine(pen, 48, 14, 48, 28);
-            graphics.DrawLine(pen, 48, 28, 36, 23);
+            // Restart symbol: circular arrow with a vertical power-style stem.
+            g.DrawArc(pen, 29, 28, 70, 72, -35, 292);
+            g.DrawLine(pen, 63, 48, 63, 86);
+            using var arrow = new SolidBrush(Color.White);
+            g.FillPolygon(arrow, new[] { new Point(102, 27), new Point(99, 57), new Point(75, 40) });
         }
         return bitmap;
     }
