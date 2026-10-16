@@ -28,6 +28,8 @@ public class DockSettings
     public bool ShowDiskWidget { get; set; } = false;
     public int DiskColorArgb { get; set; } = Color.FromArgb(48, 130, 222).ToArgb();
     public int CriticalPercent { get; set; } = 90;
+    public Dictionary<string,int> DiskColors { get; set; } = new(StringComparer.OrdinalIgnoreCase);
+    public bool HoverAnimation { get; set; } = true;
 }
 internal static class Program
 {
@@ -145,6 +147,7 @@ public class Dock : Form
         if (settings.ShowNames && settings.NameMode == "Tooltip") settings.NameMode = "Written";
         if (settings.DockMode != "Flotante") settings.DockMode = "Acoplada";
         settings.CriticalPercent = Math.Clamp(settings.CriticalPercent, 70, 99);
+        settings.DiskColors ??= new(StringComparer.OrdinalIgnoreCase);
         // Migrate old disk widget into the reorderable item list once.
         if (settings.ShowDiskWidget && !settings.Items.Any(x => x.IsDiskWidget))
             settings.Items.Insert(0, new DockItem { Name = "Discos", IsDiskWidget = true });
@@ -359,7 +362,7 @@ public class Dock : Form
         {
             var control = panel.Controls[0];
             panel.Controls.RemoveAt(0);
-            if (control is Button b) b.Image?.Dispose();
+            if (control is Button b) { b.Image?.Dispose(); (b.Tag as Image)?.Dispose(); }
             control.Dispose();
         }
         int width = Horizontal ? Math.Max(60, settings.IconSize + (settings.NameMode == "Written" ? 55 : 12)) : Math.Max(55, settings.Width - 18);
@@ -372,7 +375,7 @@ public class Dock : Form
                     try
                     {
                         if (!drive.IsReady || drive.TotalSize <= 0) continue;
-                        var view = new DiskUsageControl(drive, Color.FromArgb(settings.DiskColorArgb), settings.CriticalPercent, true)
+                        var view = new DiskUsageControl(drive, Color.FromArgb(settings.DiskColors.TryGetValue(drive.Name.Substring(0,2).ToUpperInvariant(), out int individual) ? individual : settings.DiskColorArgb), settings.CriticalPercent, true)
                         {
                             Width = Horizontal ? 72 : Math.Max(65, settings.Width - 16), Height = 67, BackColor = BackColor, ForeColor = ForeColor,
                             Margin = new Padding(0, 1, 0, 1)
@@ -418,12 +421,15 @@ public class Dock : Form
             };
             // WinForms Button.Image is drawn at native size; resize the extracted image to chosen dock size.
             var source = btn.Image;
+            btn.Tag = new Bitmap(source!);
             btn.Image = new Bitmap(source!, new Size(settings.IconSize, settings.IconSize));
             source?.Dispose();
             btn.FlatAppearance.BorderSize = 0;
             btn.FlatAppearance.MouseOverBackColor = light ? Color.FromArgb(225, 233, 244) : Color.FromArgb(62, 67, 77);
             btn.FlatAppearance.MouseDownBackColor = light ? Color.FromArgb(210, 222, 239) : Color.FromArgb(78, 83, 97);
             btn.Click += (_, _) => Open(item);
+            btn.MouseEnter += (_, _) => { if (settings.HoverAnimation) AnimateIcon(btn, true); };
+            btn.MouseLeave += (_, _) => { if (settings.HoverAnimation) AnimateIcon(btn, false); };
             var tips = new ToolTip { ShowAlways = true };
             if (settings.NameMode != "None") tips.SetToolTip(btn, item.Name + "\n" + item.Path);
             var context = new ContextMenuStrip();
@@ -485,6 +491,8 @@ public class Dock : Form
         settings.ShowDiskWidget = dlg.ShowDiskWidget;
         settings.DiskColorArgb = dlg.DiskColorArgb;
         settings.CriticalPercent = dlg.CriticalPercent;
+        settings.DiskColors = dlg.DiskColors;
+        settings.HoverAnimation = dlg.HoverAnimation;
         var currentWidget = settings.Items.FirstOrDefault(i => i.IsDiskWidget);
         if (settings.ShowDiskWidget && currentWidget == null) settings.Items.Add(new DockItem { Name = "Discos", IsDiskWidget = true });
         if (!settings.ShowDiskWidget && currentWidget != null) settings.Items.Remove(currentWidget);
@@ -525,6 +533,18 @@ public class Dock : Form
         menu.Items.Add("Refrescar barra", null, (_, _) => RefreshDock());
         menu.Items.Add("Cerrar JANUS Dock", null, (_, _) => Close());
         menu.Show(this, PointToClient(Cursor.Position));
+    }
+    void AnimateIcon(Button btn, bool enlarged)
+    {
+        if (btn.IsDisposed || btn.Image == null) return;
+        // Resize only the image, not the control: other shortcuts and AppBar dimensions stay fixed.
+        var original = btn.Tag as Image;
+        if (original == null) return;
+        int target = enlarged ? Math.Min(settings.IconSize * 2, Math.Max(settings.IconSize, btn.Height - 8)) : settings.IconSize;
+        using var next = new Bitmap(original, new Size(target, target));
+        var old = btn.Image;
+        btn.Image = new Bitmap(next);
+        old.Dispose();
     }
     void RefreshDock()
     {
