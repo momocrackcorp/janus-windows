@@ -126,6 +126,8 @@ public sealed class DockOptionsForm : Form
             if (history.Count == 0) return;
             ordered = history.Pop();
             RefreshOrder(0);
+        };
+        RefreshOrder(0);
         // Organizing remains in Apariencia; use stacked rows on narrow/high-DPI displays.
         appearance.Controls.Clear();
         var appearanceRows = PageRows(appearance);
@@ -143,9 +145,7 @@ public sealed class DockOptionsForm : Form
         foreach (Control control in actions.Controls) { control.Width = 112; control.Height = 32; }
         appearanceRows.Controls.Add(actions);
         appearanceRows.SizeChanged += (_, _) => FitRows(appearanceRows);
-        };
-        appearance.Controls.Add(actions);
-        RefreshOrder(0);
+
 
         var top = new CheckBox { Text = "Mantener siempre visible (encima de otras ventanas)", Checked = config.AlwaysOnTop, AutoSize = true, Location = new Point(18, 22) };
         var hide = new CheckBox { Text = "Ocultar automáticamente al alejar el puntero", Checked = config.AutoHide, AutoSize = true, Location = new Point(18, 54) };
