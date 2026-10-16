@@ -305,8 +305,43 @@ public class Dock : Form
         if (e.Data?.GetData(DataFormats.FileDrop) is string[] paths)
             foreach (string path in paths) Add(path);
     }
+    Image ShellFolderIcon(string folder)
+    {
+        IntPtr result = SHGetFileInfo(folder, FILE_ATTRIBUTE_NORMAL, out var info, (uint)Marshal.SizeOf<SHFILEINFO>(), SHGFI_ICON | SHGFI_LARGEICON);
+        if (result != IntPtr.Zero && info.hIcon != IntPtr.Zero)
+        {
+            try { using var icon = (Icon)Icon.FromHandle(info.hIcon).Clone(); return icon.ToBitmap(); }
+            finally { DestroyIcon(info.hIcon); }
+        }
+        return SystemIcons.Application.ToBitmap();
+    }
+    Image EnergyIcon(bool shutdown)
+    {
+        var bitmap = new Bitmap(64, 64);
+        using var graphics = Graphics.FromImage(bitmap);
+        graphics.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.AntiAlias;
+        using var color = new SolidBrush(shutdown ? Color.FromArgb(208, 43, 48) : Color.FromArgb(35, 157, 91));
+        using var pen = new Pen(Color.White, 5) { StartCap = System.Drawing.Drawing2D.LineCap.Round, EndCap = System.Drawing.Drawing2D.LineCap.Round };
+        graphics.FillRectangle(color, new Rectangle(3, 3, 58, 58));
+        if (shutdown)
+        {
+            graphics.DrawArc(pen, 19, 21, 26, 26, 135, 270);
+            graphics.DrawLine(pen, 32, 13, 32, 33);
+        }
+        else
+        {
+            graphics.DrawArc(pen, 15, 15, 34, 34, -30, 305);
+            graphics.DrawLine(pen, 48, 14, 48, 28);
+            graphics.DrawLine(pen, 48, 28, 36, 23);
+        }
+        return bitmap;
+    }
     Image GetIcon(string path)
     {
+        if (path == "janus:shutdown") return EnergyIcon(true);
+        if (path == "janus:restart") return EnergyIcon(false);
+        if (path == "janus:documents") return ShellFolderIcon(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments));
+        if (path == "janus:downloads") return ShellFolderIcon(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "Downloads"));
         // Resolve the underlying target/icon of .lnk rather than asking the shell for
         // the shortcut composite (which contains the arrow overlay).
         if (Path.GetExtension(path).Equals(".lnk", StringComparison.OrdinalIgnoreCase))
