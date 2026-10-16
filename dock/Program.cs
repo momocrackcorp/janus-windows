@@ -67,6 +67,20 @@ public class Dock : Form
     }
     [DllImport("shell32.dll", CharSet = CharSet.Unicode)]
     static extern IntPtr SHGetFileInfo(string pszPath, uint dwFileAttributes, out SHFILEINFO psfi, uint cbFileInfo, uint uFlags);
+    [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]
+    struct SHSTOCKICONINFO
+    {
+        public uint cbSize;
+        public IntPtr hIcon;
+        public int iSysImageIndex;
+        public int iIcon;
+        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 260)]
+        public string szPath;
+    }
+    [DllImport("shell32.dll", CharSet = CharSet.Unicode)]
+    static extern int SHGetStockIconInfo(int id, uint flags, ref SHSTOCKICONINFO info);
+    const int SIID_MYCOMPUTER = 15;
+    const uint SHGSI_ICON = 0x100, SHGSI_LARGEICON = 0;
     [DllImport("user32.dll")] static extern bool DestroyIcon(IntPtr hIcon);
     [DllImport("user32.dll")] static extern bool ReleaseCapture();
     [DllImport("user32.dll")] static extern IntPtr SendMessage(IntPtr hWnd, int msg, IntPtr wParam, IntPtr lParam);
@@ -318,9 +332,13 @@ public class Dock : Form
                 return (Image)SystemIcons.Information.ToBitmap();
             if (path == "shell:MyComputerFolder")
             {
-                // Native Explorer/This PC icon from the system library.
-                using var pcIcon = Icon.ExtractAssociatedIcon(Path.Combine(Environment.SystemDirectory, "explorer.exe"));
-                if (pcIcon != null) return pcIcon.ToBitmap();
+                // Use the Windows stock "This PC" icon, not explorer.exe's application icon.
+                var stock = new SHSTOCKICONINFO { cbSize = (uint)Marshal.SizeOf<SHSTOCKICONINFO>(), szPath = "" };
+                if (SHGetStockIconInfo(SIID_MYCOMPUTER, SHGSI_ICON | SHGSI_LARGEICON, ref stock) == 0 && stock.hIcon != IntPtr.Zero)
+                {
+                    try { using var pcIcon = (Icon)Icon.FromHandle(stock.hIcon).Clone(); return pcIcon.ToBitmap(); }
+                    finally { DestroyIcon(stock.hIcon); }
+                }
             }
             string iconPath = path;
             IntPtr result = SHGetFileInfo(iconPath, FILE_ATTRIBUTE_NORMAL, out var info,
