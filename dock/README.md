@@ -69,3 +69,12 @@ Lote de cambios previstos para 2.1:
 10. Permitir insertar y desplazar separadores entre el bloque de discos y los accesos.
 
 **Estado:** cambios implementados en código en la rama de desarrollo. Quedan pendientes la compilación Windows, revisión de diseño con escalado de pantalla y prueba con datos reales antes de publicar la versión 2.1.
+
+## Nueva tanda de ajustes (pendiente de pruebas)
+
+- Ventana General: modo **Acoplada / Flotante**, iconos desde **16 px**, y tres formas de nombres (**Solo iconos**, **Al pasar el mouse**, **Iconos con nombres**).
+- Menú contextual **Refrescar barra**: vuelve a resolver iconos/rutas, refresca indicadores de discos y solicita recalcular espacio/posición sin reiniciar Explorer.
+- Modo flotante: ventana movible y redimensionable, sin registro AppBar. El modo acoplado sigue usando la lógica de bordes existente.
+- El modo de nombres y el tipo de barra se almacenan en el JSON del usuario.
+
+Estos cambios están en la rama de pruebas; **sin validación de compilación ni uso real en Windows 11**. Continuar revisando colocación, escalado, pantalla inferior y comportamiento de ocultación automática antes de declarar una release 2.1.
