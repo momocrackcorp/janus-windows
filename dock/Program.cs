@@ -20,6 +20,8 @@ public class DockSettings
     public int Width { get; set; } = 88;
     public int IconSize { get; set; } = 40;
     public bool ShowNames { get; set; } = false;
+    public string NameMode { get; set; } = "Tooltip";
+    public string DockMode { get; set; } = "Acoplada";
     public string Edge { get; set; } = "Derecha";
     public bool AlwaysOnTop { get; set; } = true;
     public bool AutoHide { get; set; } = false;
@@ -96,7 +98,9 @@ public class Dock : Form
         try { settings = JsonSerializer.Deserialize<DockSettings>(File.ReadAllText(config)) ?? new(); }
         catch { }
         settings.Width = Math.Clamp(settings.Width, 64, 300);
-        settings.IconSize = Math.Clamp(settings.IconSize, 24, 64);
+        settings.IconSize = Math.Clamp(settings.IconSize, 16, 64);
+        if (settings.ShowNames && settings.NameMode == "Tooltip") settings.NameMode = "Written";
+        if (settings.DockMode != "Flotante") settings.DockMode = "Acoplada";
         settings.CriticalPercent = Math.Clamp(settings.CriticalPercent, 70, 99);
         // Migrate old disk widget into the reorderable item list once.
         if (settings.ShowDiskWidget && !settings.Items.Any(x => x.IsDiskWidget))
@@ -275,7 +279,7 @@ public class Dock : Form
             if (control is Button b) b.Image?.Dispose();
             control.Dispose();
         }
-        int width = Horizontal ? Math.Max(60, settings.IconSize + (settings.ShowNames ? 55 : 12)) : Math.Max(55, settings.Width - 18);
+        int width = Horizontal ? Math.Max(60, settings.IconSize + (settings.NameMode == "Written" ? 55 : 12)) : Math.Max(55, settings.Width - 18);
         foreach (var item in settings.Items.ToList())
         {
             if (item.IsDiskWidget)
@@ -288,7 +292,7 @@ public class Dock : Form
                         var view = new DiskUsageControl(drive, Color.FromArgb(settings.DiskColorArgb), settings.CriticalPercent, true)
                         {
                             Width = Horizontal ? 88 : Math.Max(65, settings.Width - 16), Height = Horizontal ? 67 : 67, BackColor = BackColor, ForeColor = ForeColor,
-                            Margin = new Padding(0, 2, 0, 2)
+                            Margin = new Padding(0, 1, 0, 1)
                         };
                         var diskMenu = new ContextMenuStrip();
                         diskMenu.Items.Add("Mover bloque de discos hacia arriba", null, (_, _) => Move(item, -1));
@@ -315,10 +319,10 @@ public class Dock : Form
             var btn = new Button
             {
                 Width = width,
-                Height = Horizontal ? Math.Clamp(settings.IconSize + (settings.ShowNames ? 28 : 10), 40, 92) : settings.IconSize + (settings.ShowNames ? 45 : 14),
+                Height = Horizontal ? Math.Clamp(settings.IconSize + (settings.NameMode == "Written" ? 28 : 10), 40, 92) : settings.IconSize + (settings.NameMode == "Written" ? 45 : 14),
                 Image = GetIcon(item.Path),
-                ImageAlign = settings.ShowNames ? ContentAlignment.TopCenter : ContentAlignment.MiddleCenter,
-                Text = settings.ShowNames ? item.Name : "",
+                ImageAlign = settings.NameMode == "Written" ? ContentAlignment.TopCenter : ContentAlignment.MiddleCenter,
+                Text = settings.NameMode == "Written" ? item.Name : "",
                 TextAlign = ContentAlignment.BottomCenter,
                 TextImageRelation = TextImageRelation.ImageAboveText,
                 AutoEllipsis = true,
@@ -337,7 +341,7 @@ public class Dock : Form
             btn.FlatAppearance.MouseDownBackColor = light ? Color.FromArgb(210, 222, 239) : Color.FromArgb(78, 83, 97);
             btn.Click += (_, _) => Open(item);
             var tips = new ToolTip { ShowAlways = true };
-            tips.SetToolTip(btn, item.Name + "\n" + item.Path);
+            if (settings.NameMode != "None") tips.SetToolTip(btn, item.Name + "\n" + item.Path);
             var context = new ContextMenuStrip();
             context.Items.Add("Abrir", null, (_, _) => Open(item));
             context.Items.Add("Subir", null, (_, _) => Move(item, -1));
@@ -379,6 +383,7 @@ public class Dock : Form
             menu.Items.Add("Agregar separador", null, (_, _) => { settings.Items.Add(new DockItem { Name = "Separador", IsSeparator = true }); Store(); Render(); });
             menu.Items.Add(new ToolStripSeparator());
             menu.Items.Add("Opciones...", null, (_, _) => ShowOptions());
+            menu.Items.Add("Refrescar barra", null, (_, _) => RefreshDock());
             menu.Items.Add("Salir de JANUS Dock", null, (_, _) => Close());
         };
         return menu;
@@ -391,6 +396,8 @@ public class Dock : Form
         settings.AlwaysOnTop = dlg.AlwaysOnTop;
         settings.AutoHide = dlg.AutoHide;
         settings.ShowNames = dlg.ShowNames;
+        settings.NameMode = dlg.NameMode;
+        settings.DockMode = dlg.DockMode;
         settings.ShowDiskWidget = dlg.ShowDiskWidget;
         settings.DiskColorArgb = dlg.DiskColorArgb;
         settings.CriticalPercent = dlg.CriticalPercent;
@@ -431,8 +438,18 @@ public class Dock : Form
             sizes.DropDownItems.Add(option);
         }
         menu.Items.Add(sizes);
+        menu.Items.Add("Refrescar barra", null, (_, _) => RefreshDock());
         menu.Items.Add("Cerrar JANUS Dock", null, (_, _) => Close());
         menu.Show(this, PointToClient(Cursor.Position));
+    }
+    void RefreshDock()
+    {
+        light = IsLightTheme(); ApplyTheme();
+        collapsed = false;
+        UnregisterBar();
+        RegisterBar();
+        Render();
+        Position();
     }
     void Move(DockItem item, int delta)
     {
@@ -467,7 +484,8 @@ public class Dock : Form
             _ => DockStyle.Left
         };
         grip.Cursor = Horizontal ? Cursors.SizeNS : Cursors.SizeWE;
-        grip.Visible = settings.Edge != "Abajo";
+        grip.Visible = settings.Edge != "Abajo" && settings.DockMode != "Flotante";
+        FormBorderStyle = settings.DockMode == "Flotante" ? FormBorderStyle.SizableToolWindow : FormBorderStyle.None;
         AlignFooter();
     }
     void UnregisterBar()
@@ -482,7 +500,7 @@ public class Dock : Form
         if (!IsHandleCreated) return;
         // Windows 11 owns the lower edge with its taskbar. Do not register
         // another AppBar there; use the safe work area instead.
-        if (settings.Edge == "Abajo") { registered = false; Position(); return; }
+        if (settings.DockMode == "Flotante" || settings.Edge == "Abajo") { registered = false; Position(); return; }
         var d = Data();
         registered = SHAppBarMessage(ABM_NEW, ref d) != IntPtr.Zero;
         Position();
@@ -516,6 +534,12 @@ public class Dock : Form
         try
         {
             var bounds = Screen.PrimaryScreen?.Bounds ?? Screen.FromControl(this).Bounds;
+            if (settings.DockMode == "Flotante")
+            {
+                panel.Visible = !collapsed;
+                if (Width < 80 || Height < 100) Bounds = new Rectangle(bounds.Left + 140, bounds.Top + 120, 130, 460);
+                return;
+            }
             int thickness = collapsed ? RevealStrip : (Horizontal ? Math.Clamp(settings.IconSize + (settings.ShowNames ? 36 : 16), 48, 100) : settings.Width);
             if (settings.Edge == "Abajo")
             {
