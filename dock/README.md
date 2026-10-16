@@ -78,3 +78,16 @@ Lote de cambios previstos para 2.1:
 - El modo de nombres y el tipo de barra se almacenan en el JSON del usuario.
 
 Estos cambios están en la rama de pruebas; **sin validación de compilación ni uso real en Windows 11**. Continuar revisando colocación, escalado, pantalla inferior y comportamiento de ocultación automática antes de declarar una release 2.1.
+
+## Objetivo JANUS Dock 2.6 — cierre de calidad
+
+Versión de trabajo: **2.6.0-preview**. No es una versión final certificada hasta pasar compilación y pruebas en Windows 11. El número de ejecución de GitHub Actions (#20, etc.) no es el número de versión.
+
+- Mantener la apariencia de barra de acceso rápido tradicional (sin bordes ni encabezado en modo flotante).
+- Verificar el icono de **Este equipo** y resolver los iconos de accesos .lnk sin flecha, sin alterar los accesos originales del escritorio.
+- Centrar widgets de discos y permitir asignar un color distinto a cada unidad (pendiente de implementación).
+- Corregir posicionamiento, reserva de área del escritorio y refresco sin tapar la barra de tareas.
+- Finalizar menú contextual, separadores, tres modos de nombres y escalado compacto.
+- La pestaña Acerca de identifica **JANUS Dock (LNK)**, idea desarrollada en **Pueblo Seco, Ñuble, Chile**, fecha **16 de octubre de 2026**, autoría **Omar Aguila / Laboratorios Momocrackcorp**.
+- El proyecto liviano depende de **.NET Desktop Runtime 8**; para distribución pública se evaluará una versión LTS con soporte vigente.
+- La versión final requiere validación en las cuatro ubicaciones, modo flotante y varios factores de escalado antes de integrar con JANUS Plus.
