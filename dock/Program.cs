@@ -194,7 +194,7 @@ public class Dock : Form
                 int sign = settings.Edge is "Izquierda" or "Arriba" ? 1 : -1;
                 settings.Width = Math.Clamp(dragWidth + sign * (current - dragX), 64, 300);
                 Position();
-                AlignFooter();
+                Render();
             }
         };
         grip.MouseUp += (_, _) => FinishResize();
@@ -222,8 +222,8 @@ public class Dock : Form
         if (!resizeActive) return;
         resizeActive = false;
         Store();
-        Position();
         Render();
+        Position();
     }
     bool IsLightTheme()
     {
@@ -514,6 +514,7 @@ public class Dock : Form
         }
         panel.ResumeLayout();
         AlignFooter();
+        if (IsHandleCreated && !resizeActive) Position();
     }
     ToolStripMenuItem DrivesMenu()
     {
@@ -596,6 +597,7 @@ public class Dock : Form
         RegisterBar();
         Store();
         Render();
+        Position();
     }
     void ShowLegacyOptions()
     {
@@ -765,7 +767,11 @@ public class Dock : Form
                 panel.Visible = !collapsed;
                 foreach (Control c in panel.Controls)
                 {
-                    if (c is Button b) { b.Width = Math.Max(52, settings.IconSize + (settings.ShowNames ? 55 : 12)); b.Height = thickness - 8; }
+                    if (c is ZoomShortcutButton b)
+                    {
+                        b.Width = Math.Max(60, (int)Math.Ceiling(settings.IconSize * (settings.HoverAnimation ? 1.8 : 1.0)) + 12);
+                        b.Height = Math.Max(40, thickness - 8);
+                    }
                 }
                 return;
             }
@@ -792,13 +798,25 @@ public class Dock : Form
             Bounds = Rectangle.FromLTRB(d.rc.left, d.rc.top, d.rc.right, d.rc.bottom);
             panel.Visible = !collapsed;
             footer.Width = Horizontal ? 80 : settings.Width;
+            // Match current bar thickness while preserving space for hover zoom.
+            int mainWidth = Horizontal
+                ? Math.Max(60, (int)Math.Ceiling(settings.IconSize * (settings.HoverAnimation ? 1.8 : 1.0)) + 12)
+                : Math.Max(55, thickness - 18);
+            int mainHeight = Horizontal
+                ? Math.Max(40, thickness - 8)
+                : Math.Max(settings.IconSize + (settings.NameMode == "Written" ? 45 : 14),
+                    (int)Math.Ceiling(settings.IconSize * (settings.HoverAnimation ? 1.8 : 1.0)) + (settings.NameMode == "Written" ? 30 : 8));
             foreach (Control c in panel.Controls)
             {
-                if (c is Button b)
+                if (c is ZoomShortcutButton b)
                 {
-                    b.Width = Horizontal ? Math.Max(60, settings.IconSize + (settings.ShowNames ? 55 : 12)) : Math.Max(55, thickness - 18);
-                    b.Height = Horizontal ? Math.Max(52, thickness - 17) : settings.IconSize + (settings.ShowNames ? 45 : 14);
+                    b.Width = mainWidth;
+                    b.Height = mainHeight;
                 }
+                else if (c is DiskUsageControl drive)
+                    drive.Width = Horizontal ? 72 : Math.Max(65, thickness - 16);
+                else if (c is Panel separator)
+                    separator.Width = Horizontal ? 18 : Math.Max(30, thickness - 25);
             }
         }
         finally { repositioning = false; }
