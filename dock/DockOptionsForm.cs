@@ -64,7 +64,7 @@ public sealed class DockOptionsForm : Form
         var smallIcons = new CheckBox { Text = "Iconos pequeños (24 px)", AutoSize = true, Location = new Point(310, 230), Checked = config.IconSize <= 24 };
         general.Controls.Add(smallIcons);
         smallIcons.CheckedChanged += (_, _) => { if (smallIcons.Checked) size.Value = 24; else if (size.Value == 24) size.Value = 48; };
-        size.ValueChanged += (_, _) => { bool small = size.Value <= 24; if (smallIcons.Checked != small) smallIcons.Checked = small; };
+        // Explicit quick preset; manual numeric sizes remain independent.
         general.Controls.Add(new Label { Text = "Nota: al ocultarse, queda una franja para recuperar la barra con el mouse.", Location = new Point(18, 276), AutoSize = true });
 
         var widget = new CheckBox { Text = "Mostrar indicador de uso de discos en la barra", Checked = config.ShowDiskWidget, Location = new Point(18, 20), AutoSize = true };
