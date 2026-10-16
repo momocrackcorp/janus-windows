@@ -209,9 +209,9 @@ public class Dock : Form
     }
     void Add(string path)
     {
-        if (!File.Exists(path) && !Directory.Exists(path) &&
+        if (path != "shell:MyComputerFolder" && !File.Exists(path) && !Directory.Exists(path) &&
             !(Uri.TryCreate(path, UriKind.Absolute, out var uri) && (uri.Scheme == "https" || uri.Scheme == "http"))) return;
-        string name = Path.GetFileNameWithoutExtension(path.TrimEnd('\\', '/'));
+        string name = path == "shell:MyComputerFolder" ? "Este equipo" : Path.GetFileNameWithoutExtension(path.TrimEnd('\\', '/'));
         settings.Items.Add(new DockItem { Name = string.IsNullOrWhiteSpace(name) ? path : name, Path = path });
         Store(); Render();
     }
@@ -238,7 +238,8 @@ public class Dock : Form
         {
             if (Uri.TryCreate(path, UriKind.Absolute, out var uri) && uri.Scheme.StartsWith("http"))
                 return (Image)SystemIcons.Information.ToBitmap();
-            IntPtr result = SHGetFileInfo(path, FILE_ATTRIBUTE_NORMAL, out var info,
+            string iconPath = path == "shell:MyComputerFolder" ? "::{20D04FE0-3AEA-1069-A2D8-08002B30309D}" : path;
+            IntPtr result = SHGetFileInfo(iconPath, FILE_ATTRIBUTE_NORMAL, out var info,
                 (uint)Marshal.SizeOf<SHFILEINFO>(), SHGFI_ICON | SHGFI_LARGEICON);
             if (result != IntPtr.Zero && info.hIcon != IntPtr.Zero)
             {
@@ -315,6 +316,19 @@ public class Dock : Form
         panel.ResumeLayout();
         AlignFooter();
     }
+    ToolStripMenuItem DrivesMenu()
+    {
+        var menu = new ToolStripMenuItem("Agregar unidad de disco");
+        foreach (var drive in DriveInfo.GetDrives())
+        {
+            string path = drive.Name;
+            string label;
+            try { label = drive.IsReady ? $"{drive.VolumeLabel} ({path.TrimEnd('\\')})" : $"Unidad {path.TrimEnd('\\')} (no disponible)"; }
+            catch { label = path; }
+            menu.DropDownItems.Add(label, null, (_, _) => Add(path));
+        }
+        return menu;
+    }
     ContextMenuStrip MakeDockMenu()
     {
         var menu = new ContextMenuStrip();
@@ -322,6 +336,10 @@ public class Dock : Form
         {
             menu.Items.Clear();
             menu.Items.Add("Agregar acceso...", null, (_, _) => AddDialog());
+        menu.Items.Add("Agregar Este equipo", null, (_, _) => Add("shell:MyComputerFolder"));
+        menu.Items.Add(DrivesMenu());
+            menu.Items.Add("Agregar Este equipo", null, (_, _) => Add("shell:MyComputerFolder"));
+            menu.Items.Add(DrivesMenu());
             menu.Items.Add("Agregar separador", null, (_, _) => { settings.Items.Add(new DockItem { Name = "Separador", IsSeparator = true }); Store(); Render(); });
             menu.Items.Add(new ToolStripSeparator());
             menu.Items.Add("Opciones...", null, (_, _) => ShowOptions());
@@ -364,7 +382,11 @@ public class Dock : Form
     }
     void Open(DockItem item)
     {
-        try { Process.Start(new ProcessStartInfo(item.Path) { UseShellExecute = true }); }
+        try
+        {
+            if (item.Path == "shell:MyComputerFolder") Process.Start(new ProcessStartInfo("explorer.exe", "shell:MyComputerFolder") { UseShellExecute = true });
+            else Process.Start(new ProcessStartInfo(item.Path) { UseShellExecute = true });
+        }
         catch (Exception ex) { MessageBox.Show(ex.Message, "No se pudo abrir", MessageBoxButtons.OK, MessageBoxIcon.Warning); }
     }
     bool Horizontal => settings.Edge == "Arriba" || settings.Edge == "Abajo";
@@ -376,6 +398,7 @@ public class Dock : Form
         footer.Width = Horizontal ? 80 : settings.Width;
         footer.Height = 0;
         footer.Visible = false;
+        MinimumSize = Horizontal ? new Size(200, 1) : new Size(64, 200);
         grip.Dock = settings.Edge switch
         {
             "Izquierda" => DockStyle.Right,
@@ -384,6 +407,7 @@ public class Dock : Form
             _ => DockStyle.Left
         };
         grip.Cursor = Horizontal ? Cursors.SizeNS : Cursors.SizeWE;
+        grip.Visible = settings.Edge != "Abajo";
         AlignFooter();
     }
     void UnregisterBar()
@@ -396,6 +420,9 @@ public class Dock : Form
     void RegisterBar()
     {
         if (!IsHandleCreated) return;
+        // Windows 11 owns the lower edge with its taskbar. Do not register
+        // another AppBar there; use the safe work area instead.
+        if (settings.Edge == "Abajo") { registered = false; Position(); return; }
         var d = Data();
         registered = SHAppBarMessage(ABM_NEW, ref d) != IntPtr.Zero;
         Position();
@@ -407,7 +434,18 @@ public class Dock : Form
         try
         {
             var bounds = Screen.PrimaryScreen?.Bounds ?? Screen.FromControl(this).Bounds;
-            int thickness = settings.Width;
+            int thickness = Horizontal ? Math.Clamp(settings.IconSize + (settings.ShowNames ? 36 : 16), 48, 100) : settings.Width;
+            if (settings.Edge == "Abajo")
+            {
+                // Do not overlap the Windows taskbar or reserve a giant bottom strip.
+                var work = Screen.PrimaryScreen?.WorkingArea ?? Screen.FromControl(this).WorkingArea;
+                Bounds = new Rectangle(work.Left, work.Bottom - thickness, work.Width, thickness);
+                foreach (Control c in panel.Controls)
+                {
+                    if (c is Button b) { b.Width = Math.Max(52, settings.IconSize + (settings.ShowNames ? 55 : 12)); b.Height = thickness - 8; }
+                }
+                return;
+            }
             var d = Data();
             d.rc = new Rect
             {
