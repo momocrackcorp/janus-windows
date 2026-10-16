@@ -22,3 +22,11 @@ No exige permisos de administrador, no modifica otros archivos JANUS, guarda dat
 - Los nombres completos aparecen en tooltip al pasar el mouse, incluso estando ocultos.
 
 **Estado:** cambios subidos a la rama de pruebas y pendientes de validar compilación/funcionamiento en Windows 11. No es todavía una versión estable.
+
+## Estilo barra de acceso rápido clásica (octubre de 2026)
+
+- Sin botones visibles para Agregar/Opciones/Cerrar. **Clic derecho en el fondo** de la barra para agregar accesos, agregar separadores, abrir opciones o salir. En cualquier icono, clic derecho → Opciones de la barra.
+- Iconos sin marcos individuales permanentes: se resalta solamente al pasar el puntero o hacer clic.
+- Separadores finos verticales u horizontales según la ubicación elegida; pueden subirse, bajarse o quitarse sin modificar los accesos.
+- Color derivado del modo claro/oscuro y del color de acento DWM de Windows, mediante mezcla aproximada; la barra de tareas de Windows 11 usa materiales/efectos que WinForms no reproduce exactamente.
+- Conserva los accesos de la configuración anterior. El comportamiento aún requiere compilación y prueba en Windows 11; no se ha validado como versión estable.
