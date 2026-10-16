@@ -124,6 +124,11 @@ public class Dock : Form
         Dock = DockStyle.Fill, FlowDirection = FlowDirection.TopDown,
         WrapContents = false, AutoScroll = true, Padding = new Padding(5)
     };
+    readonly FlowLayoutPanel energyPanel = new()
+    {
+        FlowDirection = FlowDirection.TopDown, WrapContents = false,
+        AutoScroll = false, Padding = new Padding(4), Visible = false
+    };
     readonly Panel grip = new() { Dock = DockStyle.Left, Width = 7, Cursor = Cursors.SizeWE };
     readonly Panel footer = new() { Dock = DockStyle.Bottom, Height = 0, Visible = false };
     readonly Button add = new() { Text = "+", Width = 32, Height = 30, FlatStyle = FlatStyle.Flat };
@@ -170,6 +175,7 @@ public class Dock : Form
         footer.Controls.Add(add);
         footer.Controls.Add(options);
         Controls.Add(panel);
+        Controls.Add(energyPanel);
         Controls.Add(footer);
         Controls.Add(grip);
         SetOrientation();
@@ -255,6 +261,7 @@ public class Dock : Form
         ForeColor = light ? Color.FromArgb(28, 30, 35) : Color.FromArgb(241, 241, 244);
         footer.BackColor = BackColor;
         panel.BackColor = BackColor;
+        energyPanel.BackColor = BackColor;
         grip.BackColor = light ? Color.FromArgb(210, 216, 226) : Color.FromArgb(66, 71, 82);
         foreach (var button in new[] { add, options })
         {
@@ -413,6 +420,12 @@ public class Dock : Form
     void Render()
     {
         panel.SuspendLayout();
+        energyPanel.SuspendLayout();
+        foreach (var existingEnergy in energyPanel.Controls.Cast<Control>().ToArray())
+        {
+            energyPanel.Controls.Remove(existingEnergy);
+            existingEnergy.Dispose();
+        }
         while (panel.Controls.Count > 0)
         {
             var control = panel.Controls[0];
@@ -421,8 +434,13 @@ public class Dock : Form
             control.Dispose();
         }
         int width = Horizontal ? Math.Max(60, (int)Math.Ceiling(settings.IconSize * (settings.HoverAnimation ? 1.8 : 1.0)) + 12) : Math.Max(55, settings.Width - 18);
+        int energySlot = Math.Max(settings.IconSize + 12, (int)Math.Ceiling(settings.IconSize * (settings.HoverAnimation ? 1.8 : 1.0)) + 8);
+        energyPanel.Width = Horizontal ? (energySlot + 4) * 2 + 12 : Math.Max(55, settings.Width - 10);
+        energyPanel.Height = Horizontal ? Math.Max(48, settings.IconSize + 20) : (energySlot + 4) * 2 + 12;
         foreach (var item in settings.Items.ToList())
         {
+            bool isEnergy = item.Path is "janus:shutdown" or "janus:restart";
+            var destination = isEnergy ? energyPanel : panel;
             if (item.IsDiskWidget)
             {
                 foreach (var drive in DriveInfo.GetDrives())
@@ -509,8 +527,16 @@ public class Dock : Form
             btn.AllowDrop = true;
             btn.DragEnter += EnterDrag;
             btn.DragDrop += DropFiles;
-            panel.Controls.Add(btn);
+            if (isEnergy)
+            {
+                btn.Width = Horizontal ? energySlot : Math.Max(42, settings.Width - 20);
+                btn.Height = Horizontal ? Math.Max(40, settings.IconSize + 14) : energySlot;
+                btn.Margin = new Padding(2);
+            }
+            destination.Controls.Add(btn);
         }
+        energyPanel.Visible = energyPanel.Controls.Count > 0;
+        energyPanel.ResumeLayout();
         panel.ResumeLayout();
         AlignFooter();
         if (IsHandleCreated && !resizeActive) Position();
@@ -674,6 +700,10 @@ public class Dock : Form
     void SetOrientation()
     {
         panel.FlowDirection = Horizontal ? FlowDirection.LeftToRight : FlowDirection.TopDown;
+        energyPanel.FlowDirection = Horizontal ? FlowDirection.LeftToRight : FlowDirection.TopDown;
+        energyPanel.Dock = Horizontal ? DockStyle.Right : DockStyle.Bottom;
+        // A dedicated end zone leaves power controls far from ordinary shortcuts.
+        energyPanel.BringToFront();
         panel.Dock = DockStyle.Fill;
         footer.Dock = Horizontal ? DockStyle.Right : DockStyle.Bottom;
         footer.Width = Horizontal ? 80 : settings.Width;
