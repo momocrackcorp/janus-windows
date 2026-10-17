@@ -30,7 +30,7 @@ public sealed class ZoomShortcutButton : Button
     protected override void OnMouseEnter(EventArgs e)
     {
         base.OnMouseEnter(e);
-        goal = ZoomEnabled ? Math.Clamp(ZoomFactor, 1.5f, 2.8f) : 1f;
+        goal = ZoomEnabled ? Math.Clamp(ZoomFactor, 1.5f, 3.4f) : 1f;
         animation.Start();
     }
     protected override void OnMouseLeave(EventArgs e)
