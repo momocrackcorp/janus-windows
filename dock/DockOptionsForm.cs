@@ -17,6 +17,7 @@ public sealed class DockOptionsForm : Form
     public int DiskColorArgb { get; private set; }
     public Dictionary<string,int> DiskColors { get; private set; } = new(StringComparer.OrdinalIgnoreCase);
     public bool HoverAnimation { get; private set; } = true;
+    public int ZoomPercent { get; private set; } = 280;
     public bool ShowShutdown { get; private set; }
     public bool ShowRestart { get; private set; }
     public int CriticalPercent { get; private set; }
@@ -134,6 +135,23 @@ public sealed class DockOptionsForm : Form
         appearance.Controls.Clear();
         var appearanceRows = PageRows(appearance);
         appearanceRows.Controls.Add(FieldRow(new Label { Text = "Estilo de los iconos:", AutoSize = true }, iconStyle));
+        var barWidth = new NumericUpDown { Minimum = 64, Maximum = 300, Increment = 4, Width = 100, Value = Math.Clamp(config.Width, 64, 300) };
+        var barHeight = new NumericUpDown { Minimum = 48, Maximum = 160, Increment = 4, Width = 100, Value = Math.Clamp(config.HorizontalHeight, 48, 160) };
+        var animation = new CheckBox { Text = "Activar efecto lupa al pasar el mouse", AutoSize = true, Checked = config.HoverAnimation };
+        var zoomChoice = new ComboBox { DropDownStyle = ComboBoxStyle.DropDownList, Width = 145 };
+        zoomChoice.Items.AddRange(new object[] { "150 %", "180 %", "205 %", "240 %", "280 %" });
+        int[] zoomValues = { 150, 180, 205, 240, 280 };
+        int chosenZoom = Math.Clamp(config.ZoomPercent, 150, 280);
+        zoomChoice.SelectedIndex = Array.IndexOf(zoomValues, chosenZoom);
+        if (zoomChoice.SelectedIndex < 0) zoomChoice.SelectedIndex = 4;
+        zoomChoice.Enabled = animation.Checked;
+        animation.CheckedChanged += (_, _) => zoomChoice.Enabled = animation.Checked;
+        appearanceRows.Controls.Add(new Label { Text = "Dimensiones de la barra", AutoSize = true, Font = new Font("Segoe UI", 9, FontStyle.Bold) });
+        appearanceRows.Controls.Add(FieldRow(new Label { Text = "Ancho barra vertical (px):", AutoSize = true }, barWidth));
+        appearanceRows.Controls.Add(FieldRow(new Label { Text = "Alto barra horizontal (px):", AutoSize = true }, barHeight));
+        appearanceRows.Controls.Add(animation);
+        appearanceRows.Controls.Add(FieldRow(new Label { Text = "Ampliación de la lupa:", AutoSize = true }, zoomChoice));
+
         appearanceRows.Controls.Add(new Label { Text = "Windows conserva los iconos originales; Lucide usa trazos para accesos integrados.", AutoSize = true });
         appearanceRows.Controls.Add(new Label { Text = "Organizar accesos y separadores", AutoSize = true, Font = new Font("Segoe UI", 9, FontStyle.Bold) });
         appearanceRows.Controls.Add(new Label { Text = "Arrastra filas o usa los botones. Guardar aplica los cambios.", AutoSize = true });
@@ -172,7 +190,6 @@ public sealed class DockOptionsForm : Form
         general.Controls.Add(new Label { Text = "Tamaño iconos:", Location = new Point(18, 231), AutoSize = true });
         var size = new NumericUpDown { Location = new Point(190, 227), Minimum = 16, Maximum = 64, Increment = 8, Value = Math.Clamp(config.IconSize, 16, 64), Width = 100 };
         general.Controls.Add(size);
-        var animation = new CheckBox { Text = "Animar iconos al pasar el mouse", AutoSize = true, Location = new Point(18, 263), Checked = config.HoverAnimation };
         general.Controls.Add(animation);
         var smallIcons = new CheckBox { Text = "Iconos pequeños (24 px)", AutoSize = true, Location = new Point(310, 230), Checked = config.IconSize <= 24 };
         general.Controls.Add(smallIcons);
@@ -195,11 +212,6 @@ public sealed class DockOptionsForm : Form
         generalRows.Controls.Add(FieldRow(new Label { Text = "Modo:", AutoSize = true }, dockMode));
         generalRows.Controls.Add(FieldRow(new Label { Text = "Ubicación:", AutoSize = true }, location));
         generalRows.Controls.Add(FieldRow(new Label { Text = "Tamaño iconos:", AutoSize = true }, size, smallIcons));
-        var barWidth = new NumericUpDown { Minimum = 64, Maximum = 300, Increment = 4, Width = 100, Value = Math.Clamp(config.Width, 64, 300) };
-        var barHeight = new NumericUpDown { Minimum = 48, Maximum = 160, Increment = 4, Width = 100, Value = Math.Clamp(config.HorizontalHeight, 48, 160) };
-        generalRows.Controls.Add(FieldRow(new Label { Text = "Ancho barra vertical (px):", AutoSize = true }, barWidth));
-        generalRows.Controls.Add(FieldRow(new Label { Text = "Alto barra horizontal (px):", AutoSize = true }, barHeight));
-        generalRows.Controls.Add(animation);
         generalRows.Controls.Add(FieldRow(powerTitle, shutdown, restart));
         generalRows.Controls.Add(new Label { Text = "Al ocultarse queda una franja para recuperar la barra con el mouse.", AutoSize = true });
         generalRows.SizeChanged += (_, _) => FitRows(generalRows);
@@ -306,6 +318,7 @@ public sealed class DockOptionsForm : Form
             DiskColorArgb = config.DiskColorArgb;
             DiskColors = diskColors;
             HoverAnimation = animation.Checked;
+            ZoomPercent = zoomValues[Math.Max(0, zoomChoice.SelectedIndex)];
             ShowShutdown = shutdown.Checked;
             ShowRestart = restart.Checked;
             CriticalPercent = (int)critical.Value;
@@ -355,7 +368,11 @@ public sealed class DockOptionsForm : Form
             if (control is ListBox list) list.Width = Math.Max(240, width - 24);
             if (control is FlowLayoutPanel row)
                 row.Width = Math.Max(250, width - 24);
-            if (control is Label label) label.MaximumSize = new Size(Math.Max(260, width - 25), 0);
+            if (control is Label label) label.MaximumSize = new Size(Math.Max(230, width - 25), 0);
+            if (control is CheckBox check) check.MaximumSize = new Size(Math.Max(230, width - 25), 0);
+            if (control is FlowLayoutPanel flow && flow != rows)
+                foreach (Control child in flow.Controls)
+                    if (child is Label rowLabel) rowLabel.MaximumSize = new Size(Math.Max(225, width - 38), 0);
         }
         rows.Height = rows.Controls.Cast<Control>().Sum(x => x.Height + x.Margin.Vertical) + rows.Padding.Vertical + 24;
     }
