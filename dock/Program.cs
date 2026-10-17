@@ -32,6 +32,7 @@ public class DockSettings
     public int CriticalPercent { get; set; } = 90;
     public Dictionary<string,int> DiskColors { get; set; } = new(StringComparer.OrdinalIgnoreCase);
     public bool HoverAnimation { get; set; } = true;
+    public int ZoomPercent { get; set; } = 280;
     public bool ShowShutdown { get; set; } = false;
     public bool ShowRestart { get; set; } = false;
 }
@@ -154,6 +155,7 @@ public class Dock : Form
         settings.Width = Math.Clamp(settings.Width, 64, 300);
         settings.HorizontalHeight = Math.Clamp(settings.HorizontalHeight, 48, 160);
         settings.IconSize = Math.Clamp(settings.IconSize, 16, 64);
+        settings.ZoomPercent = Math.Clamp(settings.ZoomPercent, 150, 280);
         if (settings.ShowNames && settings.NameMode == "Tooltip") settings.NameMode = "Written";
         if (settings.DockMode != "Flotante") settings.DockMode = "Acoplada";
         settings.CriticalPercent = Math.Clamp(settings.CriticalPercent, 70, 99);
@@ -500,6 +502,7 @@ public class Dock : Form
                 SourceIcon = GetIcon(item.Path),
                 BaseIconSize = settings.IconSize,
                 ZoomEnabled = settings.HoverAnimation,
+                ZoomFactor = settings.ZoomPercent / 100f,
                 ShowCaption = settings.NameMode == "Written",
                 ImageAlign = settings.NameMode == "Written" ? ContentAlignment.TopCenter : ContentAlignment.MiddleCenter,
                 Text = settings.NameMode == "Written" ? item.Name : "",
@@ -608,6 +611,7 @@ public class Dock : Form
         settings.CriticalPercent = dlg.CriticalPercent;
         settings.DiskColors = dlg.DiskColors;
         settings.HoverAnimation = dlg.HoverAnimation;
+        settings.ZoomPercent = dlg.ZoomPercent;
         settings.ShowShutdown = dlg.ShowShutdown;
         settings.ShowRestart = dlg.ShowRestart;
         settings.Items = dlg.OrderedItems;
