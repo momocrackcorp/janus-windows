@@ -18,6 +18,7 @@ public class DockSettings
 {
     public List<DockItem> Items { get; set; } = new();
     public int Width { get; set; } = 88;
+    public int HorizontalHeight { get; set; } = 64;
     public int IconSize { get; set; } = 40;
     public string IconStyle { get; set; } = "Windows";
     public bool ShowNames { get; set; } = false;
@@ -151,6 +152,7 @@ public class Dock : Form
         try { settings = JsonSerializer.Deserialize<DockSettings>(File.ReadAllText(config)) ?? new(); }
         catch { }
         settings.Width = Math.Clamp(settings.Width, 64, 300);
+        settings.HorizontalHeight = Math.Clamp(settings.HorizontalHeight, 48, 160);
         settings.IconSize = Math.Clamp(settings.IconSize, 16, 64);
         if (settings.ShowNames && settings.NameMode == "Tooltip") settings.NameMode = "Written";
         if (settings.DockMode != "Flotante") settings.DockMode = "Acoplada";
@@ -188,7 +190,7 @@ public class Dock : Form
             {
                 resizeActive = true;
                 dragX = Horizontal ? Cursor.Position.Y : Cursor.Position.X;
-                dragWidth = settings.Width;
+                dragWidth = Horizontal ? settings.HorizontalHeight : settings.Width;
                 grip.Capture = true;
             }
         };
@@ -198,7 +200,8 @@ public class Dock : Form
             {
                 int current = Horizontal ? Cursor.Position.Y : Cursor.Position.X;
                 int sign = settings.Edge is "Izquierda" or "Arriba" ? 1 : -1;
-                settings.Width = Math.Clamp(dragWidth + sign * (current - dragX), 64, 300);
+                if (Horizontal) settings.HorizontalHeight = Math.Clamp(dragWidth + sign * (current - dragX), 48, 160);
+                else settings.Width = Math.Clamp(dragWidth + sign * (current - dragX), 64, 300);
                 Position();
             }
         };
@@ -614,6 +617,8 @@ public class Dock : Form
         if (!settings.ShowDiskWidget && currentWidget != null) settings.Items.Remove(currentWidget);
         settings.IconStyle = dlg.IconStyle;
         settings.IconSize = dlg.IconSize;
+        settings.Width = dlg.BarWidth;
+        settings.HorizontalHeight = dlg.BarHeight;
         settings.Edge = dlg.Edge;
         TopMost = settings.AlwaysOnTop;
         collapsed = false;
@@ -787,7 +792,7 @@ public class Dock : Form
                 if (Width < 65 || Height < 65 || (Left == 0 && Top == 0)) Bounds = new Rectangle(bounds.Left + 140, bounds.Top + 120, 110, 450);
                 return;
             }
-            int thickness = collapsed ? RevealStrip : (Horizontal ? Math.Clamp(settings.IconSize + (settings.ShowNames ? 36 : 16), 48, 100) : settings.Width);
+            int thickness = collapsed ? RevealStrip : (Horizontal ? settings.HorizontalHeight : settings.Width);
             if (settings.Edge == "Abajo")
             {
                 // Do not overlap the Windows taskbar or reserve a giant bottom strip.
