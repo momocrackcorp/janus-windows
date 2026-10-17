@@ -44,9 +44,8 @@ public sealed class DockOptionsForm : Form
 
         var general = new TabPage("General");
         var appearance = new TabPage("Apariencia");
-        var disks = new TabPage("Discos");
         var about = new TabPage("Acerca de");
-        tabs.TabPages.AddRange(new[] { general, appearance, disks, about });
+        tabs.TabPages.AddRange(new[] { general, appearance, about });
         if (initialTab == "Apariencia") tabs.SelectedTab = appearance;
         appearance.Controls.Add(new Label { Text = "Estilo de los iconos:", Location = new Point(22, 32), AutoSize = true });
         var iconStyle = new ComboBox { DropDownStyle = ComboBoxStyle.DropDownList, Location = new Point(175, 28), Width = 260 };
@@ -215,13 +214,8 @@ public sealed class DockOptionsForm : Form
         var widget = new CheckBox { Text = "Mostrar indicador de uso de discos en la barra", Checked = config.ShowDiskWidget, Location = new Point(18, 20), AutoSize = true };
         var diskColors = new Dictionary<string,int>(config.DiskColors, StringComparer.OrdinalIgnoreCase);
         var widgetLabel = new Label { Text = "Cada unidad tiene su propio color. Selecciónalo con el botón de su fila.", Location = new Point(18, 54), AutoSize = true };
-        disks.Controls.Add(widget);
-        disks.Controls.Add(widgetLabel);
-        disks.Controls.Add(new Label { Text = "Avisar desde (%):", Location = new Point(18, 88), AutoSize = true });
         var critical = new NumericUpDown { Location = new Point(150, 84), Width = 80, Minimum = 70, Maximum = 99, Value = Math.Clamp(config.CriticalPercent, 70, 99) };
-        disks.Controls.Add(critical);
         var diskPanel = new FlowLayoutPanel { Location = new Point(18, 124), Size = new Size(510, 175), Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right, AutoScroll = true, FlowDirection = FlowDirection.TopDown, WrapContents = false, Padding = new Padding(2) };
-        disks.Controls.Add(diskPanel);
         foreach (var drive in DriveInfo.GetDrives())
         {
             try
@@ -248,15 +242,14 @@ public sealed class DockOptionsForm : Form
         }
 
         // Disk settings use the same scrollable stack for 200% DPI.
-        disks.Controls.Clear();
-        var diskRows = PageRows(disks);
-        diskRows.Controls.Add(widget);
-        diskRows.Controls.Add(widgetLabel);
-        diskRows.Controls.Add(FieldRow(new Label { Text = "Avisar desde (%):", AutoSize = true }, critical));
+        // Disk options now belong to General: keep disk colors and threshold intact.
+        generalRows.Controls.Add(new Label { Text = "Indicadores de discos", AutoSize = true, Font = new Font("Segoe UI", 9, FontStyle.Bold) });
+        generalRows.Controls.Add(widget);
+        generalRows.Controls.Add(widgetLabel);
+        generalRows.Controls.Add(FieldRow(new Label { Text = "Avisar desde (%):", AutoSize = true }, critical));
         diskPanel.Height = 220;
         diskPanel.AutoScroll = true;
-        diskRows.Controls.Add(diskPanel);
-        diskRows.SizeChanged += (_, _) => FitRows(diskRows);
+        generalRows.Controls.Add(diskPanel);
 
         var info = new Label { Text = "JANUS Dock (LNK) — v5.0 (candidata)\n\nBarra de accesos rápidos para Windows 11.\nDesarrollada en C# con Windows Forms y .NET.\n\nIdeada en Pueblo Seco, Ñuble, Chile.\n16 de octubre de 2026.\n\nAutoría: Omar Aguila\nLaboratorios Momocrackcorp", Location = new Point(104, 20), Size = new Size(420, 215) };
         var appIcon = new PictureBox { Location = new Point(20, 25), Size = new Size(64, 64), SizeMode = PictureBoxSizeMode.Zoom };
@@ -293,7 +286,6 @@ public sealed class DockOptionsForm : Form
             bar.Height = Math.Max(64, apply.PreferredSize.Height + 20);
             FitRows(generalRows);
             FitRows(appearanceRows);
-            FitRows(diskRows);
             FitRows(aboutRows);
         };
         apply.Click += (_, _) =>
@@ -362,6 +354,18 @@ public sealed class DockOptionsForm : Form
         foreach (Control control in rows.Controls)
         {
             if (control is ListBox list) list.Width = Math.Max(240, width - 24);
+            if (control is FlowLayoutPanel diskFlow && diskFlow.Controls.OfType<Panel>().Any())
+            {
+                diskFlow.Width = Math.Max(250, width - 24);
+                foreach (Panel line in diskFlow.Controls.OfType<Panel>())
+                {
+                    line.Width = Math.Max(220, diskFlow.ClientSize.Width - 24);
+                    var choose = line.Controls.OfType<Button>().FirstOrDefault();
+                    if (choose != null) choose.Location = new Point(Math.Max(115, line.Width - choose.Width - 8), choose.Top);
+                    var preview = line.Controls.OfType<DiskUsageControl>().FirstOrDefault();
+                    if (preview != null) preview.Width = Math.Max(115, line.Width - (choose?.Width ?? 100) - 16);
+                }
+            }
             if (control is FlowLayoutPanel row)
             {
                 row.Width = Math.Max(250, width - 24);
