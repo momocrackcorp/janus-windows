@@ -30,12 +30,12 @@ public sealed class DockOptionsForm : Form
     const string RunPath = @"Software\Microsoft\Windows\CurrentVersion\Run";
     const string RunValue = "JANUS Dock";
 
-    public DockOptionsForm(DockSettings config)
+    public DockOptionsForm(DockSettings config, string? initialTab = null)
     {
         Text = "Opciones de JANUS Dock";
         AutoScaleMode = AutoScaleMode.Font;
-        ClientSize = new Size(720, 540);
-        MinimumSize = new Size(430, 340);
+        ClientSize = new Size(860, 650);
+        MinimumSize = new Size(560, 440);
         MaximizeBox = false; MinimizeBox = false;
         StartPosition = FormStartPosition.CenterScreen;
         Font = new Font("Segoe UI", 9);
@@ -47,6 +47,7 @@ public sealed class DockOptionsForm : Form
         var disks = new TabPage("Discos");
         var about = new TabPage("Acerca de");
         tabs.TabPages.AddRange(new[] { general, appearance, disks, about });
+        if (initialTab == "Apariencia") tabs.SelectedTab = appearance;
         appearance.Controls.Add(new Label { Text = "Estilo de los iconos:", Location = new Point(22, 32), AutoSize = true });
         var iconStyle = new ComboBox { DropDownStyle = ComboBoxStyle.DropDownList, Location = new Point(175, 28), Width = 260 };
         iconStyle.Items.AddRange(new object[] { "Iconos de Windows", "Iconos Lucide" });
@@ -144,11 +145,11 @@ public sealed class DockOptionsForm : Form
         var barHeight = new NumericUpDown { Minimum = 48, Maximum = 160, Increment = 4, Width = 100, Value = Math.Clamp(config.HorizontalHeight, 48, 160) };
         var animation = new CheckBox { Text = "Activar efecto lupa al pasar el mouse", AutoSize = true, Checked = config.HoverAnimation };
         var zoomChoice = new ComboBox { DropDownStyle = ComboBoxStyle.DropDownList, Width = 145 };
-        zoomChoice.Items.AddRange(new object[] { "150 %", "180 %", "205 %", "240 %", "280 %" });
-        int[] zoomValues = { 150, 180, 205, 240, 280 };
-        int chosenZoom = Math.Clamp(config.ZoomPercent, 150, 280);
+        zoomChoice.Items.AddRange(new object[] { "150 %", "180 %", "205 %", "240 %", "280 %", "340 %" });
+        int[] zoomValues = { 150, 180, 205, 240, 280, 340 };
+        int chosenZoom = Math.Clamp(config.ZoomPercent, 150, 340);
         zoomChoice.SelectedIndex = Array.IndexOf(zoomValues, chosenZoom);
-        if (zoomChoice.SelectedIndex < 0) zoomChoice.SelectedIndex = 4;
+        if (zoomChoice.SelectedIndex < 0) zoomChoice.SelectedIndex = 5;
         zoomChoice.Enabled = animation.Checked;
         animation.CheckedChanged += (_, _) => zoomChoice.Enabled = animation.Checked;
         appearanceRows.Controls.Add(new Label { Text = "Dimensiones de la barra", AutoSize = true, Font = new Font("Segoe UI", 9, FontStyle.Bold) });
@@ -287,7 +288,7 @@ public sealed class DockOptionsForm : Form
         Shown += (_, _) =>
         {
             var area = Screen.FromControl(this).WorkingArea;
-            Size = new Size(Math.Min(Width, Math.Max(420, area.Width - 24)), Math.Min(Height, Math.Max(320, area.Height - 24)));
+            Size = new Size(Math.Min(Math.Max(Width, (int)(area.Width * 0.78)), area.Width - 16), Math.Min(Math.Max(Height, (int)(area.Height * 0.80)), area.Height - 16));
             Location = new Point(area.Left + Math.Max(0, (area.Width - Width) / 2), area.Top + Math.Max(0, (area.Height - Height) / 2));
             bar.Height = Math.Max(64, apply.PreferredSize.Height + 20);
             FitRows(generalRows);
@@ -341,7 +342,7 @@ public sealed class DockOptionsForm : Form
             AutoSize = true, AutoSizeMode = AutoSizeMode.GrowAndShrink,
             FlowDirection = FlowDirection.LeftToRight, WrapContents = true,
             Margin = new Padding(0, 3, 0, 8), Padding = Padding.Empty,
-            MinimumSize = new Size(250, 32)
+            MinimumSize = new Size(250, 36)
         };
         foreach (var control in controls)
         {
@@ -391,7 +392,8 @@ public sealed class DockOptionsForm : Form
                 foreach (Control child in flow.Controls)
                     if (child is Label rowLabel) rowLabel.MaximumSize = new Size(Math.Max(225, width - 38), 0);
         }
-        rows.Height = rows.Controls.Cast<Control>().Sum(x => x.Height + x.Margin.Vertical) + rows.Padding.Vertical + 24;
+        rows.PerformLayout();
+        rows.Height = rows.Controls.Cast<Control>().Sum(x => x.Height + x.Margin.Vertical) + rows.Padding.Vertical + 36;
     }
 
     public static bool IsStartupEnabled()
