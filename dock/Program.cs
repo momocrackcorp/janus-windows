@@ -155,7 +155,7 @@ public class Dock : Form
         settings.Width = Math.Clamp(settings.Width, 64, 300);
         settings.HorizontalHeight = Math.Clamp(settings.HorizontalHeight, 48, 160);
         settings.IconSize = Math.Clamp(settings.IconSize, 16, 64);
-        settings.ZoomPercent = Math.Clamp(settings.ZoomPercent, 150, 280);
+        settings.ZoomPercent = Math.Clamp(settings.ZoomPercent, 150, 340);
         if (settings.ShowNames && settings.NameMode == "Tooltip") settings.NameMode = "Written";
         if (settings.DockMode != "Flotante") settings.DockMode = "Acoplada";
         settings.CriticalPercent = Math.Clamp(settings.CriticalPercent, 70, 99);
@@ -291,7 +291,7 @@ public class Dock : Form
     {
         if (!path.StartsWith("janus:", StringComparison.OrdinalIgnoreCase) && path != "shell:MyComputerFolder" && !File.Exists(path) && !Directory.Exists(path) &&
             !(Uri.TryCreate(path, UriKind.Absolute, out var uri) && (uri.Scheme == "https" || uri.Scheme == "http"))) return;
-        string name = path switch { "shell:MyComputerFolder" => "Este equipo", "janus:documents" => "Documentos", "janus:downloads" => "Descargas", "janus:shutdown" => "Apagar", "janus:restart" => "Reiniciar", _ => Path.GetFileNameWithoutExtension(path.TrimEnd('\\', '/')) };
+        string name = path switch { "shell:MyComputerFolder" => "Este equipo", "janus:documents" => "Documentos", "janus:downloads" => "Descargas", "janus:shutdown" => "Apagar", "janus:restart" => "Reiniciar", "janus:settings" => "Configuración", _ => Path.GetFileNameWithoutExtension(path.TrimEnd('\\', '/')) };
         settings.Items.Add(new DockItem { Name = string.IsNullOrWhiteSpace(name) ? path : name, Path = path });
         Store(); Render();
     }
@@ -355,6 +355,7 @@ public class Dock : Form
         if (path == "janus:shutdown") return EnergyIcon(true);
         if (path == "janus:restart") return EnergyIcon(false);
         if (path == "janus:documents") return ShellFolderIcon(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments));
+        if (path == "janus:settings") return SystemIcons.Application.ToBitmap();
         if (path == "janus:downloads") return ShellFolderIcon(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "Downloads"));
         // Resolve the underlying target/icon of .lnk rather than asking the shell for
         // the shortcut composite (which contains the arrow overlay).
@@ -566,15 +567,20 @@ public class Dock : Form
         menu.Opening += (_, _) =>
         {
             menu.Items.Clear();
-            menu.Items.Add("Agregar acceso...", null, (_, _) => AddDialog());
-            menu.Items.Add("Agregar Este equipo", null, (_, _) => Add("shell:MyComputerFolder"));
-            menu.Items.Add(DrivesMenu());
-            var special = new ToolStripMenuItem("Carpetas del usuario");
-            special.DropDownItems.Add("Documentos", null, (_, _) => Add("janus:documents"));
-            special.DropDownItems.Add("Descargas", null, (_, _) => Add("janus:downloads"));
-            special.DropDownItems.Add("Carpeta de trabajo...", null, (_, _) => AddFolder());
-            menu.Items.Add(special);
-            menu.Items.Add("Agregar separador", null, (_, _) => { settings.Items.Add(new DockItem { Name = "Separador", IsSeparator = true }); Store(); Render(); });
+            var addMenu = new ToolStripMenuItem("Agregar");
+            addMenu.DropDownItems.Add("Programa o acceso directo...", null, (_, _) => AddDialog());
+            addMenu.DropDownItems.Add(DrivesMenu());
+            var sys = new ToolStripMenuItem("Carpetas del sistema");
+            sys.DropDownItems.Add("Este equipo", null, (_, _) => Add("shell:MyComputerFolder"));
+            sys.DropDownItems.Add("Mis documentos", null, (_, _) => Add("janus:documents"));
+            sys.DropDownItems.Add("Descargas", null, (_, _) => Add("janus:downloads"));
+            sys.DropDownItems.Add("Configuración de Windows", null, (_, _) => Add("janus:settings"));
+            sys.DropDownItems.Add("Seleccionar otra carpeta...", null, (_, _) => AddFolder());
+            addMenu.DropDownItems.Add(sys);
+            addMenu.DropDownItems.Add("Separador", null, (_, _) => { settings.Items.Add(new DockItem { Name = "Separador", IsSeparator = true }); Store(); Render(); });
+            menu.Items.Add(addMenu);
+            var organize = new ToolStripMenuItem("Organizar barra");
+            organize.DropDownItems.Add("Abrir organizador visual...", null, (_, _) => ShowOptions("Apariencia"));
             var manageSeparators = new ToolStripMenuItem("Administrar separadores");
             int number = 0;
             foreach (var separator in settings.Items.Where(i => i.IsSeparator).ToList())
@@ -588,7 +594,8 @@ public class Dock : Form
                 manageSeparators.DropDownItems.Add(submenu);
             }
             manageSeparators.Enabled = number > 0;
-            menu.Items.Add(manageSeparators);
+            organize.DropDownItems.Add(manageSeparators);
+            menu.Items.Add(organize);
             menu.Items.Add(new ToolStripSeparator());
             menu.Items.Add("Opciones...", null, (_, _) => ShowOptions());
             menu.Items.Add("Refrescar barra", null, (_, _) => RefreshDock());
@@ -596,9 +603,9 @@ public class Dock : Form
         };
         return menu;
     }
-    void ShowOptions()
+    void ShowOptions(string? initialTab = null)
     {
-        using var dlg = new DockOptionsForm(settings);
+        using var dlg = new DockOptionsForm(settings, initialTab);
         if (dlg.ShowDialog(this) != DialogResult.OK) return;
         UnregisterBar();
         settings.AlwaysOnTop = dlg.AlwaysOnTop;
@@ -698,6 +705,7 @@ public class Dock : Form
                 if (MessageBox.Show($"¿Seguro que quieres {verb} el equipo? Guarda tus documentos primero.", "Confirmar acción de energía", MessageBoxButtons.YesNo, MessageBoxIcon.Warning, MessageBoxDefaultButton.Button2) != DialogResult.Yes) return;
                 Process.Start(new ProcessStartInfo("shutdown.exe", item.Path == "janus:shutdown" ? "/s /t 0" : "/r /t 0") { UseShellExecute = true });
             }
+            else if (item.Path == "janus:settings") Process.Start(new ProcessStartInfo("ms-settings:") { UseShellExecute = true });
             else if (item.Path == "janus:documents") Process.Start(new ProcessStartInfo("explorer.exe", $"\"{Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments)}\"") { UseShellExecute = true });
             else if (item.Path == "janus:downloads") Process.Start(new ProcessStartInfo("explorer.exe", $"\"{Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "Downloads")}\"") { UseShellExecute = true });
             else if (item.Path == "shell:MyComputerFolder") Process.Start(new ProcessStartInfo("explorer.exe", "shell:MyComputerFolder") { UseShellExecute = true });
