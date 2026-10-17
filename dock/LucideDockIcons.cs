@@ -14,6 +14,7 @@ internal static class LucideDockIcons
             "shell:mycomputerfolder" => "monitor",
             "janus:documents" => "folder",
             "janus:downloads" => "download",
+            "janus:settings" => "settings",
             "janus:shutdown" => "power",
             "janus:restart" => "restart",
             _ => ""
@@ -50,6 +51,23 @@ internal static class LucideDockIcons
             case "download":
                 g.DrawRoundedRectangleCompat(pen, 3, 4, 18, 16, 2);
                 Line(12, 7, 12, 16); Line(8, 12, 12, 16); Line(16, 12, 12, 16);
+                break;
+            case "settings":
+                // Gear outline for Windows Settings. Fit inside 24x24 viewbox.
+                using (var gear = new GraphicsPath())
+                {
+                    var points = new List<PointF>();
+                    for (int j = 0; j < 32; j++)
+                    {
+                        double angle = -Math.PI / 2 + j * Math.PI * 2 / 32;
+                        double radius = j % 4 is 1 or 2 ? 10.0 : 7.6;
+                        points.Add(new PointF(12 + (float)(radius * Math.Cos(angle)),
+                                              12 + (float)(radius * Math.Sin(angle))));
+                    }
+                    gear.AddPolygon(points.ToArray());
+                    g.DrawPath(pen, gear);
+                    g.DrawEllipse(pen, 9, 9, 6, 6);
+                }
                 break;
             case "power":
                 // Continuous ring; the power stem is drawn above it.
