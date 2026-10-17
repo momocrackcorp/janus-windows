@@ -750,9 +750,9 @@ public class Dock : Form
     void RegisterBar()
     {
         if (!IsHandleCreated) return;
-        // Windows 11 owns the lower edge with its taskbar. Do not register
-        // another AppBar there; use the safe work area instead.
-        if (settings.DockMode == "Flotante" || settings.Edge == "Abajo") { registered = false; Position(); return; }
+        // Register every docked orientation, including bottom. Without ABM_SETPOS
+        // Windows cannot reserve working-area space above a horizontal dock.
+        if (settings.DockMode == "Flotante") { registered = false; Position(); return; }
         var d = Data();
         registered = SHAppBarMessage(ABM_NEW, ref d) != IntPtr.Zero;
         Position();
@@ -793,29 +793,16 @@ public class Dock : Form
                 return;
             }
             int thickness = collapsed ? RevealStrip : (Horizontal ? settings.HorizontalHeight : settings.Width);
-            if (settings.Edge == "Abajo")
-            {
-                // Do not overlap the Windows taskbar or reserve a giant bottom strip.
-                var work = Screen.PrimaryScreen?.WorkingArea ?? Screen.FromControl(this).WorkingArea;
-                Bounds = new Rectangle(work.Left, work.Bottom - thickness, work.Width, thickness);
-                panel.Visible = !collapsed;
-                foreach (Control c in panel.Controls)
-                {
-                    if (c is ZoomShortcutButton b)
-                    {
-                        b.Width = Math.Max(60, (int)Math.Ceiling(settings.IconSize * (settings.HoverAnimation ? 1.8 : 1.0)) + 12);
-                        b.Height = Math.Max(40, thickness - 8);
-                    }
-                }
-                return;
-            }
             var d = Data();
+            // On bottom, position above the native Windows taskbar rather than
+            // covering its notification area. Shell AppBar then reserves the dock.
+            var work = Screen.PrimaryScreen?.WorkingArea ?? Screen.FromControl(this).WorkingArea;
             d.rc = new Rect
             {
                 left = settings.Edge == "Derecha" ? bounds.Right - thickness : bounds.Left,
                 right = settings.Edge == "Izquierda" ? bounds.Left + thickness : bounds.Right,
-                top = settings.Edge == "Abajo" ? bounds.Bottom - thickness : bounds.Top,
-                bottom = settings.Edge == "Arriba" ? bounds.Top + thickness : bounds.Bottom
+                top = settings.Edge == "Abajo" ? work.Bottom - thickness : bounds.Top,
+                bottom = settings.Edge == "Arriba" ? bounds.Top + thickness : settings.Edge == "Abajo" ? work.Bottom : bounds.Bottom
             };
             if (registered)
             {
