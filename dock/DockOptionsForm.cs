@@ -21,6 +21,8 @@ public sealed class DockOptionsForm : Form
     public bool ShowRestart { get; private set; }
     public int CriticalPercent { get; private set; }
     public int IconSize { get; private set; }
+    public int BarWidth { get; private set; }
+    public int BarHeight { get; private set; }
     public string IconStyle { get; private set; } = "Windows";
     public List<DockItem> OrderedItems { get; private set; } = new();
     public string Edge { get; private set; } = "Derecha";
@@ -193,6 +195,10 @@ public sealed class DockOptionsForm : Form
         generalRows.Controls.Add(FieldRow(new Label { Text = "Modo:", AutoSize = true }, dockMode));
         generalRows.Controls.Add(FieldRow(new Label { Text = "Ubicación:", AutoSize = true }, location));
         generalRows.Controls.Add(FieldRow(new Label { Text = "Tamaño iconos:", AutoSize = true }, size, smallIcons));
+        var barWidth = new NumericUpDown { Minimum = 64, Maximum = 300, Increment = 4, Width = 100, Value = Math.Clamp(config.Width, 64, 300) };
+        var barHeight = new NumericUpDown { Minimum = 48, Maximum = 160, Increment = 4, Width = 100, Value = Math.Clamp(config.HorizontalHeight, 48, 160) };
+        generalRows.Controls.Add(FieldRow(new Label { Text = "Ancho barra vertical (px):", AutoSize = true }, barWidth));
+        generalRows.Controls.Add(FieldRow(new Label { Text = "Alto barra horizontal (px):", AutoSize = true }, barHeight));
         generalRows.Controls.Add(animation);
         generalRows.Controls.Add(FieldRow(powerTitle, shutdown, restart));
         generalRows.Controls.Add(new Label { Text = "Al ocultarse queda una franja para recuperar la barra con el mouse.", AutoSize = true });
@@ -292,6 +298,8 @@ public sealed class DockOptionsForm : Form
             DockMode = dockMode.SelectedItem?.ToString() ?? "Acoplada";
             ShowDiskWidget = widget.Checked;
             IconSize = (int)size.Value;
+            BarWidth = (int)barWidth.Value;
+            BarHeight = (int)barHeight.Value;
             IconStyle = iconStyle.SelectedIndex == 1 ? "Lucide" : "Windows";
             OrderedItems = new List<DockItem>(ordered);
             Edge = (string)location.SelectedItem!;
