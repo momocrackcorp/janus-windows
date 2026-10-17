@@ -794,15 +794,15 @@ public class Dock : Form
             }
             int thickness = collapsed ? RevealStrip : (Horizontal ? settings.HorizontalHeight : settings.Width);
             var d = Data();
-            // On bottom, position above the native Windows taskbar rather than
-            // covering its notification area. Shell AppBar then reserves the dock.
-            var work = Screen.PrimaryScreen?.WorkingArea ?? Screen.FromControl(this).WorkingArea;
+            // Query from physical screen bounds, not WorkingArea: the latter
+            // already includes our own AppBar reservation and would drift upward
+            // on every layout refresh. ABM_QUERYPOS negotiates with the taskbar.
             d.rc = new Rect
             {
                 left = settings.Edge == "Derecha" ? bounds.Right - thickness : bounds.Left,
                 right = settings.Edge == "Izquierda" ? bounds.Left + thickness : bounds.Right,
-                top = settings.Edge == "Abajo" ? work.Bottom - thickness : bounds.Top,
-                bottom = settings.Edge == "Arriba" ? bounds.Top + thickness : settings.Edge == "Abajo" ? work.Bottom : bounds.Bottom
+                top = settings.Edge == "Abajo" ? bounds.Bottom - thickness : bounds.Top,
+                bottom = settings.Edge == "Arriba" ? bounds.Top + thickness : bounds.Bottom
             };
             if (registered)
             {
