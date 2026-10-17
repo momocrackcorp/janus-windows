@@ -29,7 +29,7 @@ public sealed class ZoomShortcutButton : Button
     protected override void OnMouseEnter(EventArgs e)
     {
         base.OnMouseEnter(e);
-        goal = ZoomEnabled ? 2.05f : 1f;
+        goal = ZoomEnabled ? 2.8f : 1f;
         animation.Start();
     }
     protected override void OnMouseLeave(EventArgs e)
@@ -51,7 +51,7 @@ public sealed class ZoomShortcutButton : Button
         }
         // Give the animation a visibly smaller resting size, leaving room to grow
         // inside narrow vertical bars without clipping at high DPI.
-        float baseFactor = ZoomEnabled ? .80f : 1f;
+        float baseFactor = ZoomEnabled ? .72f : 1f;
         int size = (int)Math.Round(BaseIconSize * baseFactor * zoom);
         size = Math.Min(size, Math.Min(ClientSize.Width - 2, ClientSize.Height - (ShowCaption ? 29 : 2)));
         size = Math.Max(1, size);
