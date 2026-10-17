@@ -135,6 +135,11 @@ public sealed class DockOptionsForm : Form
         appearance.Controls.Clear();
         var appearanceRows = PageRows(appearance);
         appearanceRows.Controls.Add(FieldRow(new Label { Text = "Estilo de los iconos:", AutoSize = true }, iconStyle));
+        // Icon size belongs with all other appearance settings.
+        var size = new NumericUpDown { Minimum = 16, Maximum = 64, Increment = 8, Value = Math.Clamp(config.IconSize, 16, 64), Width = 95 };
+        var smallIcons = new CheckBox { Text = "Iconos pequeños (24 px)", AutoSize = true, Checked = config.IconSize <= 24 };
+        smallIcons.CheckedChanged += (_, _) => { if (smallIcons.Checked) size.Value = 24; else if (size.Value == 24) size.Value = 48; };
+        appearanceRows.Controls.Add(FieldRow(new Label { Text = "Tamaño de iconos (px):", AutoSize = true }, size, smallIcons));
         var barWidth = new NumericUpDown { Minimum = 64, Maximum = 300, Increment = 4, Width = 100, Value = Math.Clamp(config.Width, 64, 300) };
         var barHeight = new NumericUpDown { Minimum = 48, Maximum = 160, Increment = 4, Width = 100, Value = Math.Clamp(config.HorizontalHeight, 48, 160) };
         var animation = new CheckBox { Text = "Activar efecto lupa al pasar el mouse", AutoSize = true, Checked = config.HoverAnimation };
@@ -160,9 +165,10 @@ public sealed class DockOptionsForm : Form
         actions.FlowDirection = FlowDirection.LeftToRight;
         actions.WrapContents = true;
         actions.AutoScroll = false;
-        actions.AutoSize = true;
-        actions.AutoSizeMode = AutoSizeMode.GrowAndShrink;
-        foreach (Control control in actions.Controls) { control.Width = 112; control.Height = 32; }
+        actions.AutoSize = false;
+        actions.AutoScroll = false;
+        actions.WrapContents = true;
+        foreach (Control control in actions.Controls) { control.Width = Math.Max(116, control.PreferredSize.Width + 16); control.Height = Math.Max(34, control.PreferredSize.Height + 7); }
         appearanceRows.Controls.Add(actions);
         appearanceRows.SizeChanged += (_, _) => FitRows(appearanceRows);
 
@@ -187,16 +193,6 @@ public sealed class DockOptionsForm : Form
         location.SelectedItem = config.Edge;
         if (location.SelectedIndex < 0) location.SelectedIndex = 0;
         general.Controls.Add(location);
-        general.Controls.Add(new Label { Text = "Tamaño iconos:", Location = new Point(18, 231), AutoSize = true });
-        var size = new NumericUpDown { Location = new Point(190, 227), Minimum = 16, Maximum = 64, Increment = 8, Value = Math.Clamp(config.IconSize, 16, 64), Width = 100 };
-        general.Controls.Add(size);
-        general.Controls.Add(animation);
-        var smallIcons = new CheckBox { Text = "Iconos pequeños (24 px)", AutoSize = true, Location = new Point(310, 230), Checked = config.IconSize <= 24 };
-        general.Controls.Add(smallIcons);
-        smallIcons.CheckedChanged += (_, _) => { if (smallIcons.Checked) size.Value = 24; else if (size.Value == 24) size.Value = 48; };
-        // Explicit quick preset; manual numeric sizes remain independent.
-        general.Controls.Add(new Label { Text = "Nota: al ocultarse, queda una franja para recuperar la barra con el mouse.", Location = new Point(18, 347), AutoSize = true });
-
         var powerTitle = new Label { Text = "Botones de energía en la barra:", AutoSize = true, Location = new Point(18, 292) };
         var shutdown = new CheckBox { Text = "Apagar", AutoSize = true, Location = new Point(240, 292), Checked = config.ShowShutdown };
         var restart = new CheckBox { Text = "Reiniciar", AutoSize = true, Location = new Point(335, 292), Checked = config.ShowRestart };
@@ -211,7 +207,6 @@ public sealed class DockOptionsForm : Form
         generalRows.Controls.Add(FieldRow(names, nameMode));
         generalRows.Controls.Add(FieldRow(new Label { Text = "Modo:", AutoSize = true }, dockMode));
         generalRows.Controls.Add(FieldRow(new Label { Text = "Ubicación:", AutoSize = true }, location));
-        generalRows.Controls.Add(FieldRow(new Label { Text = "Tamaño iconos:", AutoSize = true }, size, smallIcons));
         generalRows.Controls.Add(FieldRow(powerTitle, shutdown, restart));
         generalRows.Controls.Add(new Label { Text = "Al ocultarse queda una franja para recuperar la barra con el mouse.", AutoSize = true });
         generalRows.SizeChanged += (_, _) => FitRows(generalRows);
@@ -367,7 +362,29 @@ public sealed class DockOptionsForm : Form
         {
             if (control is ListBox list) list.Width = Math.Max(240, width - 24);
             if (control is FlowLayoutPanel row)
+            {
                 row.Width = Math.Max(250, width - 24);
+                if (row.Controls.Count > 0 && row.Controls[0] is Button)
+                {
+                    // Button toolbar: adjust its height to the number of wrapped lines.
+                    int usable = Math.Max(160, row.ClientSize.Width - row.Padding.Horizontal - 8);
+                    int lineWidth = 0, lineHeight = 0, height = row.Padding.Vertical + 8;
+                    foreach (Control button in row.Controls)
+                    {
+                        int itemWidth = button.Width + button.Margin.Horizontal;
+                        int itemHeight = button.Height + button.Margin.Vertical;
+                        if (lineWidth > 0 && lineWidth + itemWidth > usable)
+                        {
+                            height += lineHeight;
+                            lineWidth = 0;
+                            lineHeight = 0;
+                        }
+                        lineWidth += itemWidth;
+                        lineHeight = Math.Max(lineHeight, itemHeight);
+                    }
+                    row.Height = height + lineHeight;
+                }
+            }
             if (control is Label label) label.MaximumSize = new Size(Math.Max(230, width - 25), 0);
             if (control is CheckBox check) check.MaximumSize = new Size(Math.Max(230, width - 25), 0);
             if (control is FlowLayoutPanel flow && flow != rows)
