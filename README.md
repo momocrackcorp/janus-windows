@@ -1,3 +1,55 @@
+<div align="center">
+
+# JANUS para Windows
+
+### Migración segura, recuperación y puesta a punto
+
+**Windows · C# · Windows Forms · Proyecto de Momocrackcorp**
+
+[![Releases](https://img.shields.io/badge/Descargas-Releases-2563eb?style=for-the-badge&logo=github)](https://github.com/momocrackcorp/janus-windows/releases)
+[![Repositorio](https://img.shields.io/badge/C%C3%B3digo-GitHub-24292f?style=for-the-badge&logo=github)](https://github.com/momocrackcorp/janus-windows)
+
+</div>
+
+---
+
+**JANUS** ayuda a preparar o recuperar un equipo Windows: organiza carpetas personales en otra unidad o partición, permite respaldar y restaurar configuraciones de rutas y reúne herramientas útiles para una reinstalación.
+
+> **Estado documentado:** 3.1.0 RC1. Consulta la sección [Releases](https://github.com/momocrackcorp/janus-windows/releases) para comprobar qué versiones y archivos están publicados actualmente.
+
+## Empieza aquí
+
+1. Descarga una versión disponible desde **[Releases](https://github.com/momocrackcorp/janus-windows/releases)**.
+2. Lee sus requisitos y notas de versión antes de ejecutar la aplicación.
+3. Prepara un respaldo externo de tus datos importantes antes de modificar rutas o ajustes del sistema.
+4. Revisa la vista previa y las confirmaciones antes de aplicar operaciones.
+
+## Funciones principales
+
+| Área | ¿Qué permite hacer? |
+| --- | --- |
+| **Migración segura** | Seleccionar Escritorio, Documentos, Descargas, Imágenes, Música y Vídeos; previsualizar origen y destino y comprobar espacio. |
+| **Respaldo y recuperación** | Guardar rutas de carpetas conocidas y restaurarlas; conservar originales sin borrado automático. |
+| **Mochila de reinstalación** | Preparar inventarios, perfiles de aplicaciones, controladores e informes para reinstalar Windows. |
+| **Herramientas de Windows** | Acceder a información del sistema y ajustes habituales de puesta a punto. |
+| **Iconos y personalización** | Aplicar y restaurar iconos y paquetes visuales, con respaldos y cambios reversibles. |
+| **Historial y comprobaciones** | Consultar operaciones realizadas y sus resultados. |
+
+**Seguridad primero:** la migración copia y verifica los archivos antes de cambiar las rutas; JANUS no borra automáticamente los originales. Algunas herramientas específicas pueden necesitar permisos de administrador, pero las operaciones no se ejecutan sin la intervención correspondiente.
+
+## ¿Cuál es la diferencia entre JANUS y JANUS+?
+
+- **[JANUS](https://github.com/momocrackcorp/janus-windows):** edición enfocada en migración, respaldo, recuperación y puesta a punto.
+- **[JANUS+](https://github.com/momocrackcorp/janus-plus-windows):** edición ampliada que suma selección de temas reversibles para Windows.
+- **[JANUS Dock](https://github.com/momocrackcorp/janus-dock):** barra de accesos independiente; no es necesaria para ejecutar JANUS ni JANUS+.
+
+Si encuentras un error, puedes [abrir un issue](https://github.com/momocrackcorp/janus-windows/issues) con la versión de Windows, la versión de la aplicación y los pasos para reproducirlo; evita publicar contraseñas, claves o datos personales.
+
+---
+
+<details>
+<summary><strong>Documentación técnica y registro completo de funciones</strong> (expandir)</summary>
+
 # Janus para Windows
 
 Aplicación gráfica para trasladar Escritorio, Documentos, Descargas, Imágenes, Música y Vídeos a otra unidad sin arriesgar los archivos originales.
@@ -114,3 +166,6 @@ Después de verificar durante varios días que todo funciona, el usuario puede a
 ## Pruebas
 
 La validación del ejecutable comprueba que la interfaz nativa inicia y permanece estable. Las operaciones reales solo comienzan después de seleccionar destino y aceptar la confirmación final.
+
+
+</details>
