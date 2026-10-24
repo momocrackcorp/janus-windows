@@ -1,0 +1,31 @@
+name: Build JANUS Dock
+on:
+  workflow_dispatch:
+  push:
+    branches: [feature/janus-dock-v02]
+    paths:
+      - 'dock/**'
+      - '.github/workflows/build-janus-dock.yml'
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+      - name: Generate JANUS Dock icon
+        shell: pwsh
+        run: ./dock/generate-icon.ps1
+      - name: Build compact version (requires .NET Desktop Runtime 8)
+        run: dotnet publish dock/JanusDock.csproj -c Release -r win-x64 --self-contained false -p:PublishSingleFile=true -o dist-compact
+      - name: Build standalone version (includes .NET runtime)
+        run: dotnet publish dock/JanusDock.csproj -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -o dist-standalone
+      - uses: actions/upload-artifact@v4
+        with:
+          name: JANUS-Dock-Liviano-Windows-x64
+          path: dist-compact/JanusDock.exe
+      - uses: actions/upload-artifact@v4
+        with:
+          name: JANUS-Dock-Autonomo-Windows-x64
+          path: dist-standalone/JanusDock.exe

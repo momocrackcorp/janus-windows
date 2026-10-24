@@ -1,0 +1,18 @@
+using System.Drawing;
+using System.IO;
+
+namespace JanusDock;
+
+// Images provided by the project owner, reduced to 64px without redrawing.
+internal static class PowerImages
+{
+    private const string ShutdownPng = "iVBORw0KGgoAAAANSUhEUgAAADAAAAAwCAMAAABg3Am1AAAAYFBMVEXYYVvcnZvmOjPZOy7u397oQjfaNSn3WCL2QjW3OTm8IyLbOy7dgnz0QjTpwL+qVVW/SUl/AADWOS0AAADmOzDwQTTLKiT+/PzS1tfSzMy7FxX/VVXQJBy8IiD/AADDGRQcywRFAAAAIHRSTlP//xdp/9/aGGwE/5r/l/8D/wL+AP79//////8D//8B/+vtKnUAAAK9SURBVHjahZbZduMgDIYFNl7ipDODAeP9/d+ykgw2xOlUFz095P/QghCGPrF/M/6RRVdptqorJC7MW6qB5P+Z1EHMZoyuiEmRC8BF2el3M9Z0iNR3YO7bQn80a4qWvOdA28tK/2DGVhIFGdD2hf6PWVtEAn7XGzIk5AX8rr8I4Hx/1xuKaj6ArZd3HUCuJ6Km6kK//Wnv9RF+EEeBbNQbqySeIHwMCEo/DIAnYOjkgoMjKNg2mYei2AECYrcGnnAQlq3eNpj7tB/AlwKJJwOTgwEdUTTBXn0LWcbg/ViCi8AkEBiep95aiTkUud77x+SOkKaFPLCPaA0CVVqb0Y9/p3WKIe1MlPoEVA9JRE/aH/XrBAEIhFhOooYrIoXbe3isUwK4XbCLM6gGuiSD0WOij0cEdkdWUhZLJF5QZRnAtL4B7EIs0YeCNGWq0DvAlSqPLiGDNAUvMIHH6rKQNMWkXCQgPQRMYV1Xqk05nsCRhIs+7gCFoUWJYbgcODoqATiklTWLBqEXd4UEx83Ic/jCxtBT2HYP8WgXko5Nfiury01zlb5cvHcKOpMd3P4OcApiifeug8KkSXjYPzjAfj1nR9J8hptV77k+d4DN11cmzgeg7hMngWuLIv1gTweKLpANerzBdIFGWBaWu+XYf4DqdEAXSJ7zxxpR0pUQQGKn4YsvnLj0dEXbvrNnlTENIvwohCh591z/6mcaMzR9whLl4UdihmDPRM9jhgaZvSaoAepydBO2h1Tf0CDDUSmrqwzWOPUUI3koy0vO+jAqccLKdNlqyhdNucVkP4RhzOPeJvPQmqOxs8kdAgoPikTCJPPN3CY96+X1ZEn2kROf9fFRZMKmxA/69NlVGZHpVR312cPefCJ4e3l/2PnroH69Ezzs6o+fDvg44i51kwRGctX8+HESEGReAVJdc//8+QbjsaT2wFIxyQAAAABJRU5ErkJggg==";
+    private const string RestartPng = "iVBORw0KGgoAAAANSUhEUgAAADAAAAAwCAMAAABg3Am1AAAAYFBMVEWr585UzZoA///R8uRP7aEzmG2G3bk4sHgewHxDyZD///8QemxVqqpFy5N///9//38aUzkA/wBBvYk+yY4DGhc+toM5uYt/f39VqlUowoIAAAD7/fxK1ZtHy5QYvngiwH4D/PcKAAAAIHRSTlP/3QH/DVr/Df9JAQsDogICKQGtExWpFgID/gD//vf//lmBGs8AAAKBSURBVHjajVbrmqMgDAVErbdqbTuzZgi+/1tuuEkctbv50a/COSQhNwScyUN1nXqcbonDitL1GP6NtVb/JPS9+9VPEp2/Lwk9naibYZBIIoehIZLqLwluqxnQGIMLif8zNOGYM8IfgktjHHZZSfwfY2Tjt44EDc8hwndizPAEfSTUoOUJ3FOkpu1fhBoac4F3SpqNIZI9TfD0XJAYmhNG0Ax/s9b5be3KGBrGTFAjs99arETx81MIifbG/BjVRuhhyHgUP5sItBtjgD4RenIgLq8rgzupso7GMxzhWyWD1iXiC5KoJBulvgNBMwUBVTnHl0X6L3HLKrQnZA+sCGeG61lt0Ccs90KAgi9M/vrjbb5/W7kVjDrwi8DCx5gpEJZHbLfk4+0I0aKbV/A7yEwF2eQII8Q78voru8fzRSMJLB7QSczqcd0T1iXbhLKDh1BQ4xJQLh+OiedWw60tWIMS3Y6wXXq2qUiOeULHCadyIDCTzmmbodGkB0yIW2Z7uXQaJ3IaWthqQVZVJYTA2+W1thQHDTMPHJ23XgVuJrAjlIal0j50PjZFSo3SEzrokBPkMfniChLUpfc92mRlKplQyof0ngkaCqjcEcgqZAVUJJe8Rb5E25e/JyJUW0lvJVqk8Bj5amNN34MKK4U9NAGxMgX31Gbu8DYp1Jdt5u3xsZHRRZmUGtTIZGhkFeaoG7oixVtlibtW6XXlvkdZUfJWGdz42IyDA6zdEwOv2z1u+DxQPjA4no2sO0zz+ciap4znQ5GcKs+GYgnR3+PYpUiW837szgRv1eVgd7Gfyref6zTZ3+UUF6+fDq3ffk0kr/z9+XGSMW2r/uM1E54/JOfPn7/TbdDEiAL02QAAAABJRU5ErkJggg==";
+    public static Image Load(bool shutdown)
+    {
+        byte[] data = Convert.FromBase64String(shutdown ? ShutdownPng : RestartPng);
+        using var stream = new MemoryStream(data);
+        using var image = Image.FromStream(stream);
+        return new Bitmap(image);
+    }
+}
